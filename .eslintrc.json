@@ -1,0 +1,12 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "next/core-web-vitals",
+    "plugin:prettier/recommended" // Make this the last element so prettier config overrides other formatting rules
+  ],
+  "rules": {
+    "no-console": "warn",
+    "@typescript-eslint/no-explicit-any": "off"
+  }
+}
