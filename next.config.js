@@ -1,7 +1,7 @@
 const {PHASE_DEVELOPMENT_SERVER} = require('next/constants');
 
 const {
-    JWT_SECRET = '',
+    JWT_SECRET = 'change-this-secret',
     MONGODB_URI = '',
     SES_HOST = 'email-smtp.eu-central-1.amazonaws.com',
     SES_PORT = '465',
