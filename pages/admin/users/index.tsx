@@ -17,16 +17,37 @@ export const getServerSideProps = wrapper.getServerSideProps((store) => async ({
     });
 
     await dbConnect();
-    const users = await UserModel.find({}).populate('credentials');
+
+    const users = await UserModel.aggregate([
+        {
+            $lookup: {
+                from: 'accounts',
+                localField: 'accounts',
+                foreignField: '_id',
+                as: 'accounts',
+            },
+        },
+        {
+            $lookup: {
+                from: 'usercredentials',
+                localField: 'credentials',
+                foreignField: '_id',
+                as: 'credentials',
+            },
+        },
+        {$sort: {'credentials.updatedAt': -1}},
+    ]);
+
+    console.log('USERS', users);
 
     store.dispatch(
         listLoadSuccessful(
             users.map((item) =>
                 JSON.parse(
                     JSON.stringify({
-                        ...item.toObject({virtuals: true}),
+                        ...item,
                         credentials: {
-                            updatedAt: item.credentials?.updatedAt,
+                            updatedAt: item.credentials && item.credentials[0].updatedAt,
                         },
                     }),
                 ),
