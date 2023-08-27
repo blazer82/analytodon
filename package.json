@@ -38,7 +38,7 @@
         "js-file-download": "^0.4.12",
         "jsonwebtoken": "^8.5.1",
         "megalodon": "^5.0.1",
-        "mongoose": "^6.7.5",
+        "mongoose": "^7.0.0",
         "newrelic": "^9.7.2",
         "next": "13.2.4",
         "next-redux-wrapper": "^8.0.0",
