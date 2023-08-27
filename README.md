@@ -1,7 +1,5 @@
 # Analytodon - Analytics for Mastodon
 
-[![build-badge]](https://github.com/blazer82/analytodon/actions?workflow=build)
-
 This is the official repository for the service [www.analytodon.com](https://www.analytodon.com).
 
 Contributions are welcome.
@@ -27,5 +25,3 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-[build-badge]: https://github.com/blazer82/analytodon/workflows/build/badge.svg

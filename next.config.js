@@ -23,11 +23,8 @@ module.exports = (phase) => {
             mongodbUri: MONGODB_URI,
             mongodbOpts: {
                 tls: true,
-                tlsCAFile: 'rds-combined-ca-bundle.pem',
-                replicaSet: 'rs0',
-                readPreference: 'secondaryPreferred',
+                tlsAllowInvalidCertificates: true,
                 retryWrites: false,
-                dbName: 'analytodon',
             },
             nodemailerTransport: {
                 host: SES_HOST,
