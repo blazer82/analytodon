@@ -61,7 +61,7 @@
         "@types/numeral": "^2.0.2",
         "@types/uuid": "^9.0.0",
         "@typescript-eslint/eslint-plugin": "^5.48.0",
-        "eslint-config-prettier": "^8.5.0",
+        "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^4.2.1",
         "prettier": "^2.8.0"
     }
