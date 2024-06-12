@@ -38,8 +38,6 @@ export const getServerSideProps = wrapper.getServerSideProps((store) => async ({
         {$sort: {'credentials.updatedAt': -1}},
     ]);
 
-    console.log('USERS', users);
-
     store.dispatch(
         listLoadSuccessful(
             users.map((item) =>
