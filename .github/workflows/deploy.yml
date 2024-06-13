@@ -30,8 +30,6 @@ jobs:
                       ${{ env.IMAGE_NAME }}:latest
                       ${{ env.IMAGE_NAME }}:${{ github.sha }}
                       ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
     deploy:
         name: Deploy
         needs: build-and-push
