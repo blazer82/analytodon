@@ -110,9 +110,9 @@ metadata:
     name: analytodon-ingress
     namespace: analytodon
     annotations:
+        kubernetes.io/ingress.class: nginx
         cert-manager.io/cluster-issuer: letsencrypt
 spec:
-    ingressClass: nginx
     tls:
         - hosts:
               - app.analytodon.com
