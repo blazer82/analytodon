@@ -1,0 +1,146 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: analytodon
+    namespace: analytodon
+spec:
+    replicas: 2
+    strategy:
+        type: RollingUpdate
+        rollingUpdate:
+            maxSurge: 0
+            maxUnavailable: 1
+    selector:
+        matchLabels:
+            app: analytodon
+    template:
+        metadata:
+            labels:
+                app: analytodon
+        spec:
+            affinity:
+                nodeAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                        - weight: 1
+                          preference:
+                              matchExpressions:
+                                  - key: project
+                                    operator: In
+                                    values:
+                                        - analytodon
+            containers:
+                - name: makler-lii
+                  image: productionbuild/analytodon:latest
+                  imagePullPolicy: Always
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                          drop:
+                              - ALL
+                  ports:
+                      - name: http
+                        containerPort: 80
+                  env:
+                      - name: NEWRELIC_LICENSE_KEY
+                        valueFrom:
+                            secretKeyRef:
+                                name: newrelic-secret
+                                key: license-key
+                      - name: JWT_SECRET
+                        valueFrom:
+                            secretKeyRef:
+                                name: jwt-secret
+                                key: secret
+                      - name: MONGODB_URI
+                        valueFrom:
+                            secretKeyRef:
+                                name: mongodb-secret
+                                key: uri
+                      - name: SES_HOST
+                        valueFrom:
+                            secretKeyRef:
+                                name: email-secret
+                                key: host
+                      - name: SES_PORT
+                        valueFrom:
+                            secretKeyRef:
+                                name: email-secret
+                                key: port
+                      - name: SES_USER
+                        valueFrom:
+                            secretKeyRef:
+                                name: email-secret
+                                key: user
+                      - name: SES_PASSWD
+                        valueFrom:
+                            secretKeyRef:
+                                name: email-secret
+                                key: password
+                      - name: EMAIL_API_KEY
+                        valueFrom:
+                            secretKeyRef:
+                                name: emailapi-secret
+                                key: key
+                  startupProbe:
+                      failureThreshold: 120
+                      httpGet:
+                          path: /
+                          port: http
+                  readinessProbe:
+                      httpGet:
+                          path: /login
+                          port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: analytodon
+    namespace: analytodon
+spec:
+    selector:
+        app: analytodon
+    ports:
+        - port: 80
+          targetPort: http
+    type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: analytodon-ingress
+    namespace: analytodon
+    annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+spec:
+    ingressClass: nginx
+    tls:
+        - hosts:
+              - app.analytodon.com
+          secretName: letsencrypt-analytodon-tls
+    rules:
+        - host: 'app.analytodon.com'
+          http:
+              paths:
+                  - pathType: Prefix
+                    path: '/'
+                    backend:
+                        service:
+                            name: analytodon
+                            port:
+                                number: 80
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+    name: letsencrypt
+    namespace: analytodon
+spec:
+    acme:
+        email: info@productionbuild.de
+        server: https://acme-v02.api.letsencrypt.org/directory
+        privateKeySecretRef:
+            name: letsencrypt-private-key
+        solvers:
+            - http01:
+                  ingress:
+                      class: nginx

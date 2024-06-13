@@ -1,0 +1,55 @@
+name: deploy-staging
+
+on:
+    push:
+        tags:
+            - 'v[0-9]+.[0-9]+.[0-9]+'
+
+env:
+    IMAGE_NAME: productionbuild/analytodon
+
+jobs:
+    build-and-push:
+        name: Build and push
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: Log in to container registry
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
+            - name: 'Build and push'
+              uses: docker/build-push-action@v5
+              with:
+                  push: true
+                  tags: |
+                      ${{ env.IMAGE_NAME }}:latest
+                      ${{ env.IMAGE_NAME }}:${{ github.sha }}
+                      ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+    deploy:
+        name: Deploy
+        needs: build-and-push
+        runs-on: ubuntu-latest
+        steps:
+            - name: Install doctl
+              uses: digitalocean/action-doctl@v2
+              with:
+                  token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+            - name: Save DigitalOcean kubeconfig with short-lived credentials
+              run: doctl kubernetes cluster kubeconfig save productionbuild-cluster
+            - name: Checkout source code
+              uses: actions/checkout@v4
+            - name: Deploy to the Kubernetes cluster
+              uses: azure/k8s-deploy@v4
+              with:
+                  namespace: analytodon
+                  manifests: |
+                      deploy/k8s/analytodon.yml
+                  images: |
+                      ${{ env.IMAGE_NAME }}:${{ github.sha }}
