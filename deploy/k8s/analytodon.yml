@@ -32,11 +32,6 @@ spec:
                 - name: makler-lii
                   image: productionbuild/analytodon:latest
                   imagePullPolicy: Always
-                  securityContext:
-                      allowPrivilegeEscalation: false
-                      capabilities:
-                          drop:
-                              - ALL
                   ports:
                       - name: http
                         containerPort: 80
