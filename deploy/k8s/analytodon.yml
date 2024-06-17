@@ -27,7 +27,7 @@ spec:
                                   - key: project
                                     operator: In
                                     values:
-                                        - mastodon
+                                        - default
             containers:
                 - name: analytodon
                   image: productionbuild/analytodon:latest
