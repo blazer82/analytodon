@@ -4,12 +4,12 @@ metadata:
     name: analytodon
     namespace: analytodon
 spec:
-    replicas: 2
+    replicas: 1
     strategy:
         type: RollingUpdate
         rollingUpdate:
-            maxSurge: 0
-            maxUnavailable: 1
+            maxSurge: 1
+            maxUnavailable: 0
     selector:
         matchLabels:
             app: analytodon
@@ -27,7 +27,7 @@ spec:
                                   - key: project
                                     operator: In
                                     values:
-                                        - analytodon
+                                        - mastodon
             containers:
                 - name: analytodon
                   image: productionbuild/analytodon:latest
@@ -85,6 +85,13 @@ spec:
                       httpGet:
                           path: /login
                           port: http
+                  resources:
+                      requests:
+                          memory: '20Mi'
+                          cpu: '100m'
+                      limits:
+                          memory: '256Mi'
+                          cpu: '500m'
 ---
 apiVersion: v1
 kind: Service
