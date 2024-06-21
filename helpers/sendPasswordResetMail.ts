@@ -17,7 +17,7 @@ const sendPasswordResetMail = async (user: User) => {
             text:
                 `Hi,\n\n` +
                 `You requested a link to reset your Analytodon password.\n` +
-                `If this wan't you then you can just ignore this email.\n\n` +
+                `If this wasn't you then you can just ignore this email.\n\n` +
                 `Click here to reset your password:\n` +
                 `${publicRuntimeConfig.appURL}/reset-password?t=${user.resetPasswordToken}\n\n` +
                 `Best regards,\n` +
