@@ -130,19 +130,3 @@ spec:
                             name: analytodon
                             port:
                                 number: 80
----
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-    name: letsencrypt
-    namespace: analytodon
-spec:
-    acme:
-        email: info@productionbuild.de
-        server: https://acme-v02.api.letsencrypt.org/directory
-        privateKeySecretRef:
-            name: letsencrypt-private-key
-        solvers:
-            - http01:
-                  ingress:
-                      class: nginx
