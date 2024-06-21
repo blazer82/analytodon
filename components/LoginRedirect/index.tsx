@@ -11,6 +11,7 @@ const LoginRedirect: React.FunctionComponent = () => {
             !user &&
             !router.asPath.startsWith('/login') &&
             !router.asPath.startsWith('/register') &&
+            !router.asPath.startsWith('/reset-password') &&
             !router.asPath.startsWith('/unsubscribe') &&
             !router.asPath.startsWith('/subscribe')
         ) {

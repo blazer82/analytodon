@@ -81,6 +81,11 @@ const LoginPage: React.FunctionComponent = () => {
                                 <Link variant="body2">{"Don't have an account? Sign up!"}</Link>
                             </NextLink>
                         </Grid>
+                        <Grid item>
+                            <NextLink href="/reset-password" passHref legacyBehavior>
+                                <Link variant="body2">{'Forgot your password? Click here!'}</Link>
+                            </NextLink>
+                        </Grid>
                     </Grid>
                 </Box>
             </Box>

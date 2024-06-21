@@ -17,6 +17,9 @@ const UserSchema = new Schema<UserType>(
         emailVerificationCode: {
             type: String,
         },
+        resetPasswordToken: {
+            type: String,
+        },
         role: {
             type: String,
             enum: [UserRole.Admin, UserRole.AccountOwner],

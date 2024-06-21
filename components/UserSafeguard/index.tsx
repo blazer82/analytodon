@@ -13,6 +13,7 @@ const UserSafeguard: React.FunctionComponent<React.PropsWithChildren> = ({childr
         () =>
             !router.asPath.startsWith('/login') &&
             !router.asPath.startsWith('/register') &&
+            !router.asPath.startsWith('/reset-password') &&
             !router.asPath.startsWith('/unsubscribe') &&
             !router.asPath.startsWith('/subscribe'),
         [router],

@@ -8,6 +8,7 @@ export interface User {
     email: string;
     emailVerified: boolean;
     emailVerificationCode?: string;
+    resetPasswordToken?: string;
     accounts?: Account[];
     maxAccounts?: number;
     serverURLOnSignUp?: string;
