@@ -15,6 +15,7 @@ export interface User {
     timezone?: string;
     credentials?: UserCredentials;
     unsubscribed?: string[];
+    oldAccountDeletionNoticeSent?: boolean;
     createdAt: Date | string;
     updatedAt: Date | string;
 }

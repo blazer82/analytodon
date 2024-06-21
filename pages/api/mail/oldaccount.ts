@@ -44,6 +44,9 @@ const handlePost = async ({body}: NextApiRequest, res: NextApiResponse): Promise
             return res.status(404).end();
         }
 
+        user.oldAccountDeletionNoticeSent = true;
+        await user.save();
+
         await sendOldAccountMail(user);
 
         res.end();

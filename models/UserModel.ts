@@ -54,6 +54,9 @@ const UserSchema = new Schema<UserType>(
                 type: String,
             },
         ],
+        oldAccountDeletionNoticeSent: {
+            type: Boolean,
+        },
     },
     {
         timestamps: true,

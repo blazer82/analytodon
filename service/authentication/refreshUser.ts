@@ -22,8 +22,10 @@ const refreshUser: RefreshUser = async (currentRefreshToken) => {
     const {token, refreshToken} = await createJWT(user);
 
     userCredentials.refreshToken = refreshToken;
-
     await userCredentials.save();
+
+    user.oldAccountDeletionNoticeSent = false;
+    await user.save();
 
     return {token, refreshToken};
 };

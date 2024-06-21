@@ -30,8 +30,10 @@ const loginUser: LoginUser = async (email, password) => {
     const {token, refreshToken} = await createJWT(user);
 
     user.credentials.refreshToken = refreshToken;
-
     await (user.credentials as UserCredentials).save();
+
+    user.oldAccountDeletionNoticeSent = false;
+    await user.save();
 
     return {token, refreshToken};
 };
