@@ -16,13 +16,13 @@ const login: Login = async ({body, method}, res) => {
         return res.status(401).end();
     }
 
-    const {token, refreshToken} = response;
+    const {token, refreshToken, user} = response;
 
     res.setHeader('Set-Cookie', [
         serialize('token', token, {path: '/', httpOnly: true, secure: process.env.NODE_ENV !== 'development'}),
         serialize('refreshToken', refreshToken, {path: '/', httpOnly: true, secure: process.env.NODE_ENV !== 'development'}),
     ]);
-    res.json({token, refreshToken});
+    res.json({token, refreshToken, user});
 };
 
 export default login;

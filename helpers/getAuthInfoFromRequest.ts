@@ -2,11 +2,11 @@ import jwt from 'jsonwebtoken';
 import getConfig from 'next/config';
 import refreshUser from '@/service/authentication/refreshUser';
 import {NextApiRequest} from 'next';
-import {User} from '../types/User';
+import {JwtUser} from '../types/User';
 
 const {serverRuntimeConfig} = getConfig();
 
-type GetAuthInfoFromRequest = (req: NextApiRequest, forceRefresh?: boolean) => Promise<{user?: User; token?: string; refreshToken?: string}>;
+type GetAuthInfoFromRequest = (req: NextApiRequest, forceRefresh?: boolean) => Promise<{user?: JwtUser; token?: string; refreshToken?: string}>;
 const getAuthInfoFromRequest: GetAuthInfoFromRequest = async ({cookies, headers}, forceRefresh = false) => {
     const token = headers['authorization']?.split(' ')[1] ?? cookies.token ?? '';
     try {
@@ -14,27 +14,12 @@ const getAuthInfoFromRequest: GetAuthInfoFromRequest = async ({cookies, headers}
             throw new Error();
         }
 
-        const {
-            _id,
-            role,
-            email,
-            emailVerified = false,
-            accounts = null,
-            maxAccounts = null,
-            serverURLOnSignUp = null,
-            timezone = null,
-        } = (await jwt.verify(token, serverRuntimeConfig.jwtSecret)) as Partial<User>;
+        const {_id, role} = (await jwt.verify(token, serverRuntimeConfig.jwtSecret)) as JwtUser;
         return {
             user: {
                 _id,
                 role,
-                email,
-                emailVerified,
-                accounts,
-                maxAccounts,
-                serverURLOnSignUp,
-                timezone,
-            } as User,
+            } as JwtUser,
             token,
         };
     } catch (error: any) {
@@ -43,28 +28,13 @@ const getAuthInfoFromRequest: GetAuthInfoFromRequest = async ({cookies, headers}
             if (response === null) {
                 return {};
             }
-            const {
-                _id,
-                role,
-                email,
-                emailVerified = false,
-                accounts = null,
-                maxAccounts = null,
-                serverURLOnSignUp = null,
-                timezone = null,
-            } = jwt.decode(response.token) as Partial<User>;
+            const {_id, role} = jwt.decode(response.token) as JwtUser;
             return {
+                ...response,
                 user: {
                     _id,
                     role,
-                    email,
-                    emailVerified,
-                    accounts,
-                    maxAccounts,
-                    serverURLOnSignUp,
-                    timezone,
-                } as User,
-                ...response,
+                } as JwtUser,
             };
         } else {
             console.warn(error?.message);

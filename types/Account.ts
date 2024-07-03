@@ -19,3 +19,15 @@ export interface Account {
     createdAt: Date | string;
     updatedAt: Date | string;
 }
+
+export interface SessionAccount {
+    _id: string;
+    serverURL: string;
+    name?: string;
+    username?: string;
+    accountName?: string;
+    accountURL?: string;
+    avatarURL?: string;
+    utcOffset: string;
+    timezone: string;
+}

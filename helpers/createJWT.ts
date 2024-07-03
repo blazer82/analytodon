@@ -13,12 +13,6 @@ const createJWT: CreateJWT = async (user) => {
         {
             _id,
             role: user.role,
-            email: user.email,
-            emailVerified: user.emailVerified,
-            accounts: user.accounts,
-            maxAccounts: user.maxAccounts,
-            serverURLOnSignUp: user.serverURLOnSignUp,
-            timezone: user.timezone,
         },
         serverRuntimeConfig.jwtSecret,
         {expiresIn: '10m'},

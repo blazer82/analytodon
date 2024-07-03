@@ -2,8 +2,6 @@ import postJSON from '@/helpers/postJSON';
 import {loginSuccessful} from '@/redux/auth/slice';
 import {AppDispatch} from '@/redux/store';
 import {RegistrationFormData} from '@/schemas/registrationForm';
-import {User} from '@/types/User';
-import jwt from 'jsonwebtoken';
 import {registrationAttempt, registrationFailed} from '../slice';
 
 export const register = (data: RegistrationFormData) => async (dispatch: AppDispatch) => {
@@ -12,8 +10,7 @@ export const register = (data: RegistrationFormData) => async (dispatch: AppDisp
     const response = await postJSON('/api/user/register', data);
 
     if (response.status === 200) {
-        const {token} = await response.data;
-        const user = jwt.decode(token) as User;
+        const {user} = await response.data;
         dispatch(loginSuccessful(user));
     } else {
         const {error} = await response.data;

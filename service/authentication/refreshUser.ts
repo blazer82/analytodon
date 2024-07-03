@@ -1,10 +1,12 @@
 import createJWT from '@/helpers/createJWT';
+import createSessionUser from '@/helpers/createSessionUser';
 import dbConnect from '@/helpers/dbConnect';
 import AccountModel from '@/models/AccountModel';
 import UserCredentialsModel from '@/models/UserCredentialsModel';
 import UserModel from '@/models/UserModel';
+import {SessionUser} from '@/types/User';
 
-type RefreshUser = (refreshToken: string) => Promise<{token: string; refreshToken: string} | null>;
+type RefreshUser = (refreshToken: string) => Promise<{token: string; refreshToken: string; user: SessionUser} | null>;
 const refreshUser: RefreshUser = async (currentRefreshToken) => {
     await dbConnect();
 
@@ -27,7 +29,7 @@ const refreshUser: RefreshUser = async (currentRefreshToken) => {
     user.oldAccountDeletionNoticeSent = false;
     await user.save();
 
-    return {token, refreshToken};
+    return {token, refreshToken, user: createSessionUser(user)};
 };
 
 export default refreshUser;

@@ -20,7 +20,7 @@ import AdminNavigation from '../AdminNavigation';
 import {logout} from '@/redux/auth/action/logout';
 import {useRouter} from 'next/router';
 import getConfig from 'next/config';
-import {Account} from '@/types/Account';
+import {SessionAccount} from '@/types/Account';
 
 const {publicRuntimeConfig} = getConfig();
 
@@ -56,7 +56,7 @@ const Layout: React.FunctionComponent<React.PropsWithChildren<LayoutProps>> = ({
     }, [user, dispatch]);
 
     const handleAccountSwitch = React.useCallback(
-        (account: Account) => {
+        (account: SessionAccount) => {
             setAnchorEl(null);
             router.push(`${publicRuntimeConfig.appURL}/dashboard/${account._id}`);
         },

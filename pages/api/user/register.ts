@@ -71,13 +71,13 @@ const register: Register = async ({body, method}, res) => {
         return res.status(500).end();
     }
 
-    const {token, refreshToken} = response;
+    const {token, refreshToken, user: sessionUser} = response;
 
     res.setHeader('Set-Cookie', [
         serialize('token', token, {path: '/', httpOnly: true, secure: process.env.NODE_ENV !== 'development'}),
         serialize('refreshToken', refreshToken, {path: '/', httpOnly: true, secure: process.env.NODE_ENV !== 'development'}),
     ]);
-    res.json({token, refreshToken});
+    res.json({token, refreshToken, user: sessionUser});
 };
 
 export default register;

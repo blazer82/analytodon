@@ -1,12 +1,12 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
-import {User} from '@/types/User';
+import {SessionUser} from '@/types/User';
 import {HYDRATE} from 'next-redux-wrapper';
-import {Account} from '@/types/Account';
+import {SessionAccount} from '@/types/Account';
 
 // Define a type for the slice state
 interface AuthState {
-    user?: User | null;
-    account?: Account | null;
+    user?: SessionUser | null;
+    account?: SessionAccount | null;
     loginInProgress: boolean;
     loginError?: string | null;
     resetPasswordRequestInProgress?: boolean;
@@ -27,7 +27,7 @@ export const authSlice = createSlice({
             state.loginInProgress = true;
             state.loginError = null;
         },
-        loginSuccessful: (state, action: PayloadAction<User>) => {
+        loginSuccessful: (state, action: PayloadAction<SessionUser>) => {
             state.user = action.payload;
             state.account = (action.payload.accounts?.length ?? 0) > 0 ? action.payload.accounts![0] : null;
             state.loginInProgress = false;
@@ -41,7 +41,7 @@ export const authSlice = createSlice({
             state.user = null;
             state.account = null;
         },
-        switchAccount: (state, action: PayloadAction<Account>) => {
+        switchAccount: (state, action: PayloadAction<SessionAccount>) => {
             state.account = action.payload;
         },
         resetPasswordRequestStarted: (state) => {
