@@ -16,7 +16,7 @@ const sendOldAccountMail = async (user: User) => {
             subject: "You haven't been on Analytodon in a while - we'll be deleting your data soon!",
             text:
                 `Hi and thanks for signing up to Analytodon!\n\n` +
-                `We haven't seem you in a while and we'll be deleting your data soon.\n` +
+                `We haven't seen you in a while and we'll be deleting your data soon.\n` +
                 `If you don't want your data to be deleted just log in to your dashboard:\n` +
                 `${publicRuntimeConfig.appURL}\n\n` +
                 `If you don't intend to use Analytodon anymore you don't need to do anything.\n\n` +
