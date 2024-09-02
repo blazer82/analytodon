@@ -44,7 +44,7 @@ jobs:
             - name: Checkout source code
               uses: actions/checkout@v4
             - name: Deploy to the Kubernetes cluster
-              uses: azure/k8s-deploy@v4
+              uses: azure/k8s-deploy@v5
               with:
                   namespace: analytodon
                   manifests: |
