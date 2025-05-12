@@ -35,16 +35,16 @@ jobs:
         needs: build-and-push
         runs-on: ubuntu-latest
         steps:
-            - name: Install doctl
-              uses: digitalocean/action-doctl@v2
-              with:
-                  token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-            - name: Save DigitalOcean kubeconfig with short-lived credentials
-              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 productionbuild-cluster
             - name: Checkout source code
               uses: actions/checkout@v4
+            - name: Setup kubectl
+              uses: azure/setup-kubectl@v4
+            - name: Set K8s context
+              uses: azure/k8s-set-context@v4
+              with:
+                  kubeconfig: ${{ secrets.KUBECONFIG_OVH }}
             - name: Deploy to the Kubernetes cluster
-              uses: azure/k8s-deploy@v4
+              uses: azure/k8s-deploy@v5
               with:
                   namespace: analytodon
                   manifests: |
