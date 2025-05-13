@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  mongodb:
+    image: mongo:6
+    container_name: analytodon-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: analytodon_dev
+    restart: unless-stopped

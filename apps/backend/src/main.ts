@@ -15,8 +15,8 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Backend API')
-    .setDescription('The backend API description')
+    .setTitle('Analytodon API')
+    .setDescription('This is the API documentation for Analytodon - the open-source Mastodon analytics tool.')
     .setVersion('1.0')
     .addBearerAuth() // If you use Bearer authentication
     .build();

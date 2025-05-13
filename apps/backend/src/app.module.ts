@@ -1,6 +1,7 @@
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { MongoDriver } from '@mikro-orm/mongodb';
+import { MikroOrmModule, MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AccountsModule } from './accounts/accounts.module';
 // Feature Modules
@@ -19,22 +20,18 @@ import { UsersModule } from './users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true, // Makes ConfigService available throughout the app
-      // envFilePath: '.env', // Specify your .env file if not in root
+      envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
     }),
-    MikroOrmModule.forRoot({
-      // TODO: Configure MikroORM connection options here.
-      // This configuration can be loaded from ConfigService.
-      // Example:
-      // entities: ['./dist/**/*.entity.js'],
-      // entitiesTs: ['./src/**/*.entity.ts'],
-      // dbName: process.env.DB_NAME,
-      // user: process.env.DB_USER,
-      // password: process.env.DB_PASSWORD,
-      // host: process.env.DB_HOST,
-      // port: parseInt(process.env.DB_PORT, 10),
-      // type: 'postgresql', // or your DB type
-      // allowGlobalContext: true, // Recommended for NestJS
-      // autoLoadEntities: true, // Can be useful
+    MikroOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService): MikroOrmModuleOptions => ({
+        clientUrl: configService.get<string>('DB_CLIENT_URL'),
+        driver: MongoDriver,
+        allowGlobalContext: true, // Recommended for NestJS
+        autoLoadEntities: true, // Automatically loads entities
+        debug: process.env.NODE_ENV !== 'production', // Enable debug logging in dev
+      }),
     }),
     AuthModule,
     UsersModule,
