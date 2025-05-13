@@ -1,11 +1,12 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { UsersService } from './users.service';
+
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../shared/enums/user-role.enum';
-import { GetUser } from '../auth/decorators/get-user.decorator';
 import { UserEntity } from './entities/user.entity';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {

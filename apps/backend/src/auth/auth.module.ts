@@ -1,14 +1,16 @@
-import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+
+import { authConstants } from '../shared/constants/auth.constants';
+import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UserCredentialsEntity } from './entities/user-credentials.entity';
-import { UsersModule } from '../users/users.module';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { authConstants } from '../shared/constants/auth.constants';
+
 // LocalStrategy will be added in a subsequent step
 
 @Module({

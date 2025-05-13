@@ -1,5 +1,6 @@
-import { Entity, PrimaryKey, Property, ManyToOne, Rel, Embedded, Collection } from '@mikro-orm/core';
+import { Entity, ManyToOne, PrimaryKey, Property, Rel } from '@mikro-orm/core';
 import { ObjectId } from '@mikro-orm/mongodb';
+
 import { AccountEntity } from '../../accounts/entities/account.entity';
 import { TagEmbeddable } from './tag.embeddable';
 
@@ -11,8 +12,11 @@ export class TootEntity {
   @Property()
   uri!: string;
 
-  @ManyToOne(() => AccountEntity, { fieldName: 'account', mapToPk: true, primary: false })
-  account!: ObjectId; // Stores the ObjectId of the account
+  @ManyToOne(() => AccountEntity, {
+    fieldName: 'account',
+    primary: false,
+  })
+  account!: Rel<AccountEntity>;
 
   @Property()
   content!: string;

@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { Module } from '@nestjs/common';
+
+import { UserCredentialsEntity } from '../auth/entities/user-credentials.entity';
+import { UserEntity } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { UserEntity } from './entities/user.entity';
-import { UserCredentialsEntity } from '../auth/entities/user-credentials.entity';
 
 @Module({
   imports: [

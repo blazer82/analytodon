@@ -1,20 +1,19 @@
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
+import { AccountsModule } from './accounts/accounts.module';
 // Feature Modules
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { AccountsModule } from './accounts/accounts.module';
-import { FollowersModule } from './followers/followers.module';
 import { BoostsModule } from './boosts/boosts.module';
-import { RepliesModule } from './replies/replies.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { FollowersModule } from './followers/followers.module';
 import { MailModule } from './mail/mail.module';
-import { TootsModule } from './toots/toots.module';
-
+import { RepliesModule } from './replies/replies.module';
 // Shared Module
 import { SharedModule } from './shared/shared.module';
+import { TootsModule } from './toots/toots.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -49,6 +48,6 @@ import { SharedModule } from './shared/shared.module';
     SharedModule,
   ],
   controllers: [], // AppController has been removed
-  providers: [],   // AppService has been removed
+  providers: [], // AppService has been removed
 })
 export class AppModule {}

@@ -1,4 +1,5 @@
 import { Controller } from '@nestjs/common';
+
 import { FavoritesService } from './favorites.service';
 
 @Controller('favorites')

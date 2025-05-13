@@ -1,15 +1,18 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Strips properties that do not have any decorators
-    forbidNonWhitelisted: true, // Throws an error if non-whitelisted values are provided
-    transform: true, // Automatically transform payloads to DTO instances
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strips properties that do not have any decorators
+      forbidNonWhitelisted: true, // Throws an error if non-whitelisted values are provided
+      transform: true, // Automatically transform payloads to DTO instances
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Backend API')

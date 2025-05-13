@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
 import { EntityRepository } from '@mikro-orm/mongodb';
-import { UserEntity } from './entities/user.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
+import { Injectable } from '@nestjs/common';
 import { ObjectId } from 'bson';
+
+import { UserEntity } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -15,7 +16,10 @@ export class UsersService {
     if (!ObjectId.isValid(id)) {
       return null;
     }
-    return this.userRepository.findOne({ _id: new ObjectId(id), isActive: true });
+    return this.userRepository.findOne({
+      _id: new ObjectId(id),
+      isActive: true,
+    });
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
@@ -23,7 +27,7 @@ export class UsersService {
   }
 
   async save(user: UserEntity): Promise<UserEntity> {
-    await this.userRepository.persistAndFlush(user);
+    await this.userRepository.getEntityManager().persistAndFlush(user);
     return user;
   }
 

@@ -1,4 +1,5 @@
 import { Controller } from '@nestjs/common';
+
 import { BoostsService } from './boosts.service';
 
 @Controller('boosts')

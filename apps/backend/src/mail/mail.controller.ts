@@ -1,4 +1,5 @@
 import { Controller } from '@nestjs/common';
+
 import { MailService } from './mail.service';
 
 @Controller('mail') // This might not be needed if mail is only triggered internally

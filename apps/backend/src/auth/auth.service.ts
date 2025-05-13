@@ -1,15 +1,17 @@
+import { EntityRepository } from '@mikro-orm/mongodb';
+import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
+import * as bcrypt from 'bcrypt';
+import { ObjectId } from 'bson';
+import { v4 as uuidv4 } from 'uuid';
+
 import { UserEntity } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
-import * as bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/mongodb';
 import { UserCredentialsEntity } from './entities/user-credentials.entity';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -36,10 +38,7 @@ export class AuthService {
       throw new UnauthorizedException('Credentials not found for this user.');
     }
 
-    const isMatch = await bcrypt.compare(
-      loginDto.password,
-      user.credentials.passwordHash,
-    );
+    const isMatch = await bcrypt.compare(loginDto.password, user.credentials.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials.');
     }
@@ -62,9 +61,7 @@ export class AuthService {
     // Store the new refresh token (hashed, if preferred, but for now storing directly)
     // For production, consider hashing refresh tokens before storing.
     user.credentials.refreshToken = refreshToken; // Or await bcrypt.hash(refreshToken, 10);
-    await this.userCredentialsRepository
-      .getEntityManager()
-      .persistAndFlush(user.credentials);
+    await this.userCredentialsRepository.getEntityManager().persistAndFlush(user.credentials);
 
     return {
       accessToken,
@@ -111,9 +108,7 @@ export class AuthService {
     const newRefreshToken = uuidv4();
 
     userCredentials.refreshToken = newRefreshToken; // Or await bcrypt.hash(newRefreshToken, 10);
-    await this.userCredentialsRepository
-      .getEntityManager()
-      .persistAndFlush(userCredentials);
+    await this.userCredentialsRepository.getEntityManager().persistAndFlush(userCredentials);
 
     return {
       accessToken: newAccessToken,
@@ -122,14 +117,16 @@ export class AuthService {
   }
 
   async logout(userId: string): Promise<void> {
+    if (!ObjectId.isValid(userId)) {
+      // Optionally handle invalid ObjectId string, e.g., log or throw, or just return
+      return;
+    }
     const userCredentials = await this.userCredentialsRepository.findOne({
-      user: userId,
+      user: new ObjectId(userId),
     });
     if (userCredentials) {
       userCredentials.refreshToken = undefined; // Or null
-      await this.userCredentialsRepository
-        .getEntityManager()
-        .persistAndFlush(userCredentials);
+      await this.userCredentialsRepository.getEntityManager().persistAndFlush(userCredentials);
     }
     // If userCredentials are not found, it might mean the user is already effectively logged out
     // or there's no refresh token to invalidate. No error needs to be thrown.

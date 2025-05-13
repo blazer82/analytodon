@@ -1,5 +1,6 @@
-import { Entity, PrimaryKey, Property, ManyToOne, Rel } from '@mikro-orm/core';
+import { Entity, ManyToOne, PrimaryKey, Property, Rel } from '@mikro-orm/core';
 import { ObjectId } from '@mikro-orm/mongodb';
+
 import { AccountEntity } from '../../accounts/entities/account.entity';
 
 @Entity({ collection: 'dailytootstats' })
@@ -7,8 +8,11 @@ export class DailyTootStatsEntity {
   @PrimaryKey()
   _id!: ObjectId;
 
-  @ManyToOne(() => AccountEntity, { fieldName: 'account', mapToPk: true, primary: false })
-  account!: ObjectId; // Stores the ObjectId of the account
+  @ManyToOne(() => AccountEntity, {
+    fieldName: 'account',
+    primary: false,
+  })
+  account!: Rel<AccountEntity>;
 
   @Property()
   day!: Date;

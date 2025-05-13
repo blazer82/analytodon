@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { Module } from '@nestjs/common';
+
 import { RepliesController } from './replies.controller';
 import { RepliesService } from './replies.service';
 

@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { Module } from '@nestjs/common';
+
 import { BoostsController } from './boosts.controller';
 import { BoostsService } from './boosts.service';
 

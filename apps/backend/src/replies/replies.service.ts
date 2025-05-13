@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class RepliesService {

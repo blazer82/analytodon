@@ -1,27 +1,14 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiBody,
-} from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+
+import { UserResponseDto } from '../users/dto/user-response.dto';
+import { UserEntity } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
+import { GetUser } from './decorators/get-user.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { GetUser } from './decorators/get-user.decorator';
-import { UserEntity } from '../users/entities/user.entity';
-import { UserResponseDto } from '../users/dto/user-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -78,9 +65,7 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid refresh token.',
   })
-  async refreshTokens(
-    @Body() refreshTokenDto: RefreshTokenDto,
-  ): Promise<TokenResponseDto> {
+  async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
     return this.authService.refreshTokens(refreshTokenDto.refreshToken);
   }
 

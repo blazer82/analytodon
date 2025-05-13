@@ -1,4 +1,5 @@
 import { Controller } from '@nestjs/common';
+
 import { FollowersService } from './followers.service';
 
 @Controller('followers')
