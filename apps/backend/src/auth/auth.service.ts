@@ -1,10 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { JwtPayload } from './interfaces/jwt-payload.interface.ts';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { UserEntity } from '../users/entities/user.entity';
-import { LoginDto } from './dto/login.dto.ts';
-import { TokenResponseDto } from './dto/token-response.dto.ts';
+import { LoginDto } from './dto/login.dto';
+import { TokenResponseDto } from './dto/token-response.dto';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { InjectRepository } from '@mikro-orm/nestjs';
@@ -36,7 +36,10 @@ export class AuthService {
       throw new UnauthorizedException('Credentials not found for this user.');
     }
 
-    const isMatch = await bcrypt.compare(loginDto.password, user.credentials.passwordHash);
+    const isMatch = await bcrypt.compare(
+      loginDto.password,
+      user.credentials.passwordHash,
+    );
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials.');
     }
@@ -59,7 +62,9 @@ export class AuthService {
     // Store the new refresh token (hashed, if preferred, but for now storing directly)
     // For production, consider hashing refresh tokens before storing.
     user.credentials.refreshToken = refreshToken; // Or await bcrypt.hash(refreshToken, 10);
-    await this.userCredentialsRepository.persistAndFlush(user.credentials);
+    await this.userCredentialsRepository
+      .getEntityManager()
+      .persistAndFlush(user.credentials);
 
     return {
       accessToken,
@@ -82,7 +87,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
-    const user = await this.userRepository.findOne({ id: userCredentials.user.id, isActive: true });
+    const user = await this.userRepository.findOne({
+      id: userCredentials.user.id,
+      isActive: true,
+    });
     if (!user) {
       throw new UnauthorizedException('User not found or not active.');
     }
@@ -103,7 +111,9 @@ export class AuthService {
     const newRefreshToken = uuidv4();
 
     userCredentials.refreshToken = newRefreshToken; // Or await bcrypt.hash(newRefreshToken, 10);
-    await this.userCredentialsRepository.persistAndFlush(userCredentials);
+    await this.userCredentialsRepository
+      .getEntityManager()
+      .persistAndFlush(userCredentials);
 
     return {
       accessToken: newAccessToken,
@@ -112,10 +122,14 @@ export class AuthService {
   }
 
   async logout(userId: string): Promise<void> {
-    const userCredentials = await this.userCredentialsRepository.findOne({ user: userId });
+    const userCredentials = await this.userCredentialsRepository.findOne({
+      user: userId,
+    });
     if (userCredentials) {
       userCredentials.refreshToken = undefined; // Or null
-      await this.userCredentialsRepository.persistAndFlush(userCredentials);
+      await this.userCredentialsRepository
+        .getEntityManager()
+        .persistAndFlush(userCredentials);
     }
     // If userCredentials are not found, it might mean the user is already effectively logged out
     // or there's no refresh token to invalidate. No error needs to be thrown.
