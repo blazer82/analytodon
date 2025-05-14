@@ -1,6 +1,5 @@
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
@@ -8,20 +7,15 @@ import { authConstants } from '../shared/constants/auth.constants';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { UserCredentialsEntity } from './entities/user-credentials.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 // LocalStrategy will be added in a subsequent step
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature({
-      entities: [UserCredentialsEntity],
-    }),
-    UsersModule, // To use UsersService
+    UsersModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
-      imports: [ConfigModule], // Ensure ConfigModule is imported if not global
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>(authConstants.JWT_SECRET_KEY, authConstants.JWT_DEFAULT_SECRET),
         signOptions: {
@@ -32,7 +26,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy], // Add JwtStrategy here
-  exports: [AuthService, JwtModule, PassportModule], // Export for use in other modules if needed
+  providers: [AuthService, JwtStrategy],
+  exports: [AuthService, JwtModule, PassportModule],
 })
 export class AuthModule {}

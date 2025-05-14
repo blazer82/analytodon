@@ -27,9 +27,12 @@ import { UsersModule } from './users/users.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService): MikroOrmModuleOptions => ({
         clientUrl: configService.get<string>('DB_CLIENT_URL'),
+        entities: ['./dist/**/*.entity.js'],
+        entitiesTs: ['./src/**/*.entity.ts'],
         driver: MongoDriver,
+        ensureDatabase: true,
+        ensureIndexes: true,
         allowGlobalContext: true, // Recommended for NestJS
-        autoLoadEntities: true, // Automatically loads entities
         debug: process.env.NODE_ENV !== 'production', // Enable debug logging in dev
       }),
     }),
