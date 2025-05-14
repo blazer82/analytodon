@@ -1,0 +1,63 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.5.2"
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm --filter @analytodon/backend prettier:check
+
+      - name: Run linter
+        run: pnpm --filter @analytodon/backend lint
+
+      - name: Run unit tests
+        run: pnpm --filter @analytodon/backend test:unit
+
+      - name: Setup e2e environment
+        run: pnpm --filter @analytodon/backend test:e2e:setup
+
+      - name: Run e2e tests
+        run: pnpm --filter @analytodon/backend test:e2e:run
+
+      - name: Stop e2e docker containers
+        if: always()
+        run: pnpm --filter @analytodon/backend test:e2e:stop-docker
