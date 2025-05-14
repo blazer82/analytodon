@@ -9,18 +9,18 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // This is a temporary login endpoint for testing token generation.
-  // It will be replaced/enhanced by LocalAuthGuard later.
+  @UseGuards(LocalAuthGuard) // Use LocalAuthGuard for the login route
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Log in a user' })
-  @ApiBody({ type: LoginDto })
+  @ApiBody({ type: LoginDto }) // Keep ApiBody to describe the expected request payload
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully logged in.',
@@ -30,8 +30,8 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid credentials.',
   })
-  async login(@Body() loginDto: LoginDto): Promise<TokenResponseDto> {
-    return this.authService.login(loginDto);
+  async login(@GetUser() user: UserEntity): Promise<TokenResponseDto> {
+    return this.authService.login(user);
   }
 
   @UseGuards(JwtAuthGuard)
