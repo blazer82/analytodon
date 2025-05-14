@@ -33,7 +33,7 @@ import { UsersModule } from './users/users.module';
         ensureDatabase: true,
         ensureIndexes: true,
         allowGlobalContext: true, // Recommended for NestJS
-        debug: process.env.NODE_ENV !== 'production', // Enable debug logging in dev
+        debug: process.env.NODE_ENV === 'development', // Enable debug logging in dev
       }),
     }),
     AuthModule,

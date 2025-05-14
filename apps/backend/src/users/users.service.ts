@@ -31,7 +31,7 @@ export class UsersService {
   }
 
   async findByResetPasswordToken(token: string): Promise<UserEntity | null> {
-    return this.userRepository.findOne({ resetPasswordToken: token, isActive: true });
+    return this.userRepository.findOne({ resetPasswordToken: token, isActive: true }, { populate: ['credentials'] });
   }
 
   async save(user: UserEntity): Promise<UserEntity> {
