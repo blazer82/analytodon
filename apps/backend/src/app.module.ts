@@ -26,10 +26,10 @@ import { UsersModule } from './users/users.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService): MikroOrmModuleOptions => ({
+        driver: MongoDriver, // This spits out a warning referring to https://github.com/mikro-orm/nestjs/pull/204 but the fix is not yet released or it does not work
         clientUrl: configService.get<string>('DB_CLIENT_URL'),
         entities: ['./dist/**/*.entity.js'],
         entitiesTs: ['./src/**/*.entity.ts'],
-        driver: MongoDriver,
         ensureDatabase: true,
         ensureIndexes: true,
         allowGlobalContext: true, // Recommended for NestJS
