@@ -1,4 +1,3 @@
-import { EntityRepository } from '@mikro-orm/mongodb';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -51,10 +50,6 @@ const mockUserCredentialsRepository = {
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usersService: UsersService;
-  let jwtService: JwtService;
-  let userRepository: EntityRepository<UserEntity>;
-  let userCredentialsRepository: EntityRepository<UserCredentialsEntity>;
 
   beforeEach(async () => {
     // Reset all mocks before each test
@@ -81,12 +76,6 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    usersService = module.get<UsersService>(UsersService);
-    jwtService = module.get<JwtService>(JwtService);
-    userRepository = module.get<EntityRepository<UserEntity>>(getRepositoryToken(UserEntity));
-    userCredentialsRepository = module.get<EntityRepository<UserCredentialsEntity>>(
-      getRepositoryToken(UserCredentialsEntity),
-    );
   });
 
   it('should be defined', () => {

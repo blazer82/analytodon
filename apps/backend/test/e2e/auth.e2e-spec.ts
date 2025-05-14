@@ -1,18 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
-import { AppModule } from '../../src/app.module';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { UserEntity } from '../../src/users/entities/user.entity';
-import { UserCredentialsEntity } from '../../src/auth/entities/user-credentials.entity';
-import { RegisterUserDto } from '../../src/auth/dto/register-user.dto';
-import { LoginDto } from '../../src/auth/dto/login.dto';
-import { UserRole } from '../../src/shared/enums/user-role.enum';
-import { TokenResponseDto } from '../../src/auth/dto/token-response.dto';
+import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { authConstants } from '../../src/shared/constants/auth.constants';
 import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as request from 'supertest';
+
+import { AppModule } from '../../src/app.module';
+import { LoginDto } from '../../src/auth/dto/login.dto';
+import { RegisterUserDto } from '../../src/auth/dto/register-user.dto';
 import { ResetPasswordDto } from '../../src/auth/dto/reset-password.dto';
+import { TokenResponseDto } from '../../src/auth/dto/token-response.dto';
+import { UserCredentialsEntity } from '../../src/auth/entities/user-credentials.entity';
+import { authConstants } from '../../src/shared/constants/auth.constants';
+import { UserRole } from '../../src/shared/enums/user-role.enum';
+import { UserEntity } from '../../src/users/entities/user.entity';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -122,10 +123,7 @@ describe('AuthController (e2e)', () => {
     it('should log in an existing user and return tokens', async () => {
       const loginDto: LoginDto = { email: testUser.email, password: testUser.password };
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/login')
-        .send(loginDto)
-        .expect(HttpStatus.OK);
+      const response = await request(app.getHttpServer()).post('/auth/login').send(loginDto).expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('accessToken');
       expect(response.body).toHaveProperty('refreshToken');
@@ -175,14 +173,11 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should fail if user is inactive', async () => {
-        const user = await entityManager.findOneOrFail(UserEntity, { email: testUser.email });
-        user.isActive = false;
-        await entityManager.persistAndFlush(user);
+      const user = await entityManager.findOneOrFail(UserEntity, { email: testUser.email });
+      user.isActive = false;
+      await entityManager.persistAndFlush(user);
 
-        await request(app.getHttpServer())
-          .post('/auth/refresh')
-          .send({ refreshToken })
-          .expect(HttpStatus.UNAUTHORIZED);
+      await request(app.getHttpServer()).post('/auth/refresh').send({ refreshToken }).expect(HttpStatus.UNAUTHORIZED);
     });
   });
 
@@ -220,8 +215,7 @@ describe('AuthController (e2e)', () => {
         },
       );
       // Wait for token to actually expire
-      await new Promise(resolve => setTimeout(resolve, 50));
-
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       await request(app.getHttpServer())
         .get('/auth/profile')
@@ -257,9 +251,7 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should require authentication to logout', async () => {
-        await request(app.getHttpServer())
-          .post('/auth/logout')
-          .expect(HttpStatus.UNAUTHORIZED);
+      await request(app.getHttpServer()).post('/auth/logout').expect(HttpStatus.UNAUTHORIZED);
     });
   });
 
@@ -291,16 +283,16 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should return NO_CONTENT if user is not verified, but not send token', async () => {
-        await clearDatabase(); // clear user from beforeEach
-        await request(app.getHttpServer()).post('/auth/register').send(secondUser); // secondUser is not verified
+      await clearDatabase(); // clear user from beforeEach
+      await request(app.getHttpServer()).post('/auth/register').send(secondUser); // secondUser is not verified
 
-        await request(app.getHttpServer())
-            .post('/auth/request-password-reset')
-            .send({ email: secondUser.email })
-            .expect(HttpStatus.NO_CONTENT);
+      await request(app.getHttpServer())
+        .post('/auth/request-password-reset')
+        .send({ email: secondUser.email })
+        .expect(HttpStatus.NO_CONTENT);
 
-        const dbUser = await entityManager.findOne(UserEntity, { email: secondUser.email });
-        expect(dbUser?.resetPasswordToken).toBeUndefined();
+      const dbUser = await entityManager.findOne(UserEntity, { email: secondUser.email });
+      expect(dbUser?.resetPasswordToken).toBeUndefined();
     });
   });
 
@@ -370,9 +362,7 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should fail to verify email with an invalid code', async () => {
-      await request(app.getHttpServer())
-        .get('/auth/verify-email?code=invalid-code')
-        .expect(HttpStatus.NOT_FOUND);
+      await request(app.getHttpServer()).get('/auth/verify-email?code=invalid-code').expect(HttpStatus.NOT_FOUND);
 
       const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email });
       expect(dbUser?.emailVerified).toBe(false); // Should remain unverified
