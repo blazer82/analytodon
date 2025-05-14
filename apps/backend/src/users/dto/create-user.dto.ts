@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min, MinLength } from 'class-validator';
 
 import { UserRole } from '../../shared/enums/user-role.enum';
+import { IsValidTimezone } from '../../shared/validators/is-valid-timezone.validator';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'newuser@example.com', description: 'User email address' })
@@ -37,7 +38,7 @@ export class CreateUserDto {
   serverURLOnSignUp?: string;
 
   @ApiPropertyOptional({ example: 'Europe/Berlin', description: 'User timezone' })
-  @IsString()
+  @IsValidTimezone()
   @IsOptional()
   timezone?: string;
 }

@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
+import { IsValidTimezone } from '../../shared/validators/is-valid-timezone.validator';
+
 export class RegisterUserDto {
   @ApiProperty({
     example: 'user@example.com',
@@ -32,6 +34,6 @@ export class RegisterUserDto {
     description: 'User timezone (optional)',
   })
   @IsOptional()
-  @IsString()
+  @IsValidTimezone()
   timezone?: string;
 }
