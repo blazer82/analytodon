@@ -26,11 +26,16 @@ export class UsersService {
     return this.userRepository.findOne({ email, isActive: true });
   }
 
+  async findByEmailVerificationCode(code: string): Promise<UserEntity | null> {
+    return this.userRepository.findOne({ emailVerificationCode: code, isActive: true });
+  }
+
+  async findByResetPasswordToken(token: string): Promise<UserEntity | null> {
+    return this.userRepository.findOne({ resetPasswordToken: token, isActive: true });
+  }
+
   async save(user: UserEntity): Promise<UserEntity> {
     await this.userRepository.getEntityManager().persistAndFlush(user);
     return user;
   }
-
-  // Define other service methods for user management here
-  // e.g., updateUser, createUser (if not in auth)
 }

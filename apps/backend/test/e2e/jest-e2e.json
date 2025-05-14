@@ -5,5 +5,7 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
-  }
+  },
+  "forceExit": true,
+  "setupFilesAfterEnv": ["<rootDir>/jest-e2e.setup.ts"]
 }
