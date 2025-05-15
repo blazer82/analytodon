@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AccountsService } from '../accounts/accounts.service'; // To get account timezone
@@ -37,7 +37,7 @@ export class TootsController {
   ): Promise<AllTopTootsResponseDto> {
     const account = await this.accountsService.findById(accountId, user);
     if (!account) {
-      throw new Error('Account not found or not owned by user.'); // Or NotFoundException
+      throw new NotFoundException(`Account with ID ${accountId} not found or not owned by user.`);
     }
 
     const { dateFrom, dateTo, timeframe: resolvedTimeframe } = resolveTimeframe(account.timezone, query.timeframe);

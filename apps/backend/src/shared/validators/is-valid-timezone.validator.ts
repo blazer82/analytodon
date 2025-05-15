@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { Logger } from '@nestjs/common';
 import {
   registerDecorator,
   ValidationArguments,
@@ -25,7 +26,7 @@ try {
   const timezonesData: TimezoneEntry[] = JSON.parse(timezonesFile);
   validTimezones = timezonesData.map((tz) => tz.name);
 } catch (error) {
-  console.error('Failed to load or parse timezones.json:', error);
+  new Logger('IsValidTimezoneConstraint').error('Failed to load or parse timezones.json:', error);
   // Depending on strictness, you might want to throw an error here
   // or allow the application to start with timezone validation potentially not working.
   // For now, it will log an error, and validation will fail for any timezone if the file is missing/corrupt.

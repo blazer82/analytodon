@@ -219,7 +219,7 @@ describe('AccountsController (e2e)', () => {
       await request(app.getHttpServer())
         .get(`/accounts/${nonExistentId}`)
         .set('Authorization', `Bearer ${testUserAccessToken}`)
-        .expect(HttpStatus.FORBIDDEN); // Or NOT_FOUND depending on service logic for ownership
+        .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should fail if not authenticated', async () => {

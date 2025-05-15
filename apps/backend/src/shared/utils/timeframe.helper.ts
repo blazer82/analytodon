@@ -1,4 +1,5 @@
 import { EntityRepository } from '@mikro-orm/core';
+import { Logger } from '@nestjs/common';
 import { parseISO as dateFnsParseISO } from 'date-fns';
 import { intlFormat } from 'date-fns/intlFormat';
 import { findTimeZone, getUTCOffset } from 'timezone-support';
@@ -76,7 +77,7 @@ export const getDaysAgo = (days: number, timezone: string): Date => {
 
     return finalDate;
   } catch (error) {
-    console.error(`Error processing timezone ${validTimezone} in getDaysAgo: `, error);
+    new Logger('TimeframeHelper').error(`Error processing timezone ${validTimezone} in getDaysAgo: `, error);
     // Fallback or rethrow, for now, return the unadjusted date
     return date;
   }
@@ -312,7 +313,7 @@ export const formatDateISO = (date: Date | string | undefined, timezone?: string
       { locale: 'en-CA' }, // 'en-CA' locale typically gives YYYY-MM-DD format
     );
   } catch (error) {
-    console.error('Error formatting date to ISO:', error);
+    new Logger('TimeframeHelper').error('Error formatting date to ISO:', error);
     return null;
   }
 };

@@ -2,10 +2,10 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -71,7 +71,7 @@ export class AccountsController {
   async findOne(@Param('id') id: string, @GetUser() user: UserEntity): Promise<AccountResponseDto> {
     const account = await this.accountsService.findById(id, user);
     if (!account) {
-      throw new ForbiddenException(`Account with ID ${id} not found or not owned by user.`);
+      throw new NotFoundException(`Account with ID ${id} not found or not owned by user.`);
     }
     return new AccountResponseDto(account);
   }
