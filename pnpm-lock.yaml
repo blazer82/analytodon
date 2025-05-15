@@ -55,6 +55,12 @@ importers:
       class-validator:
         specifier: ^0.14.2
         version: 0.14.2
+      csv-stringify:
+        specifier: ^6.5.2
+        version: 6.5.2
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       megalodon:
         specifier: ^10.1.1
         version: 10.1.1
@@ -73,6 +79,9 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@5.1.0)
+      timezone-support:
+        specifier: ^3.1.0
+        version: 3.1.0
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -2799,6 +2808,9 @@ packages:
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
 
+  csv-stringify@6.5.2:
+    resolution: {integrity: sha512-RFPahj0sXcmUyjrObAK+DOWtMvMIFV328n4qZJhgX3x2RqkQgOTU2mCUmiFR0CzM6AzChlRSUErjiJeEt8BaQA==}
+
   damerau-levenshtein@1.0.8:
     resolution: {integrity: sha512-sdQSFB7+llfUcQHUQO3+B8ERRj0Oa4w9POWMI/puGtuf7gFywGmkaLCElnudfTiKZV+NvHqL0ifzdrI8Ro7ESA==}
 
@@ -2820,6 +2832,9 @@ packages:
 
   dataloader@2.2.3:
     resolution: {integrity: sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==}
+
+  date-fns@4.1.0:
+    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
 
   dayjs@1.11.13:
     resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
@@ -4846,6 +4861,12 @@ packages:
   modern-ahocorasick@1.1.0:
     resolution: {integrity: sha512-sEKPVl2rM+MNVkGQt3ChdmD8YsigmXdn5NifZn6jiwn9LRJpWm8F3guhaqrJT/JOat6pwpbXEk6kv+b9DMIjsQ==}
 
+  moment-timezone@0.5.39:
+    resolution: {integrity: sha512-hoB6suq4ISDj7BDgctiOy6zljBsdYT0++0ZzZm9rtxIvJhIbQ3nmbgSWe7dNFGurl6/7b1OUkHlmN9JWgXVz7w==}
+
+  moment@2.30.1:
+    resolution: {integrity: sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==}
+
   mongodb-connection-string-url@3.0.2:
     resolution: {integrity: sha512-rMO7CGo/9BFwyZABcKAWL8UJwH/Kc2x0g72uhDWzG48URRax5TCIcJ7Rc3RZqffZzO/Gwff/jyKwCU9TN8gehA==}
 
@@ -6083,6 +6104,11 @@ packages:
 
   through2@2.0.5:
     resolution: {integrity: sha512-/mrRod8xqpA+IHSLyGCQ2s8SPHiCDEeQJSep1jqLYeEUClOFG2Qsh+4FU6G9VeqpZnGW/Su8LQGc4YKni5rYSQ==}
+
+  timezone-support@3.1.0:
+    resolution: {integrity: sha512-N04dOzxt7Bw3PZ5ts8ofkQx6RsqWDo8cUQ/a8fdtywB58NIctmdbUUDWZSrgtI7c2jzA6MZ1Z6jY6OtBvc+CUQ==}
+    engines: {node: '>=14.8'}
+    hasBin: true
 
   tinyglobby@0.2.13:
     resolution: {integrity: sha512-mEwzpUgrLySlveBwEVDMKk5B57bhLPYovRfPAXD5gA/98Opn0rCDj3GtLwFvCvH5RK9uPCExUROW5NjDwvqkxw==}
@@ -9613,6 +9639,8 @@ snapshots:
 
   csstype@3.1.3: {}
 
+  csv-stringify@6.5.2: {}
+
   damerau-levenshtein@1.0.8: {}
 
   data-uri-to-buffer@3.0.1: {}
@@ -9636,6 +9664,8 @@ snapshots:
       is-data-view: 1.0.2
 
   dataloader@2.2.3: {}
+
+  date-fns@4.1.0: {}
 
   dayjs@1.11.13: {}
 
@@ -12627,6 +12657,12 @@ snapshots:
 
   modern-ahocorasick@1.1.0: {}
 
+  moment-timezone@0.5.39:
+    dependencies:
+      moment: 2.30.1
+
+  moment@2.30.1: {}
+
   mongodb-connection-string-url@3.0.2:
     dependencies:
       '@types/whatwg-url': 11.0.5
@@ -14071,6 +14107,10 @@ snapshots:
     dependencies:
       readable-stream: 2.3.8
       xtend: 4.0.2
+
+  timezone-support@3.1.0:
+    dependencies:
+      moment-timezone: 0.5.39
 
   tinyglobby@0.2.13:
     dependencies:
