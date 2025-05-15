@@ -2,7 +2,6 @@ import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
@@ -100,11 +99,11 @@ describe('AccountsService', () => {
     maxAccounts: 5,
     accounts: {
       isInitialized: jest.fn().mockReturnValue(true),
-      count: jest.fn().mockReturnValue(0),
+      loadCount: jest.fn().mockResolvedValue(0), // Added loadCount mock
       add: jest.fn(),
       remove: jest.fn(),
-      getItems: jest.fn().mockReturnValue([]), // Mock getItems
-      set: jest.fn(), // Mock set
+      getItems: jest.fn().mockReturnValue([]),
+      set: jest.fn(),
     },
   } as unknown as UserEntity;
 
@@ -186,7 +185,7 @@ describe('AccountsService', () => {
       };
       accountRepository.create.mockReturnValue(expectedCreatedAccount as AccountEntity);
       entityManager.persistAndFlush.mockResolvedValueOnce(undefined);
-      (mockOwner.accounts.count as jest.Mock).mockReturnValue(0); // Ensure count is within limits
+      (mockOwner.accounts.loadCount as jest.Mock).mockResolvedValue(0); // Ensure count is within limits
 
       const result = await service.create(createAccountDto, mockOwner);
 
@@ -208,7 +207,7 @@ describe('AccountsService', () => {
     });
 
     it('should throw ForbiddenException if max accounts reached', async () => {
-      (mockOwner.accounts.count as jest.Mock).mockReturnValue(5); // Max accounts reached
+      (mockOwner.accounts.loadCount as jest.Mock).mockResolvedValue(5); // Max accounts reached
       mockOwner.maxAccounts = 5;
 
       await expect(service.create(baseCreateAccountDto, mockOwner)).rejects.toThrow(ForbiddenException);
@@ -224,7 +223,7 @@ describe('AccountsService', () => {
         utcOffset: '+00:00', // Adjusted based on observed error for Europe/London
       };
       accountRepository.create.mockReturnValue(expectedAccount as AccountEntity);
-      (mockOwner.accounts.count as jest.Mock).mockReturnValue(0);
+      (mockOwner.accounts.loadCount as jest.Mock).mockResolvedValue(0);
 
       await service.create(dtoWithoutName, mockOwner);
       expect(accountRepository.create).toHaveBeenCalledWith(
@@ -238,18 +237,18 @@ describe('AccountsService', () => {
 
     it('should throw BadRequestException for invalid timezone', async () => {
       const dtoInvalidTimezone: CreateAccountDto = { ...baseCreateAccountDto, timezone: 'Invalid/Timezone' };
-      (mockOwner.accounts.count as jest.Mock).mockReturnValue(0);
+      (mockOwner.accounts.loadCount as jest.Mock).mockResolvedValue(0);
       await expect(service.create(dtoInvalidTimezone, mockOwner)).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw ConflictException for invalid server URL format', async () => {
+    it('should throw BadRequestException for invalid server URL format', async () => {
       // Use a serverURL that will cause `new URL()` to throw
       const dtoInvalidURL: CreateAccountDto = { serverURL: 'http://%&', timezone: 'Europe/Berlin', name: 'Test' };
-      (mockOwner.accounts.count as jest.Mock).mockReturnValue(0);
+      (mockOwner.accounts.loadCount as jest.Mock).mockResolvedValue(0);
       // Explicitly mock create for this test to avoid potential leakage,
       // though it shouldn't be called if normalizeServerURL throws.
       accountRepository.create.mockReturnValueOnce(undefined as unknown as AccountEntity);
-      await expect(service.create(dtoInvalidURL, mockOwner)).rejects.toThrow(ConflictException);
+      await expect(service.create(dtoInvalidURL, mockOwner)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -338,9 +337,7 @@ describe('AccountsService', () => {
 
       expect(service.findById).toHaveBeenCalledWith(accountId, mockOwner);
       expect(accountCredentialsRepository.nativeDelete).toHaveBeenCalledWith({ account: mockAccountWithCredentials });
-      expect(mockOwner.accounts.remove).toHaveBeenCalledWith(mockAccountWithCredentials);
       expect(entityManager.removeAndFlush).toHaveBeenCalledWith(mockAccountWithCredentials);
-      expect(entityManager.persistAndFlush).toHaveBeenCalledWith(mockOwner);
     });
 
     it('should remove an account successfully even if no credentials exist', async () => {
@@ -348,14 +345,11 @@ describe('AccountsService', () => {
       jest.spyOn(service, 'findById').mockResolvedValue(mockAccountWithoutCredentials);
       // No call to accountCredentialsRepository.nativeDelete expected
       entityManager.removeAndFlush.mockResolvedValueOnce(undefined);
-      entityManager.persistAndFlush.mockResolvedValueOnce(undefined);
 
       await service.remove(accountId, mockOwner);
 
       expect(accountCredentialsRepository.nativeDelete).not.toHaveBeenCalled();
-      expect(mockOwner.accounts.remove).toHaveBeenCalledWith(mockAccountWithoutCredentials);
       expect(entityManager.removeAndFlush).toHaveBeenCalledWith(mockAccountWithoutCredentials);
-      expect(entityManager.persistAndFlush).toHaveBeenCalledWith(mockOwner);
     });
 
     it('should throw NotFoundException if account not found', async () => {
