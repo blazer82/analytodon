@@ -39,6 +39,14 @@ export class AccountsService {
     private readonly configService: ConfigService,
   ) {}
 
+  /**
+   * Creates a new account shell for a user.
+   * @param createAccountDto - DTO containing account creation data.
+   * @param owner - The user entity who owns this account.
+   * @returns A promise that resolves to the created account entity.
+   * @throws ForbiddenException if the user has reached the maximum account limit.
+   * @throws BadRequestException if the provided timezone is invalid.
+   */
   async create(createAccountDto: CreateAccountDto, owner: UserEntity): Promise<AccountEntity> {
     const { name, serverURL, timezone } = createAccountDto;
 
@@ -82,10 +90,21 @@ export class AccountsService {
     return account;
   }
 
+  /**
+   * Finds all accounts belonging to a specific owner.
+   * @param owner - The user entity who owns the accounts.
+   * @returns A promise that resolves to an array of account entities.
+   */
   async findAll(owner: UserEntity): Promise<AccountEntity[]> {
     return this.accountRepository.find({ owner }, { orderBy: { createdAt: 'DESC' } });
   }
 
+  /**
+   * Finds an account by its ID and owner.
+   * @param id - The ID of the account.
+   * @param owner - The user entity who owns the account.
+   * @returns A promise that resolves to the account entity or null if not found.
+   */
   async findById(id: string, owner: UserEntity): Promise<AccountEntity | null> {
     if (!ObjectId.isValid(id)) {
       return null;
@@ -93,6 +112,15 @@ export class AccountsService {
     return this.accountRepository.findOne({ _id: new ObjectId(id), owner });
   }
 
+  /**
+   * Updates an existing account.
+   * @param id - The ID of the account to update.
+   * @param updateAccountDto - DTO containing account update data.
+   * @param owner - The user entity who owns the account.
+   * @returns A promise that resolves to the updated account entity.
+   * @throws NotFoundException if the account is not found or not owned by the user.
+   * @throws BadRequestException if an invalid timezone is provided.
+   */
   async update(id: string, updateAccountDto: UpdateAccountDto, owner: UserEntity): Promise<AccountEntity> {
     const account = await this.findById(id, owner);
     if (!account) {
@@ -118,6 +146,13 @@ export class AccountsService {
     return account;
   }
 
+  /**
+   * Removes an account.
+   * @param id - The ID of the account to remove.
+   * @param owner - The user entity who owns the account.
+   * @returns A promise that resolves when the account is removed.
+   * @throws NotFoundException if the account is not found or not owned by the user.
+   */
   async remove(id: string, owner: UserEntity): Promise<void> {
     const account = await this.findById(id, owner);
     if (!account) {
@@ -135,6 +170,15 @@ export class AccountsService {
     this.logger.log(`Account ${id} removed by ${owner.email}`);
   }
 
+  /**
+   * Initiates the OAuth connection process for a Mastodon account.
+   * Registers the application with the Mastodon instance and returns a redirect URL for authorization.
+   * @param accountId - The ID of the account to connect.
+   * @param owner - The user entity who owns the account.
+   * @returns A promise that resolves to an object containing the redirect URL.
+   * @throws NotFoundException if the account is not found.
+   * @throws InternalServerErrorException if app registration with Mastodon fails.
+   */
   async initiateConnection(accountId: string, owner: UserEntity): Promise<{ redirectUrl: string }> {
     const account = await this.findById(accountId, owner);
     if (!account) {
@@ -192,6 +236,16 @@ export class AccountsService {
     }
   }
 
+  /**
+   * Handles the OAuth callback from the Mastodon instance after user authorization.
+   * Fetches access tokens, verifies account credentials, and updates the account entity.
+   * @param callbackQueryDto - DTO containing the connection token and authorization code.
+   * @param ownerHint - The user entity expected to own this connection (for security verification).
+   * @returns A promise that resolves to an object containing the account ID and a boolean indicating if it was a reconnect.
+   * @throws NotFoundException if the connection token is invalid.
+   * @throws ForbiddenException if the owner hint does not match the token's owner.
+   * @throws InternalServerErrorException if finalizing the connection with Mastodon fails.
+   */
   async handleConnectionCallback(
     callbackQueryDto: ConnectAccountCallbackQueryDto,
     ownerHint: UserEntity,
@@ -269,11 +323,22 @@ export class AccountsService {
     }
   }
 
+  /**
+   * Gets the UTC offset for a given timezone name.
+   * @param timezoneName - The name of the timezone (e.g., "America/New_York").
+   * @returns The UTC offset string (e.g., "-04:00") or undefined if not found.
+   */
   private getUtcOffset(timezoneName: string): string | undefined {
     const tzData = timezones.find((tz: { name: string; utcOffset: string }) => tz.name === timezoneName);
     return tzData?.utcOffset;
   }
 
+  /**
+   * Normalizes a server URL to a standard format (https, no trailing slash, hostname only).
+   * @param serverURL - The server URL string to normalize.
+   * @returns The normalized server URL.
+   * @throws BadRequestException if the server URL format is invalid.
+   */
   private normalizeServerURL(serverURL: string): string {
     let normalized = serverURL.trim();
     if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
@@ -297,6 +362,11 @@ export class AccountsService {
     }
   }
 
+  /**
+   * Strips the schema (http/https) from a server URL.
+   * @param serverURL - The server URL string.
+   * @returns The server URL without the schema, including port if present.
+   */
   private stripSchemaFromServerURL(serverURL: string): string {
     try {
       const url = new URL(serverURL);

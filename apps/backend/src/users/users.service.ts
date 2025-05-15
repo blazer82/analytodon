@@ -22,6 +22,12 @@ export class UsersService {
     private readonly userCredentialsRepository: EntityRepository<UserCredentialsEntity>,
   ) {}
 
+  /**
+   * Creates a new user (typically by an admin).
+   * @param createUserDto - DTO containing user creation data.
+   * @returns A promise that resolves to the created user entity.
+   * @throws ConflictException if a user with the given email already exists.
+   */
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     const { email, password, role, isActive, maxAccounts, serverURLOnSignUp, timezone } = createUserDto;
 
@@ -61,10 +67,19 @@ export class UsersService {
     return user;
   }
 
+  /**
+   * Retrieves all users.
+   * @returns A promise that resolves to an array of user entities.
+   */
   async findAll(): Promise<UserEntity[]> {
     return this.userRepository.findAll();
   }
 
+  /**
+   * Finds a user by their ID.
+   * @param id - The ID of the user.
+   * @returns A promise that resolves to the user entity or null if not found.
+   */
   async findById(id: string): Promise<UserEntity | null> {
     if (!ObjectId.isValid(id)) {
       return null;
@@ -73,18 +88,41 @@ export class UsersService {
     return this.userRepository.findOne({ _id: new ObjectId(id) }, { populate: ['credentials'] });
   }
 
+  /**
+   * Finds a user by their email address.
+   * @param email - The email address of the user.
+   * @returns A promise that resolves to the user entity or null if not found.
+   */
   async findByEmail(email: string): Promise<UserEntity | null> {
     return this.userRepository.findOne({ email }); // isActive check might be too restrictive for admin view
   }
 
+  /**
+   * Finds an active user by their email verification code.
+   * @param code - The email verification code.
+   * @returns A promise that resolves to the user entity or null if not found or not active.
+   */
   async findByEmailVerificationCode(code: string): Promise<UserEntity | null> {
     return this.userRepository.findOne({ emailVerificationCode: code, isActive: true });
   }
 
+  /**
+   * Finds an active user by their password reset token.
+   * Populates credentials for password reset.
+   * @param token - The password reset token.
+   * @returns A promise that resolves to the user entity or null if not found or not active.
+   */
   async findByResetPasswordToken(token: string): Promise<UserEntity | null> {
     return this.userRepository.findOne({ resetPasswordToken: token, isActive: true }, { populate: ['credentials'] });
   }
 
+  /**
+   * Updates an existing user's information.
+   * @param id - The ID of the user to update.
+   * @param updateUserDto - DTO containing user update data.
+   * @returns A promise that resolves to the updated user entity.
+   * @throws NotFoundException if the user is not found.
+   */
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserEntity> {
     const user = await this.findById(id);
     if (!user) {
@@ -118,6 +156,12 @@ export class UsersService {
     return user;
   }
 
+  /**
+   * Placeholder for sending an email to a group of users.
+   * Note: Actual email sending logic is not implemented here.
+   * @param sendEmailDto - DTO containing email details and recipient information.
+   * @returns A promise that resolves when the operation is complete.
+   */
   async sendEmailToUsers(sendEmailDto: SendEmailDto): Promise<void> {
     const { recipientGroup, recipients, subject, text: _text, isTest } = sendEmailDto;
     this.logger.warn(
@@ -137,6 +181,13 @@ export class UsersService {
     }
   }
 
+  /**
+   * Manages a user's subscription status for a specific email type.
+   * @param manageSubscriptionDto - DTO containing user ID and email for verification.
+   * @param type - The type of subscription to manage (e.g., 'weekly-stats', 'news').
+   * @param subscribe - Boolean indicating whether to subscribe (true) or unsubscribe (false).
+   * @returns A promise that resolves when the subscription status is updated.
+   */
   async manageSubscription(
     manageSubscriptionDto: ManageSubscriptionDto,
     type: string,
@@ -171,6 +222,12 @@ export class UsersService {
     );
   }
 
+  /**
+   * Saves a user entity to the database.
+   * This is a general purpose save method, often used internally after modifying a user entity.
+   * @param user - The user entity to save.
+   * @returns A promise that resolves to the saved user entity.
+   */
   async save(user: UserEntity): Promise<UserEntity> {
     await this.userRepository.getEntityManager().persistAndFlush(user);
     return user;

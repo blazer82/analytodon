@@ -31,6 +31,12 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
+  /**
+   * Validates a user's credentials.
+   * @param email - The user's email.
+   * @param pass - The user's password.
+   * @returns The user entity if credentials are valid, otherwise null.
+   */
   async validateUser(email: string, pass: string): Promise<UserEntity | null> {
     const user = await this.userRepository.findOne({ email, isActive: true }, { populate: ['credentials'] });
 
@@ -58,6 +64,11 @@ export class AuthService {
     return null;
   }
 
+  /**
+   * Logs in a user and returns access and refresh tokens.
+   * @param user - The authenticated user entity.
+   * @returns A promise that resolves to an object containing the access and refresh tokens.
+   */
   async login(user: UserEntity): Promise<TokenResponseDto> {
     // At this point, 'user' is authenticated by LocalStrategy
     // We need to ensure the full user entity with credentials is available if it wasn't fully populated by validateUser
@@ -96,6 +107,12 @@ export class AuthService {
     };
   }
 
+  /**
+   * Refreshes access and refresh tokens using a valid refresh token.
+   * @param token - The refresh token.
+   * @returns A promise that resolves to an object containing new access and refresh tokens.
+   * @throws UnauthorizedException if the refresh token is invalid or the user is not found/active.
+   */
   async refreshTokens(token: string): Promise<TokenResponseDto> {
     const userCredentials = await this.userCredentialsRepository.findOne(
       { refreshToken: token },
@@ -138,6 +155,11 @@ export class AuthService {
     };
   }
 
+  /**
+   * Logs out a user by invalidating their refresh token.
+   * @param userId - The ID of the user to log out.
+   * @returns A promise that resolves when the logout process is complete.
+   */
   async logout(userId: string): Promise<void> {
     if (!ObjectId.isValid(userId)) {
       // Optionally handle invalid ObjectId string, e.g., log or throw, or just return
@@ -154,6 +176,12 @@ export class AuthService {
     // or there's no refresh token to invalidate. No error needs to be thrown.
   }
 
+  /**
+   * Registers a new user.
+   * @param registerUserDto - DTO containing user registration information.
+   * @returns A promise that resolves to an object containing access and refresh tokens for the new user.
+   * @throws ConflictException if a user with the given email already exists.
+   */
   async registerUser(registerUserDto: RegisterUserDto): Promise<TokenResponseDto> {
     const { email, password, serverURLOnSignUp, timezone } = registerUserDto;
 
@@ -210,6 +238,12 @@ export class AuthService {
     return this.login(user);
   }
 
+  /**
+   * Initiates a password reset request for a user.
+   * Generates a reset token and sends a password reset email.
+   * @param requestPasswordResetDto - DTO containing the user's email.
+   * @returns A promise that resolves when the process is complete.
+   */
   async requestPasswordReset(requestPasswordResetDto: RequestPasswordResetDto): Promise<void> {
     const { email } = requestPasswordResetDto;
     const user = await this.userRepository.findOne({ email, isActive: true, emailVerified: true });
@@ -234,6 +268,12 @@ export class AuthService {
     }
   }
 
+  /**
+   * Resets a user's password using a reset token.
+   * @param resetPasswordDto - DTO containing the reset token and new password.
+   * @returns A promise that resolves when the password has been reset.
+   * @throws NotFoundException if the token is invalid/expired or user/credentials are not found.
+   */
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
     const { token, password } = resetPasswordDto;
     const user = await this.usersService.findByResetPasswordToken(token);
@@ -256,6 +296,12 @@ export class AuthService {
     this.logger.log(`Password has been reset for user ${user.email}`);
   }
 
+  /**
+   * Verifies a user's email address using a verification code.
+   * @param verificationCode - The email verification code.
+   * @returns A promise that resolves when the email has been verified.
+   * @throws NotFoundException if the verification code is invalid or expired.
+   */
   async verifyEmail(verificationCode: string): Promise<void> {
     const user = await this.usersService.findByEmailVerificationCode(verificationCode);
 
