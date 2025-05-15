@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator'; // IsString might be removed if not used elsewhere
+import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 
 import { IsValidTimezone } from '../../shared/validators/is-valid-timezone.validator';
 
@@ -16,7 +16,7 @@ export class CreateAccountDto {
     example: 'https://mastodon.social',
     description: 'The URL of the Mastodon server',
   })
-  @IsUrl({ require_tld: false }) // Allow localhost for development
+  @IsUrl()
   @IsNotEmpty()
   serverURL!: string;
 

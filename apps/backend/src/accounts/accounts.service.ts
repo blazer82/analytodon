@@ -2,7 +2,6 @@ import { EntityManager, EntityRepository, Loaded, wrap } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
@@ -54,10 +53,8 @@ export class AccountsService {
 
     // Max accounts check
     if (typeof owner.maxAccounts === 'number') {
-      if (!owner.accounts.isInitialized()) {
-        await owner.accounts.loadCount(); // Efficiently loads just the count
-      }
-      if (owner.accounts.count() >= owner.maxAccounts) {
+      const currentAccountCount = await owner.accounts.loadCount();
+      if (currentAccountCount >= owner.maxAccounts) {
         throw new ForbiddenException(`User has reached the maximum allowed number of accounts (${owner.maxAccounts}).`);
       }
     }
@@ -132,11 +129,8 @@ export class AccountsService {
       await this.accountCredentialsRepository.nativeDelete({ account });
     }
 
-    // Remove from user's collection
-    owner.accounts.remove(account);
-
+    // Simply remove the account entity - MikroORM will handle the relationship updates
     await this.em.removeAndFlush(account);
-    await this.em.persistAndFlush(owner); // Persist changes to owner's account collection
 
     this.logger.log(`Account ${id} removed by ${owner.email}`);
   }
@@ -299,7 +293,7 @@ export class AccountsService {
       }
       return `${url.protocol}//${url.hostname}${url.port ? ':' + url.port : ''}`;
     } catch (_e) {
-      throw new ConflictException('Invalid server URL format.');
+      throw new BadRequestException('Invalid server URL format.');
     }
   }
 
