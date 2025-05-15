@@ -4,8 +4,8 @@ import { parseISO as dateFnsParseISO } from 'date-fns';
 import { intlFormat } from 'date-fns/intlFormat';
 import { findTimeZone, getUTCOffset } from 'timezone-support';
 
-import { DailyAccountStatsEntity } from '../../followers/entities/daily-account-stats.entity'; // Assuming this path is correct
-import { DailyTootStatsEntity } from '../../toots/entities/daily-toot-stats.entity'; // Assuming this path is correct
+import { DailyAccountStatsEntity } from '../../followers/entities/daily-account-stats.entity';
+import { DailyTootStatsEntity } from '../../toots/entities/daily-toot-stats.entity';
 
 // Define Timeframe type based on legacy usage
 export type Timeframe =
@@ -44,9 +44,9 @@ export const getDaysAgo = (days: number, timezone: string): Date => {
   try {
     const tz = findTimeZone(validTimezone);
     const { offset } = getUTCOffset(
-      new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate()),
+      date, // Use the 'YYYY-MM-DD' UTC midnight date, consistent with legacy for offset calculation
       tz,
-    ); // Use start of day for consistent offset
+    );
 
     const offsetHours = Math.floor(offset / 60);
     const offsetMinutes = offset % 60;
@@ -276,10 +276,6 @@ export async function getPeriodKPI(
     // Previous period is from lastPeriodStartStat to thisPeriodStartStat
     results.previousPeriod = (thisPeriodStartStat[attribute] as number) - (lastPeriodStartStat[attribute] as number);
   }
-
-  // Ensure values are non-negative
-  if (results.currentPeriod !== undefined) results.currentPeriod = Math.max(0, results.currentPeriod);
-  if (results.previousPeriod !== undefined) results.previousPeriod = Math.max(0, results.previousPeriod);
 
   return results;
 }
