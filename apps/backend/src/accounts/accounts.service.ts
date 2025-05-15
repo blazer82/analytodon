@@ -152,8 +152,8 @@ export class AccountsService {
     }
 
     const connectionToken = uuidv4();
-    const appURL = this.configService.get<string>('APP_URL', 'http://localhost:3000'); // Default for safety
-    const marketingURL = this.configService.get<string>('MARKETING_URL', appURL);
+    const appURL = this.configService.get<string>('API_URL');
+    const marketingURL = this.configService.get<string>('MARKETING_URL');
     const redirectUri = `${appURL}/api/accounts/connect/callback?token=${connectionToken}`;
 
     let client: MegalodonInterface;
@@ -226,7 +226,7 @@ export class AccountsService {
     }
 
     const isReconnect = account.setupComplete;
-    const appURL = this.configService.get<string>('APP_URL', 'http://localhost:3000');
+    const appURL = this.configService.get<string>('API_URL');
     const callbackRedirectUri = `${appURL}/api/accounts/connect/callback?token=${connectionToken}`;
     let oauthClient: MegalodonInterface;
     let mastodonClient: MegalodonInterface;

@@ -146,7 +146,7 @@ export class AccountsController {
       user,
     );
 
-    const frontendBaseUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3001'); // Default for safety
+    const frontendBaseUrl = this.configService.get<string>('FRONTEND_URL');
     let redirectPath: string;
 
     if (isReconnect) {

@@ -137,7 +137,7 @@ describe('AccountsService', () => {
 
     // Mock configService.get to return default values
     mockConfigService.get.mockImplementation((key: string, defaultValue?: unknown) => {
-      if (key === 'APP_URL') return 'http://localhost:3000';
+      if (key === 'API_URL') return 'http://localhost:3000';
       if (key === 'MARKETING_URL') return 'http://localhost:3000';
       if (key === 'MASTODON_APP_NAME') return 'TestApp';
       return defaultValue;
