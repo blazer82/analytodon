@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
 import { v4 as uuidv4 } from 'uuid';
 
+import { MailService } from '../mail/mail.service';
 import { UserRole } from '../shared/enums/user-role.enum';
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
@@ -27,6 +28,7 @@ export class AuthService {
     private readonly userRepository: EntityRepository<UserEntity>,
     @InjectRepository(UserCredentialsEntity)
     private readonly userCredentialsRepository: EntityRepository<UserCredentialsEntity>,
+    private readonly mailService: MailService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<UserEntity | null> {
@@ -184,9 +186,17 @@ export class AuthService {
       userCredentials.user = user; // Ensure relation is set
       await this.userCredentialsRepository.getEntityManager().persistAndFlush(userCredentials);
 
-      // TODO: Send email verification mail (e.g., using a MailService)
-      // this.mailService.sendEmailVerification(user.email, user.emailVerificationCode);
-      this.logger.log(`User registered: ${user.email}. Verification code: ${user.emailVerificationCode}`);
+      try {
+        if (user.emailVerificationCode) {
+          await this.mailService.sendEmailVerificationMail(user, user.emailVerificationCode);
+        }
+        await this.mailService.sendSignupNotificationMail(user);
+        this.logger.log(`User registered: ${user.email}. Verification email sent.`);
+      } catch (mailError) {
+        this.logger.error(`Failed to send registration related emails for ${user.email}`, mailError.stack);
+        // Decide if registration should fail if email sending fails.
+        // For now, we log the error and continue, as user is already in DB.
+      }
     } catch (error) {
       this.logger.error(`Error during user registration: ${error.message}`, error.stack);
       // Check for specific DB errors if necessary, e.g., unique constraint violation again
@@ -213,9 +223,15 @@ export class AuthService {
     user.resetPasswordToken = uuidv4();
     await this.usersService.save(user);
 
-    // TODO: Send password reset email
-    // this.mailService.sendPasswordResetEmail(user.email, user.resetPasswordToken);
-    this.logger.log(`Password reset token generated for user ${user.email}: ${user.resetPasswordToken}`);
+    try {
+      if (user.resetPasswordToken) {
+        await this.mailService.sendPasswordResetEmail(user, user.resetPasswordToken);
+        this.logger.log(`Password reset email sent to ${user.email}.`);
+      }
+    } catch (mailError) {
+      this.logger.error(`Failed to send password reset email to ${user.email}`, mailError.stack);
+      // Log error and continue. Token is saved, user can try again or admin can intervene.
+    }
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {

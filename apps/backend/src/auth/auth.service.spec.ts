@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
 import { v4 as uuidv4 } from 'uuid';
 
+import { MailService } from '../mail/mail.service';
 import { UserRole } from '../shared/enums/user-role.enum';
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
@@ -24,6 +25,12 @@ const mockUsersService = {
   save: jest.fn(),
   findByResetPasswordToken: jest.fn(),
   findByEmailVerificationCode: jest.fn(),
+};
+
+const mockMailService = {
+  sendEmailVerificationMail: jest.fn(),
+  sendSignupNotificationMail: jest.fn(),
+  sendPasswordResetEmail: jest.fn(),
 };
 
 const mockJwtService = {
@@ -64,6 +71,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: UsersService, useValue: mockUsersService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: MailService, useValue: mockMailService },
         {
           provide: getRepositoryToken(UserEntity),
           useValue: mockUserRepository,
@@ -206,11 +214,7 @@ describe('AuthService', () => {
 
       // Mock the login part of registerUser
       mockJwtService.sign.mockReturnValue('accessToken');
-      (uuidv4 as jest.Mock).mockImplementation(() => {
-        // First call for emailVerificationCode, second for refreshToken
-        if ((uuidv4 as jest.Mock).mock.calls.length <= 1) return 'mocked-uuid-email-verification';
-        return 'mocked-uuid-refresh-token';
-      });
+      (uuidv4 as jest.Mock).mockReturnValue('mocked-uuid');
       // Ensure the created user has credentials for the login call
       mockCreatedUser.credentials = mockCreatedCredentials;
     });
@@ -224,7 +228,7 @@ describe('AuthService', () => {
         expect.objectContaining({
           email: registerUserDto.email,
           role: UserRole.AccountOwner,
-          emailVerificationCode: 'mocked-uuid-email-verification',
+          emailVerificationCode: 'mocked-uuid',
         }),
       );
       expect(mockUserCredentialsRepository.create).toHaveBeenCalledWith(
@@ -234,9 +238,16 @@ describe('AuthService', () => {
       expect(mockUserCredentialsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(
         expect.objectContaining({ user: mockCreatedUser }),
       );
+
+      // Verify email sending
+      // user.emailVerificationCode comes from mockCreatedUser.emailVerificationCode, which is 'mocked-uuid'
+      // because userRepository.create is mocked and doesn't execute uuidv4() for emailVerificationCode.
+      expect(mockMailService.sendEmailVerificationMail).toHaveBeenCalledWith(mockCreatedUser, 'mocked-uuid');
+      expect(mockMailService.sendSignupNotificationMail).toHaveBeenCalledWith(mockCreatedUser);
+
       expect(result).toEqual({
         accessToken: 'accessToken',
-        refreshToken: 'mocked-uuid-refresh-token',
+        refreshToken: 'mocked-uuid',
       });
     });
 
@@ -384,7 +395,7 @@ describe('AuthService', () => {
       expect(mockUsersService.save).toHaveBeenCalledWith(
         expect.objectContaining({ resetPasswordToken: 'reset-token' }),
       );
-      // TODO: Test email sending when MailService is integrated
+      expect(mockMailService.sendPasswordResetEmail).toHaveBeenCalledWith(mockUser, 'reset-token');
     });
 
     it('should do nothing if user not found or not active/verified', async () => {

@@ -1,11 +1,177 @@
-import { Injectable } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
-// You might use a library like nodemailer here, configured via ConfigService
+import { AccountEntity } from '../accounts/entities/account.entity';
+import { UserEntity } from '../users/entities/user.entity';
+
+// TODO: Replace these with actual imports from your entity definitions
+interface Kpi {
+  value: number | string;
+  change: number | string;
+}
+
+interface WeeklyStatItem {
+  accountName: string;
+  followers: Kpi;
+  replies: Kpi;
+  boosts: Kpi;
+  favorites: Kpi;
+}
+
+// TODO: Check and replace URLs in mails !!!
 
 @Injectable()
 export class MailService {
-  constructor() {} // Inject ConfigService or other dependencies for mailer setup
+  private readonly logger = new Logger(MailService.name);
+  private readonly frontendURL: string;
+  private readonly supportEmail: string;
+  private readonly marketingURL: string;
+  private readonly emailSenderName: string;
 
-  // Define service methods for sending emails here
-  // e.g., sendWelcomeEmail, sendPasswordResetEmail
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly configService: ConfigService,
+  ) {
+    this.frontendURL = this.configService.getOrThrow<string>('FRONTEND_URL');
+    this.supportEmail = this.configService.getOrThrow<string>('EMAIL_FROM_ADDRESS');
+    this.marketingURL = this.configService.getOrThrow<string>('MARKETING_URL');
+    this.emailSenderName = this.configService.getOrThrow<string>('EMAIL_FROM_NAME');
+  }
+
+  private getCommonContext() {
+    return {
+      supportEmail: this.supportEmail,
+      marketingURL: this.marketingURL,
+      emailSenderName: this.emailSenderName,
+    };
+  }
+
+  async sendPasswordResetEmail(user: UserEntity, token: string) {
+    const resetLink = `${this.frontendURL}/reset-password?t=${token}`; // Legacy used 't', frontend might expect 'token'
+    const subject = 'Reset your Analytodon password!';
+
+    try {
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject,
+        template: './password-reset',
+        context: {
+          ...this.getCommonContext(),
+          resetLink,
+          subject,
+        },
+      });
+      this.logger.log(`Password reset email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send password reset email to ${user.email}`, error.stack);
+      throw error;
+    }
+  }
+
+  async sendEmailVerificationMail(user: UserEntity, verificationCode: string) {
+    const verificationLink = `${this.frontendURL}/register/verify?c=${verificationCode}`;
+    const subject = 'Welcome to Analytodon - Please verify your email address';
+
+    try {
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject,
+        template: './email-verification',
+        context: {
+          ...this.getCommonContext(),
+          verificationLink,
+          subject,
+        },
+      });
+      this.logger.log(`Email verification mail sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send email verification mail to ${user.email}`, error.stack);
+      throw error;
+    }
+  }
+
+  async sendOldAccountWarningMail(user: UserEntity) {
+    const subject = "You haven't been on Analytodon in a while - we'll be deleting your data soon!";
+    try {
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject,
+        template: './old-account-warning',
+        context: {
+          ...this.getCommonContext(),
+          subject,
+        },
+      });
+      this.logger.log(`Old account warning mail sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Error while sending old account warning mail to ${user.email}`, error.stack);
+      throw error;
+    }
+  }
+
+  async sendFirstStatsAvailableMail(user: UserEntity, account: AccountEntity) {
+    const subject = 'Your Mastodon analytics data is ready on Analytodon! 🎉';
+    try {
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject,
+        template: './first-stats-available',
+        context: {
+          ...this.getCommonContext(),
+          accountName: account.accountName || account.name,
+          subject,
+        },
+      });
+      this.logger.log(
+        `First stats available mail sent to ${user.email} for account ${account.accountName || account.name}`,
+      );
+    } catch (error) {
+      this.logger.error(`Error while sending first stats available mail to ${user.email}`, error.stack);
+      throw error;
+    }
+  }
+
+  async sendSignupNotificationMail(newUser: UserEntity) {
+    const subject = 'Analytodon: New Sign Up';
+    try {
+      await this.mailerService.sendMail({
+        to: this.supportEmail, // Send to admin/support email
+        subject,
+        template: './signup-notification',
+        context: {
+          ...this.getCommonContext(),
+          userEmail: newUser.email,
+          subject,
+        },
+      });
+      this.logger.log(`Sign up notification mail sent to admin for user ${newUser.email}`);
+    } catch (error) {
+      this.logger.error(`Error while sending sign up notification mail for ${newUser.email}`, error.stack);
+      throw error;
+    }
+  }
+
+  async sendWeeklyStatsMail(user: UserEntity, stats: WeeklyStatItem[]) {
+    const subject = 'Your Week on Mastodon';
+    const unsubscribeURL = `${this.frontendURL}/unsubscribe/weekly?u=${encodeURIComponent(user.id)}&e=${encodeURIComponent(user.email)}`;
+
+    try {
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject,
+        template: './weekly-stats',
+        context: {
+          ...this.getCommonContext(),
+          stats,
+          unsubscribeURL,
+          subject,
+        },
+      });
+      this.logger.log(`Weekly stats mail sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Error while sending weekly stats mail to ${user.email}`, error.stack);
+      throw error;
+    }
+  }
 }

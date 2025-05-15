@@ -1,6 +1,5 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 
 import { UsersModule } from '../users/users.module';
 import { AccountsController } from './accounts.controller';
@@ -14,7 +13,6 @@ import { AccountEntity } from './entities/account.entity';
       entities: [AccountEntity, AccountCredentialsEntity],
     }),
     UsersModule,
-    ConfigModule,
   ],
   controllers: [AccountsController],
   providers: [AccountsService],

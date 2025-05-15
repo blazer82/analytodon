@@ -11,6 +11,7 @@ import { RegisterUserDto } from '../../src/auth/dto/register-user.dto';
 import { ResetPasswordDto } from '../../src/auth/dto/reset-password.dto';
 import { TokenResponseDto } from '../../src/auth/dto/token-response.dto';
 import { UserCredentialsEntity } from '../../src/auth/entities/user-credentials.entity';
+import { MailService } from '../../src/mail/mail.service';
 import { authConstants } from '../../src/shared/constants/auth.constants';
 import { UserRole } from '../../src/shared/enums/user-role.enum';
 import { UserEntity } from '../../src/users/entities/user.entity';
@@ -21,6 +22,13 @@ describe('AuthController (e2e)', () => {
   let orm: MikroORM;
   let jwtService: JwtService;
   let configService: ConfigService;
+
+  const mockMailService = {
+    sendEmailVerificationMail: jest.fn().mockResolvedValue(undefined),
+    sendSignupNotificationMail: jest.fn().mockResolvedValue(undefined),
+    sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+    // Add other MailService methods here if they get called during E2E tests
+  };
 
   const testUser = {
     email: 'test@example.com',
@@ -37,7 +45,10 @@ describe('AuthController (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(MailService)
+      .useValue(mockMailService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
@@ -69,6 +80,10 @@ describe('AuthController (e2e)', () => {
 
   beforeEach(async () => {
     await clearDatabase();
+    // Clear mock calls before each test
+    mockMailService.sendEmailVerificationMail.mockClear();
+    mockMailService.sendSignupNotificationMail.mockClear();
+    mockMailService.sendPasswordResetEmail.mockClear();
   });
 
   describe('/auth/register (POST)', () => {
