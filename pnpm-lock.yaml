@@ -227,6 +227,12 @@ importers:
         specifier: ^4.2.1
         version: 4.3.2(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.18)(jiti@1.21.7)(terser@5.39.1)(yaml@2.7.1))
 
+  packages/rest-client:
+    devDependencies:
+      typescript:
+        specifier: ^4.0 || ^5.0
+        version: 5.8.3
+
 packages:
 
   '@alloc/quick-lru@5.2.0':
