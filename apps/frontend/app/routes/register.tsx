@@ -2,7 +2,16 @@ import * as React from 'react';
 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { Alert, Box, IconButton, InputAdornment, Link as MuiLink, Typography, useTheme } from '@mui/material';
+import {
+  Alert,
+  Autocomplete,
+  Box,
+  IconButton,
+  InputAdornment,
+  Link as MuiLink,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { type MetaFunction } from '@remix-run/node';
 import { Form, Link, useActionData } from '@remix-run/react';
 import Footer from '~/components/Footer';
@@ -18,6 +27,7 @@ import {
   SubmitButton,
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
+import timezones from '~/utils/timezones.json';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Sign up for Analytodon' }];
@@ -37,6 +47,17 @@ export default function Register() {
   const theme = useTheme();
   const actionData = useActionData<typeof action>();
   const [showPassword, setShowPassword] = React.useState(false);
+  const [values, setValues] = React.useState({
+    email: '',
+    password: '',
+    serverURL: '',
+    timezone: '',
+  });
+
+  const timezoneOptions = React.useMemo(
+    () => timezones.map(({ name, utcOffset }) => ({ label: `${name} (${utcOffset})`, name, utcOffset })),
+    [],
+  );
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -84,7 +105,15 @@ export default function Register() {
           </Typography>
 
           <Box component={Form} method="post" noValidate>
-            <StyledTextField required fullWidth label="Your Email Address" name="email" autoComplete="email" />
+            <StyledTextField
+              required
+              fullWidth
+              label="Your Email Address"
+              name="email"
+              autoComplete="email"
+              value={values.email}
+              onChange={(e) => setValues({ ...values, email: e.target.value })}
+            />
             <StyledTextField
               required
               fullWidth
@@ -92,6 +121,8 @@ export default function Register() {
               label="Choose a Password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
+              value={values.password}
+              onChange={(e) => setValues({ ...values, password: e.target.value })}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -114,13 +145,25 @@ export default function Register() {
               name="serverURL"
               placeholder="mastodon.social"
               helperText="The URL of the Mastodon instance your account is on"
+              value={values.serverURL}
+              onChange={(e) => setValues({ ...values, serverURL: e.target.value })}
             />
-            <StyledTextField
-              required
+            <Autocomplete
+              disablePortal
+              options={timezoneOptions}
               fullWidth
-              name="timezone"
-              label="Your Timezone"
-              helperText="The timezone you want your analytics reports to be in"
+              value={timezoneOptions.find(({ name }) => name === values.timezone)}
+              onChange={(_, value) => setValues({ ...values, timezone: value?.name ?? '' })}
+              renderInput={(params) => (
+                <StyledTextField
+                  {...params}
+                  required
+                  fullWidth
+                  name="timezone"
+                  label="Your Timezone"
+                  helperText="The timezone you want your analytics reports to be in"
+                />
+              )}
             />
 
             {actionData?.error && (
