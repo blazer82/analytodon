@@ -135,15 +135,20 @@ export class FollowersService {
     const account = await this.getAccountOrFail(accountId, user);
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
 
+    const oneDayEarlier = new Date(dateFrom);
+    oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
+
     const data = await this.dailyAccountStatsRepository.find(
-      { account: account.id, day: { $gte: dateFrom, $lte: dateTo } },
+      { account: account.id, day: { $gte: oneDayEarlier, $lte: dateTo } },
       { orderBy: { day: 'ASC' } },
     );
 
-    return data.map((entry) => ({
-      time: formatDateISO(entry.day, account.timezone)!,
-      value: entry.followersCount,
-    }));
+    return data
+      .map((entry, index, list) => ({
+        time: formatDateISO(entry.day, account.timezone)!,
+        value: index > 0 ? Math.max(0, entry.followersCount - list[index - 1].followersCount) : null,
+      }))
+      .filter((item): item is ChartDataPointDto => item.value !== null);
   }
 
   /**
