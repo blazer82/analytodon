@@ -44,11 +44,13 @@ export class MailService {
    * @returns An object containing common email context variables.
    */
   private getCommonContext(): {
+    appURL: string;
     supportEmail: string;
     marketingURL: string;
     emailSenderName: string;
   } {
     return {
+      appURL: this.frontendURL,
       supportEmail: this.supportEmail,
       marketingURL: this.marketingURL,
       emailSenderName: this.emailSenderName,
