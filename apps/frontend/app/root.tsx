@@ -1,12 +1,13 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
-import type { LinksFunction } from '@remix-run/node';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { useAppTheme } from './utils/theme';
-import { AuthProvider } from './utils/auth.context';
-import { CacheProvider } from '@emotion/react';
-import { withEmotionCache } from '@emotion/react';
 import { useContext, useEffect } from 'react';
+
+import { CacheProvider, withEmotionCache } from '@emotion/react';
+import { CssBaseline, ThemeProvider } from '@mui/material';
+import type { LinksFunction } from '@remix-run/node';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
+
+import { AuthProvider } from './utils/auth.context';
 import { ClientStyleContext } from './utils/client-style-context';
+import { useAppTheme } from './utils/theme';
 
 export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

@@ -4,13 +4,14 @@
  * For more information, see https://remix.run/file-conventions/entry.client
  */
 
-import { RemixBrowser } from '@remix-run/react';
-import { startTransition, StrictMode } from 'react';
+import { startTransition, StrictMode, useState } from 'react';
 import { hydrateRoot } from 'react-dom/client';
+
 import { CacheProvider } from '@emotion/react';
-import { createEmotionCache } from './utils/createEmotionCache';
+import { RemixBrowser } from '@remix-run/react';
+
 import { ClientStyleContext } from './utils/client-style-context';
-import { useState } from 'react';
+import { createEmotionCache } from './utils/createEmotionCache';
 
 interface ClientCacheProviderProps {
   children: React.ReactNode;

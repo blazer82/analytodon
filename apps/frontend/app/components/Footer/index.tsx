@@ -1,6 +1,7 @@
+import { FunctionComponent } from 'react';
+
 import { Typography } from '@mui/material';
 import Link from '@mui/material/Link';
-import { FunctionComponent } from 'react';
 import { useRouteLoaderData } from '@remix-run/react';
 
 const Footer: FunctionComponent = () => {
