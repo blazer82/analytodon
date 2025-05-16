@@ -15,15 +15,15 @@ export function useAppTheme() {
         palette: {
           mode: prefersDarkMode ? 'dark' : 'light',
           primary: {
-            main: '#5c6bc0', // Indigo-like color for Mastodon theme
-            light: '#8e99f3',
-            dark: '#26418f',
+            main: '#455a64', // Slate blue color
+            light: '#718792',
+            dark: '#1c313a',
             contrastText: '#ffffff',
           },
           secondary: {
-            main: '#26a69a', // Teal-like color
-            light: '#64d8cb',
-            dark: '#00766c',
+            main: '#607d8b', // Lighter slate blue for secondary actions
+            light: '#8eacbb',
+            dark: '#34515e',
             contrastText: '#ffffff',
           },
           background: {

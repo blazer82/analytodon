@@ -54,7 +54,7 @@ export const HeroSection = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
-  backgroundColor: theme.palette.primary.main,
+  background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.dark} 100%)`,
   color: theme.palette.primary.contrastText,
   padding: theme.spacing(4),
   position: 'relative',
