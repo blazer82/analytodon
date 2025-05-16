@@ -17,7 +17,6 @@ import {
 } from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { DailyTootStatsEntity } from '../toots/entities/daily-toot-stats.entity';
-import { TootEntity } from '../toots/entities/toot.entity';
 import { TootsService } from '../toots/toots.service';
 import { UserEntity } from '../users/entities/user.entity';
 import { BoostedTootDto } from './dto/boosted-toot.dto';
@@ -33,7 +32,6 @@ export class BoostsService {
     private readonly em: EntityManager,
     @InjectRepository(DailyTootStatsEntity)
     private readonly dailyTootStatsRepository: EntityRepository<DailyTootStatsEntity>,
-    @InjectRepository(TootEntity) // Needed if TootsService doesn't cover all TootEntity queries
     private readonly accountsService: AccountsService,
     private readonly tootsService: TootsService,
   ) {}
