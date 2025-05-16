@@ -113,6 +113,25 @@ export class AccountsService {
   }
 
   /**
+   * Finds an account by its ID and owner, and verifies it exists.
+   * @param id - The ID of the account.
+   * @param owner - The user entity who owns the account.
+   * @param requireSetupComplete - Whether to require the account setup to be complete.
+   * @returns A promise that resolves to the account entity.
+   * @throws NotFoundException if the account is not found, not owned by the user, or setup is not complete when required.
+   */
+  async findByIdOrFail(id: string, owner: UserEntity, requireSetupComplete = false): Promise<Loaded<AccountEntity>> {
+    const account = await this.findById(id, owner);
+    if (!account) {
+      throw new NotFoundException(`Account with ID ${id} not found or not owned by user.`);
+    }
+    if (requireSetupComplete && !account.setupComplete) {
+      throw new NotFoundException(`Account with ID ${id} setup is not complete.`);
+    }
+    return account;
+  }
+
+  /**
    * Updates an existing account.
    * @param id - The ID of the account to update.
    * @param updateAccountDto - DTO containing account update data.

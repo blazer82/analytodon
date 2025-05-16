@@ -1,6 +1,6 @@
 import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { stringify } from 'csv-stringify';
 import { Response } from 'express';
 
@@ -45,14 +45,7 @@ export class BoostsService {
    * @throws NotFoundException if the account is not found, not owned by the user, or setup is not complete.
    */
   private async getAccountOrFail(accountId: string, user: UserEntity): Promise<Loaded<AccountEntity>> {
-    const account = await this.accountsService.findById(accountId, user);
-    if (!account) {
-      throw new NotFoundException(`Account with ID ${accountId} not found or not owned by user.`);
-    }
-    if (!account.setupComplete) {
-      throw new NotFoundException(`Account with ID ${accountId} setup is not complete.`);
-    }
-    return account;
+    return this.accountsService.findByIdOrFail(accountId, user, true);
   }
 
   /**

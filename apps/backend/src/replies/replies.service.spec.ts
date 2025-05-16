@@ -59,6 +59,7 @@ describe('RepliesService', () => {
 
     mockAccountsService = {
       findById: jest.fn(),
+      findByIdOrFail: jest.fn(),
     } as unknown as jest.Mocked<AccountsService>;
 
     mockTootsService = {
@@ -94,12 +95,12 @@ describe('RepliesService', () => {
 
   describe('getAccountOrFail (private method tested via public methods)', () => {
     it('should throw NotFoundException if account not found', async () => {
-      mockAccountsService.findById.mockResolvedValue(null);
+      mockAccountsService.findByIdOrFail.mockRejectedValue(new NotFoundException(`Account not found`));
       await expect(service.getWeeklyKpi(mockAccountId, mockUser)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException if account setup not complete', async () => {
-      mockAccountsService.findById.mockResolvedValue({ ...mockAccount, setupComplete: false } as Loaded<AccountEntity>);
+      mockAccountsService.findByIdOrFail.mockRejectedValue(new NotFoundException(`Account setup is not complete`));
       await expect(service.getWeeklyKpi(mockAccountId, mockUser)).rejects.toThrow(NotFoundException);
     });
   });
@@ -114,13 +115,13 @@ describe('RepliesService', () => {
     kpiMethods.forEach((methodName) => {
       describe(methodName, () => {
         it('should return KPI data successfully', async () => {
-          mockAccountsService.findById.mockResolvedValue(mockAccount);
+          mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
           mockedGetPeriodKPI.mockResolvedValue({ currentPeriod: 10, previousPeriod: 5 });
           mockedGetKPITrend.mockReturnValue(1);
 
           const result = await service[methodName](mockAccountId, mockUser);
 
-          expect(mockAccountsService.findById).toHaveBeenCalledWith(mockAccountId, mockUser);
+          expect(mockAccountsService.findByIdOrFail).toHaveBeenCalledWith(mockAccountId, mockUser, true);
           expect(mockedGetPeriodKPI).toHaveBeenCalledWith(
             mockDailyTootStatsRepository,
             mockAccountId,
@@ -137,7 +138,7 @@ describe('RepliesService', () => {
 
   describe('getTotalSnapshot', () => {
     it('should return total snapshot if data exists', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       const mockStatEntry = { repliesCount: 100, day: new Date() } as DailyTootStatsEntity;
       mockDailyTootStatsRepository.findOne.mockResolvedValue(mockStatEntry);
 
@@ -151,7 +152,7 @@ describe('RepliesService', () => {
     });
 
     it('should return null if no data exists', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       mockDailyTootStatsRepository.findOne.mockResolvedValue(null);
 
       const result = await service.getTotalSnapshot(mockAccountId, mockUser);
@@ -161,7 +162,7 @@ describe('RepliesService', () => {
 
   describe('getChartData', () => {
     it('should return chart data correctly', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       const dateFrom = new Date('2023-01-10T00:00:00.000Z');
       const dateTo = new Date('2023-01-12T00:00:00.000Z');
       mockedResolveTimeframe.mockReturnValue({ dateFrom, dateTo, timeframe: 'custom' });
@@ -191,7 +192,7 @@ describe('RepliesService', () => {
     });
 
     it('should return empty array if no stats found', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       mockDailyTootStatsRepository.find.mockResolvedValue([]);
       const result = await service.getChartData(mockAccountId, 'last7days', mockUser);
       expect(result).toEqual([]);
@@ -200,7 +201,7 @@ describe('RepliesService', () => {
 
   describe('getTopTootsByReplies', () => {
     it('should return top toots mapped to RepliedTootDto', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       const mockRawToots = [
         {
           id: 'toot1', // TootsService.getTopToots returns RankedTootDto which has id as string

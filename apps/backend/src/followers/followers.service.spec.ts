@@ -56,6 +56,7 @@ describe('FollowersService', () => {
 
     mockAccountsService = {
       findById: jest.fn(),
+      findByIdOrFail: jest.fn(),
     } as unknown as jest.Mocked<AccountsService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -86,12 +87,12 @@ describe('FollowersService', () => {
 
   describe('getAccountOrFail (private method tested via public methods)', () => {
     it('should throw NotFoundException if account not found', async () => {
-      mockAccountsService.findById.mockResolvedValue(null);
+      mockAccountsService.findByIdOrFail.mockRejectedValue(new NotFoundException(`Account not found`));
       await expect(service.getWeeklyKpi(mockAccountId, mockUser)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException if account setup not complete', async () => {
-      mockAccountsService.findById.mockResolvedValue({ ...mockAccount, setupComplete: false } as Loaded<AccountEntity>);
+      mockAccountsService.findByIdOrFail.mockRejectedValue(new NotFoundException(`Account setup is not complete`));
       await expect(service.getWeeklyKpi(mockAccountId, mockUser)).rejects.toThrow(NotFoundException);
     });
   });
@@ -106,13 +107,13 @@ describe('FollowersService', () => {
     kpiMethods.forEach((methodName) => {
       describe(methodName, () => {
         it('should return KPI data successfully', async () => {
-          mockAccountsService.findById.mockResolvedValue(mockAccount);
+          mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
           mockedGetPeriodKPI.mockResolvedValue({ currentPeriod: 10, previousPeriod: 5 });
           mockedGetKPITrend.mockReturnValue(1);
 
           const result = await service[methodName](mockAccountId, mockUser);
 
-          expect(mockAccountsService.findById).toHaveBeenCalledWith(mockAccountId, mockUser);
+          expect(mockAccountsService.findByIdOrFail).toHaveBeenCalledWith(mockAccountId, mockUser, true);
           expect(mockedGetPeriodKPI).toHaveBeenCalledWith(
             mockDailyAccountStatsRepository,
             mockAccountId,
@@ -129,7 +130,7 @@ describe('FollowersService', () => {
 
   describe('getTotalSnapshot', () => {
     it('should return total snapshot if data exists', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       const mockStatEntry = { followersCount: 100, day: new Date() } as DailyAccountStatsEntity;
       mockDailyAccountStatsRepository.findOne.mockResolvedValue(mockStatEntry);
 
@@ -143,7 +144,7 @@ describe('FollowersService', () => {
     });
 
     it('should return null if no data exists', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       mockDailyAccountStatsRepository.findOne.mockResolvedValue(null);
 
       const result = await service.getTotalSnapshot(mockAccountId, mockUser);
@@ -153,7 +154,7 @@ describe('FollowersService', () => {
 
   describe('getChartData', () => {
     it('should return chart data correctly', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       const dateFrom = new Date('2023-01-10T00:00:00.000Z');
       const dateTo = new Date('2023-01-12T00:00:00.000Z');
       mockedResolveTimeframe.mockReturnValue({ dateFrom, dateTo, timeframe: 'custom' });
@@ -183,7 +184,7 @@ describe('FollowersService', () => {
     });
 
     it('should return empty array if no stats found', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
+      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       mockDailyAccountStatsRepository.find.mockResolvedValue([]);
       const result = await service.getChartData(mockAccountId, 'last7days', mockUser);
       expect(result).toEqual([]);

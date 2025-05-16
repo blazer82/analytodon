@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AccountsService } from '../accounts/accounts.service'; // To get account timezone
@@ -35,10 +35,7 @@ export class TootsController {
     @Query() query: TimeframeQueryDto, // Using TimeframeQueryDto from boosts for now
     @GetUser() user: UserEntity,
   ): Promise<AllTopTootsResponseDto> {
-    const account = await this.accountsService.findById(accountId, user);
-    if (!account) {
-      throw new NotFoundException(`Account with ID ${accountId} not found or not owned by user.`);
-    }
+    const account = await this.accountsService.findByIdOrFail(accountId, user, true);
 
     const { dateFrom, dateTo, timeframe: resolvedTimeframe } = resolveTimeframe(account.timezone, query.timeframe);
     const limit = 10; // As per legacy
