@@ -2,7 +2,7 @@ import * as path from 'path';
 
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AccountsModule } from '../accounts/accounts.module';
@@ -45,8 +45,8 @@ import { MailService } from './mail.service';
       },
       inject: [ConfigService],
     }),
-    UsersModule,
-    AccountsModule,
+    forwardRef(() => UsersModule),
+    forwardRef(() => AccountsModule),
   ],
   controllers: [MailController],
   providers: [MailService],

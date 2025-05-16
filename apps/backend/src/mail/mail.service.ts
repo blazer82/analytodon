@@ -218,4 +218,27 @@ export class MailService {
       throw error;
     }
   }
+
+  /**
+   * Sends a generic plain text email.
+   * @param to - The recipient's email address.
+   * @param subject - The email subject.
+   * @param textBody - The plain text body of the email.
+   * @returns A promise that resolves when the email is sent.
+   * @throws Error if sending the email fails.
+   */
+  async sendGenericPlainTextEmail(to: string, subject: string, textBody: string) {
+    try {
+      await this.mailerService.sendMail({
+        to,
+        subject,
+        text: textBody,
+        // `from` address is picked from MailerModule defaults
+      });
+      this.logger.log(`Generic plain text email sent to ${to} with subject "${subject}"`);
+    } catch (error) {
+      this.logger.error(`Failed to send generic plain text email to ${to} with subject "${subject}"`, error.stack);
+      throw error;
+    }
+  }
 }

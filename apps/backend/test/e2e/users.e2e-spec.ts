@@ -306,7 +306,7 @@ describe('UsersController (e2e)', () => {
 
     it('should accept the request and return NO_CONTENT (Admin)', async () => {
       // Logger spy to check if the service method was called (actual email sending is mocked/logged)
-      const loggerSpy = jest.spyOn(app.get(UsersService)['logger'], 'warn');
+      const loggerSpy = jest.spyOn(app.get(UsersService)['logger'], 'log');
 
       await request(app.getHttpServer())
         .post('/users/send-email')
@@ -316,7 +316,7 @@ describe('UsersController (e2e)', () => {
 
       expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining(
-          `MailService.sendEmail called with: group=${emailDto.recipientGroup}, subject=${emailDto.subject}`,
+          `Initiating email send: group=${emailDto.recipientGroup}, subject="${emailDto.subject}", isTest=false, customRecipientsProvided=false`,
         ),
       );
       loggerSpy.mockRestore();

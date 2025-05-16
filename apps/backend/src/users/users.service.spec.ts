@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
 
 import { UserCredentialsEntity } from '../auth/entities/user-credentials.entity';
+import { MailService } from '../mail/mail.service';
 import { UserRole } from '../shared/enums/user-role.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ManageSubscriptionDto } from './dto/subscription-query.dto';
@@ -61,6 +62,17 @@ describe('UsersService', () => {
     loggerLogSpy = jest.spyOn(Logger.prototype, 'log');
     loggerErrorSpy = jest.spyOn(Logger.prototype, 'error');
 
+    // Mock MailService methods
+    const mockMailServiceMethods = {
+      sendGenericPlainTextEmail: jest.fn().mockResolvedValue(undefined),
+      // Add other MailService methods used by UsersService if any, and mock their return values
+      // For example, if UsersService calls other mail methods directly:
+      // sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+      // sendEmailVerificationMail: jest.fn().mockResolvedValue(undefined),
+      // Accessing private member supportEmail for testing sendEmailToUsers
+      supportEmail: 'admin@example.com',
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
@@ -71,6 +83,10 @@ describe('UsersService', () => {
         {
           provide: getRepositoryToken(UserCredentialsEntity),
           useValue: mockUserCredentialsRepositoryMethods,
+        },
+        {
+          provide: MailService,
+          useValue: mockMailServiceMethods,
         },
       ],
     }).compile();

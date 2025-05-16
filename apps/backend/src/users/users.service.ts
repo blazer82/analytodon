@@ -1,10 +1,12 @@
-import { EntityRepository, Loaded } from '@mikro-orm/mongodb';
+import { EntityRepository, FilterQuery, Loaded } from '@mikro-orm/mongodb';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
 
 import { UserCredentialsEntity } from '../auth/entities/user-credentials.entity';
+import { MailService } from '../mail/mail.service';
+import { UserRole } from '../shared/enums/user-role.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { ManageSubscriptionDto } from './dto/subscription-query.dto';
@@ -20,6 +22,7 @@ export class UsersService {
     private readonly userRepository: EntityRepository<UserEntity>,
     @InjectRepository(UserCredentialsEntity)
     private readonly userCredentialsRepository: EntityRepository<UserCredentialsEntity>,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -163,22 +166,91 @@ export class UsersService {
    * @returns A promise that resolves when the operation is complete.
    */
   async sendEmailToUsers(sendEmailDto: SendEmailDto): Promise<void> {
-    const { recipientGroup, recipients, subject, text: _text, isTest } = sendEmailDto;
-    this.logger.warn(
-      `MailService.sendEmail called with: group=${recipientGroup}, subject=${subject}, isTest=${isTest}. Actual email sending is not implemented in UsersService.`,
+    const { recipientGroup, recipients: recipientsString, subject, text, isTest } = sendEmailDto;
+    this.logger.log(
+      `Initiating email send: group=${recipientGroup}, subject="${subject}", isTest=${isTest}, customRecipientsProvided=${!!recipientsString}`,
     );
-    // TODO: Implement the actual email sending logic.
-    // 1. Determine the list of recipient UserEntities based on recipientGroup.
-    //    - 'all': all active, email-verified users not unsubscribed from 'news' (or relevant type).
-    //    - 'admins': all UserRole.Admin users.
-    //    - 'account-owners': all UserRole.AccountOwner users.
-    //    - 'custom': parse `recipients` string.
-    // 2. For each recipient, call a MailService (e.g., this.mailService.sendGenericEmail(...)).
-    //    - Replace placeholders like [[userid]], [[email]] in the text.
-    //    - Handle batching if necessary.
-    if (recipients) {
-      this.logger.log(`Custom recipients: ${recipients}`);
+
+    const adminEmail = this.mailService['supportEmail']; // Accessing private member for admin email, consider making it public or via getter in MailService
+    const recipientsSet = new Set<{ id?: string; email: string }>();
+
+    if (isTest) {
+      recipientsSet.add({ email: adminEmail });
+      this.logger.log(`Test mode: Sending email to admin ${adminEmail}`);
+    } else {
+      if (recipientGroup === 'custom') {
+        if (recipientsString) {
+          recipientsString
+            .split(',')
+            .map((email) => email.trim())
+            .filter((email) => email)
+            .forEach((email) => recipientsSet.add({ email }));
+          this.logger.log(`Custom recipients: ${Array.from(recipientsSet).map((r) => r.email)}`);
+        } else {
+          this.logger.warn('Custom recipient group selected but no recipients string provided.');
+        }
+      } else {
+        const filterQuery: FilterQuery<UserEntity> = {
+          isActive: true,
+          emailVerified: true,
+          unsubscribed: { $nin: ['news'] }, // As per legacy, filter out those unsubscribed from 'news'
+        };
+
+        if (recipientGroup === 'admins') {
+          filterQuery.role = UserRole.Admin;
+        } else if (recipientGroup === 'account-owners') {
+          filterQuery.role = UserRole.AccountOwner;
+        }
+        // For 'all', no additional role filter is applied beyond isActive, emailVerified, and not unsubscribed.
+
+        const usersToEmail = await this.userRepository.find(filterQuery);
+        usersToEmail.forEach((user) => recipientsSet.add({ id: user.id, email: user.email }));
+        this.logger.log(
+          `Fetched ${usersToEmail.length} users for group '${recipientGroup}'. Unique recipients: ${recipientsSet.size}`,
+        );
+      }
     }
+
+    if (recipientsSet.size === 0) {
+      this.logger.warn('No recipients determined for the email broadcast. Aborting.');
+      return;
+    }
+
+    const emailPromises = Array.from(recipientsSet).map(async (recipient) => {
+      let mailSubject = subject;
+      let mailText = text;
+
+      // Replace placeholders
+      mailSubject = mailSubject.replaceAll('[[email]]', recipient.email);
+      mailText = mailText.replaceAll('[[email]]', recipient.email);
+
+      if (recipient.id) {
+        mailSubject = mailSubject.replaceAll('[[userid]]', recipient.id);
+        mailText = mailText.replaceAll('[[userid]]', recipient.id);
+      } else {
+        // For custom emails where ID might not be available
+        mailSubject = mailSubject.replaceAll('[[userid]]', '');
+        mailText = mailText.replaceAll('[[userid]]', '');
+      }
+
+      try {
+        await this.mailService.sendGenericPlainTextEmail(recipient.email, mailSubject, mailText);
+        this.logger.log(
+          `Email sent to ${recipient.email} (User ID: ${recipient.id || 'N/A'}) with subject "${mailSubject}"`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to send email to ${recipient.email} (User ID: ${recipient.id || 'N/A'}): ${error.message}`,
+          error.stack,
+        );
+        // Decide if one failure should stop all, or collect errors. For now, log and continue.
+      }
+    });
+
+    await Promise.all(emailPromises);
+    this.logger.log(
+      `Finished processing email send request for subject "${subject}". Total emails attempted: ${emailPromises.length}.`,
+    );
   }
 
   /**
