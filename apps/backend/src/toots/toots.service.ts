@@ -17,6 +17,12 @@ export class TootsService {
     private readonly tootRepository: EntityRepository<TootEntity>,
   ) {}
 
+  /**
+   * Retrieves top toots based on specified ranking criteria, limit, and date range.
+   * @param options - Options for fetching top toots, including accountId, limit, ranking, dateFrom, and dateTo.
+   * @returns A promise that resolves to an array of ranked toot DTOs.
+   * @throws Error if fetching top toots fails.
+   */
   async getTopToots(options: GetTopTootsOptions): Promise<RankedTootDto[]> {
     const { accountId, limit = 5, ranking = TootRankingEnum.TOP, dateFrom, dateTo } = options;
 

@@ -36,6 +36,14 @@ export class FavoritesService {
     private readonly tootsService: TootsService,
   ) {}
 
+  /**
+   * Retrieves an account by ID for a given user or throws a NotFoundException.
+   * Also checks if the account setup is complete.
+   * @param accountId - The ID of the account to retrieve.
+   * @param user - The user who owns the account.
+   * @returns A promise that resolves to the loaded account entity.
+   * @throws NotFoundException if the account is not found, not owned by the user, or setup is not complete.
+   */
   private async getAccountOrFail(accountId: string, user: UserEntity): Promise<Loaded<AccountEntity>> {
     const account = await this.accountsService.findById(accountId, user);
     if (!account) {
@@ -47,6 +55,12 @@ export class FavoritesService {
     return account;
   }
 
+  /**
+   * Retrieves weekly Key Performance Indicators (KPIs) for favorites for a specific account.
+   * @param accountId - The ID of the account.
+   * @param user - The user requesting the KPIs.
+   * @returns A promise that resolves to the favorites KPI DTO.
+   */
   async getWeeklyKpi(accountId: string, user: UserEntity): Promise<FavoritesKpiDto> {
     const account = await this.getAccountOrFail(accountId, user);
     const kpiData = await getPeriodKPI(
@@ -59,6 +73,12 @@ export class FavoritesService {
     return { ...kpiData, trend: getKPITrend(kpiData) };
   }
 
+  /**
+   * Retrieves monthly Key Performance Indicators (KPIs) for favorites for a specific account.
+   * @param accountId - The ID of the account.
+   * @param user - The user requesting the KPIs.
+   * @returns A promise that resolves to the favorites KPI DTO.
+   */
   async getMonthlyKpi(accountId: string, user: UserEntity): Promise<FavoritesKpiDto> {
     const account = await this.getAccountOrFail(accountId, user);
     const kpiData = await getPeriodKPI(
@@ -71,6 +91,12 @@ export class FavoritesService {
     return { ...kpiData, trend: getKPITrend(kpiData) };
   }
 
+  /**
+   * Retrieves yearly Key Performance Indicators (KPIs) for favorites for a specific account.
+   * @param accountId - The ID of the account.
+   * @param user - The user requesting the KPIs.
+   * @returns A promise that resolves to the favorites KPI DTO.
+   */
   async getYearlyKpi(accountId: string, user: UserEntity): Promise<FavoritesKpiDto> {
     const account = await this.getAccountOrFail(accountId, user);
     const kpiData = await getPeriodKPI(
@@ -83,6 +109,13 @@ export class FavoritesService {
     return { ...kpiData, trend: getKPITrend(kpiData) };
   }
 
+  /**
+   * Retrieves the total snapshot of favorites for a specific account.
+   * This typically represents the cumulative total and the date of the last data point.
+   * @param accountId - The ID of the account.
+   * @param user - The user requesting the snapshot.
+   * @returns A promise that resolves to the total snapshot DTO, or null if no data exists.
+   */
   async getTotalSnapshot(accountId: string, user: UserEntity): Promise<TotalSnapshotDto | null> {
     const account = await this.getAccountOrFail(accountId, user);
     const entry = await this.dailyTootStatsRepository.findOne({ account: account.id }, { orderBy: { day: 'DESC' } });
@@ -95,6 +128,13 @@ export class FavoritesService {
     return null;
   }
 
+  /**
+   * Retrieves chart data for favorites over a specified timeframe for a specific account.
+   * @param accountId - The ID of the account.
+   * @param timeframe - The timeframe for the chart data (e.g., 'last7days', 'last30days').
+   * @param user - The user requesting the chart data.
+   * @returns A promise that resolves to an array of chart data points.
+   */
   async getChartData(accountId: string, timeframe: string, user: UserEntity): Promise<ChartDataPointDto[]> {
     const account = await this.getAccountOrFail(accountId, user);
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
@@ -115,6 +155,13 @@ export class FavoritesService {
       .filter((item): item is ChartDataPointDto => item.value !== null);
   }
 
+  /**
+   * Retrieves the top toots ranked by favorites for a specific account within a given timeframe.
+   * @param accountId - The ID of the account.
+   * @param timeframe - The timeframe for ranking (e.g., 'last7days', 'last30days').
+   * @param user - The user requesting the top toots.
+   * @returns A promise that resolves to an array of favorited toot DTOs.
+   */
   async getTopTootsByFavorites(accountId: string, timeframe: string, user: UserEntity): Promise<FavoritedTootDto[]> {
     const account = await this.getAccountOrFail(accountId, user);
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
@@ -137,6 +184,14 @@ export class FavoritesService {
     })) as FavoritedTootDto[];
   }
 
+  /**
+   * Exports favorites data as a CSV file for a specific account and timeframe.
+   * @param accountId - The ID of the account.
+   * @param timeframe - The timeframe for the data to export.
+   * @param user - The user requesting the export.
+   * @param res - The Express response object to stream the CSV to.
+   * @returns A promise that resolves when the CSV has been streamed.
+   */
   async exportCsv(accountId: string, timeframe: string, user: UserEntity, res: Response): Promise<void> {
     const chartData = await this.getChartData(accountId, timeframe, user);
 

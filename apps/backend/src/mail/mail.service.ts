@@ -43,7 +43,11 @@ export class MailService {
    * Retrieves common context variables for email templates.
    * @returns An object containing common email context variables.
    */
-  private getCommonContext() {
+  private getCommonContext(): {
+    supportEmail: string;
+    marketingURL: string;
+    emailSenderName: string;
+  } {
     return {
       supportEmail: this.supportEmail,
       marketingURL: this.marketingURL,
