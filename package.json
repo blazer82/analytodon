@@ -3,8 +3,16 @@
   "version": "2.0.0",
   "description": "Analytics for Mastodon",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "pnpm --filter \"@analytodon/*\" run lint",
+    "test": "pnpm --filter \"@analytodon/*\" run test",
+    "prettier:check": "pnpm --filter \"@analytodon/*\" run prettier:check",
+    "prettier:write": "pnpm --filter \"@analytodon/*\" run prettier:write",
+    "codegen:rest": "openapi-generator-cli generate -i http://localhost:3000/api-json -g typescript-fetch -o packages/rest-client --additional-properties=npmName=@analytodon/rest-client,supportsES6=true,npmVersion=1.0.0",
+    "codegen": "pnpm codegen:rest"
   },
   "license": "GPL-3.0-only",
-  "packageManager": "pnpm@10.5.2"
+  "packageManager": "pnpm@10.5.2",
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.20.0"
+  }
 }

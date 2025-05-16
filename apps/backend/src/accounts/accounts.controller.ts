@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -126,7 +126,6 @@ export class AccountsController {
 
   @Get('connect/callback')
   @ApiOperation({ summary: 'Handle Mastodon OAuth callback' })
-  @ApiQuery({ type: ConnectAccountCallbackQueryDto })
   @ApiResponse({
     status: HttpStatus.FOUND,
     description: 'Redirects user to frontend settings page upon successful connection.',
