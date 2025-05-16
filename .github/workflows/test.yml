@@ -44,10 +44,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check formatting
-        run: pnpm --filter @analytodon/backend prettier:check
+        run: pnpm prettier:check
 
       - name: Run linter
-        run: pnpm --filter @analytodon/backend lint
+        run: pnpm lint
+
+      - name: Run typecheck
+        run: pnpm --filter @analytodon/frontend typecheck
 
       - name: Run unit tests
         run: pnpm --filter @analytodon/backend test:unit

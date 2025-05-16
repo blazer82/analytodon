@@ -1,0 +1,16 @@
+{
+  "importOrder": [
+    "<BUILTIN_MODULES>",
+    "",
+    "<THIRD_PARTY_MODULES>",
+    "",
+    "^([./])(?!.*[.]json$)",
+    "",
+    "[.]json$"
+  ],
+  "importOrderParserPlugins": ["typescript", "decorators-legacy"],
+  "plugins": ["@ianvs/prettier-plugin-sort-imports"],
+  "printWidth": 120,
+  "singleQuote": true,
+  "trailingComma": "all"
+}
