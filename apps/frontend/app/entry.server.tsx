@@ -7,7 +7,6 @@
 import { PassThrough } from 'node:stream';
 
 import type { EntryContext } from '@remix-run/node';
-import { createReadableStreamFromReadable } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
 import { isbot } from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
@@ -36,7 +35,7 @@ function handleBotRequest(
 ) {
   return new Promise((resolve, reject) => {
     const cache = createEmotionCache();
-    createEmotionServer(cache);
+    const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
 
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
@@ -47,16 +46,29 @@ function handleBotRequest(
         onAllReady() {
           shellRendered = true;
           const body = new PassThrough();
-          const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set('Content-Type', 'text/html');
 
-          resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: responseStatusCode,
-            }),
-          );
+          // We need to collect the HTML and then inject the critical CSS
+          const bodyChunks: Buffer[] = [];
+          body.on('data', (chunk) => bodyChunks.push(Buffer.from(chunk)));
+          body.on('end', () => {
+            const html = Buffer.concat(bodyChunks).toString();
+
+            // Extract and inject critical CSS
+            const chunks = extractCriticalToChunks(html);
+            const criticalCss = constructStyleTagsFromChunks(chunks);
+
+            // Insert the critical CSS right before the closing head tag
+            const modifiedHtml = html.replace('</head>', `${criticalCss}</head>`);
+
+            resolve(
+              new Response(modifiedHtml, {
+                headers: responseHeaders,
+                status: responseStatusCode,
+              }),
+            );
+          });
 
           pipe(body);
         },
@@ -87,7 +99,7 @@ function handleBrowserRequest(
 ) {
   return new Promise((resolve, reject) => {
     const cache = createEmotionCache();
-    createEmotionServer(cache);
+    const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
 
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
@@ -98,16 +110,29 @@ function handleBrowserRequest(
         onShellReady() {
           shellRendered = true;
           const body = new PassThrough();
-          const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set('Content-Type', 'text/html');
 
-          resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: responseStatusCode,
-            }),
-          );
+          // We need to collect the HTML and then inject the critical CSS
+          const bodyChunks: Buffer[] = [];
+          body.on('data', (chunk) => bodyChunks.push(Buffer.from(chunk)));
+          body.on('end', () => {
+            const html = Buffer.concat(bodyChunks).toString();
+
+            // Extract and inject critical CSS
+            const chunks = extractCriticalToChunks(html);
+            const criticalCss = constructStyleTagsFromChunks(chunks);
+
+            // Insert the critical CSS right before the closing head tag
+            const modifiedHtml = html.replace('</head>', `${criticalCss}</head>`);
+
+            resolve(
+              new Response(modifiedHtml, {
+                headers: responseHeaders,
+                status: responseStatusCode,
+              }),
+            );
+          });
 
           pipe(body);
         },

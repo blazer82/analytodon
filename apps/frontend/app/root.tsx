@@ -4,11 +4,9 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { useAppTheme } from './utils/theme';
 import { AuthProvider } from './utils/auth.context';
 import { CacheProvider } from '@emotion/react';
-import { createEmotionCache } from './utils/createEmotionCache';
 import { withEmotionCache } from '@emotion/react';
-
-// Create a client-side cache, shared for the whole session of the user in the browser
-createEmotionCache();
+import { useContext, useEffect } from 'react';
+import { ClientStyleContext } from './utils/client-style-context';
 
 export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -45,6 +43,25 @@ interface DocumentProps {
 
 const Document = withEmotionCache(({ children, title }: DocumentProps, emotionCache) => {
   const theme = useAppTheme();
+  const clientStyleData = useContext(ClientStyleContext);
+
+  // Only executed on client
+  useEffect(() => {
+    // Re-link sheet container
+    emotionCache.sheet.container = document.head;
+
+    // Re-inject tags
+    const tags = emotionCache.sheet.tags;
+    emotionCache.sheet.flush();
+    tags.forEach((tag) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (emotionCache.sheet as any)._insertTag(tag);
+    });
+
+    // Reset cache to reapply global styles
+    clientStyleData.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <html lang="en">
