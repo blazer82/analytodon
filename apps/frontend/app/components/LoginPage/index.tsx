@@ -1,75 +1,148 @@
 import * as React from 'react';
 
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { Alert } from '@mui/material';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
-import Grid from '@mui/material/Grid';
-import Link from '@mui/material/Link';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import { Form } from '@remix-run/react';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { Alert, Box, IconButton, InputAdornment, Link as MuiLink, Typography, useTheme } from '@mui/material';
+import { Form, Link } from '@remix-run/react';
 import Footer from '~/components/Footer';
+import Logo from '~/components/Logo';
+
+import {
+  FormCard,
+  FormSection,
+  HeroBackground,
+  HeroContent,
+  HeroSection,
+  LinksContainer,
+  LoginContainer,
+  StyledTextField,
+  SubmitButton,
+} from './styles';
 
 const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
+  const theme = useTheme();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [emailFocused, setEmailFocused] = React.useState(false);
+  const [passwordFocused, setPasswordFocused] = React.useState(false);
+
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-          <LockOutlinedIcon />
-        </Avatar>
-        <Typography component="h1" variant="h5">
-          Sign in to Analytodon
-        </Typography>
-        <Box component={Form} method="post" noValidate sx={{ mt: 1 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-          />
-          {error && <Alert severity="error">{error}</Alert>}
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-            Sign In
-          </Button>
-          <Grid container>
-            <Grid>
-              <Link href="/register" variant="body2">
-                {"Don't have an account? Sign up!"}
-              </Link>
-            </Grid>
-            <Grid>
-              <Link href="/reset-password" variant="body2">
-                {'Forgot your password? Click here!'}
-              </Link>
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
-      <Footer />
-    </Container>
+    <LoginContainer>
+      <HeroSection>
+        <HeroBackground>
+          {/* Abstract pattern background */}
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            <circle cx="50%" cy="50%" r="150" fill="currentColor" fillOpacity="0.1" />
+            <circle cx="70%" cy="30%" r="100" fill="currentColor" fillOpacity="0.1" />
+            <circle cx="30%" cy="70%" r="120" fill="currentColor" fillOpacity="0.1" />
+          </svg>
+        </HeroBackground>
+        <HeroContent>
+          <Logo size="large" color={theme.palette.primary.contrastText} />
+          <Typography variant="h4" component="h1" sx={{ mt: 3, fontWeight: 700 }}>
+            Welcome Back!
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 2, mb: 4, opacity: 0.9 }}>
+            Track your Mastodon analytics and gain valuable insights about your audience and content performance.
+          </Typography>
+        </HeroContent>
+      </HeroSection>
+
+      <FormSection>
+        <FormCard>
+          <Typography variant="h5" component="h2" align="center" sx={{ mb: 3, fontWeight: 600 }}>
+            Sign in to your account
+          </Typography>
+
+          <Box component={Form} method="post" noValidate>
+            <StyledTextField
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
+              sx={{
+                transform: emailFocused ? 'translateY(-4px)' : 'none',
+                transition: 'transform 0.2s ease-in-out',
+              }}
+            />
+
+            <StyledTextField
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
+              sx={{
+                transform: passwordFocused ? 'translateY(-4px)' : 'none',
+                transition: 'transform 0.2s ease-in-out',
+              }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <SubmitButton type="submit" fullWidth variant="contained" size="large">
+              Sign In
+            </SubmitButton>
+
+            <LinksContainer>
+              <Typography variant="body2" align="center">
+                <MuiLink component={Link} to="/register" underline="hover">
+                  New to Analytodon? Create an account
+                </MuiLink>
+              </Typography>
+              <Typography variant="body2" align="center">
+                <MuiLink component={Link} to="/reset-password" underline="hover">
+                  Forgot your password?
+                </MuiLink>
+              </Typography>
+            </LinksContainer>
+          </Box>
+        </FormCard>
+        <Footer />
+      </FormSection>
+    </LoginContainer>
   );
 };
 

@@ -1,18 +1,21 @@
 import * as React from 'react';
 
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { Alert } from '@mui/material';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
-import Grid from '@mui/material/Grid';
-import Link from '@mui/material/Link';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
+import { Alert, Box, Link as MuiLink, Typography, useTheme } from '@mui/material';
 import { type MetaFunction } from '@remix-run/node';
-import { Form, useActionData } from '@remix-run/react';
+import { Form, Link, useActionData } from '@remix-run/react';
 import Footer from '~/components/Footer';
+import {
+  FormCard,
+  FormSection,
+  HeroBackground,
+  HeroContent,
+  HeroSection,
+  LinksContainer,
+  LoginContainer,
+  StyledTextField,
+  SubmitButton,
+} from '~/components/LoginPage/styles';
+import Logo from '~/components/Logo';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Reset your Analytodon password' }];
@@ -28,40 +31,75 @@ export async function action() {
 }
 
 export default function ResetPassword() {
+  const theme = useTheme();
   const actionData = useActionData<typeof action>();
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-          <LockOutlinedIcon />
-        </Avatar>
-        <Typography component="h1" variant="h5">
-          Reset your Analytodon password
-        </Typography>
-        <Box component={Form} method="post" noValidate sx={{ mt: 1 }}>
-          <TextField margin="normal" required fullWidth label="Your Email Address" name="email" autoComplete="email" />
-          {actionData?.error && <Alert severity="error">{actionData.error}</Alert>}
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-            Send reset link
-          </Button>
-          <Grid container>
-            <Grid>
-              <Link href="/login" variant="body2">
-                {"Don't need to reset your password? Log in here!"}
-              </Link>
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
-      <Footer />
-    </Container>
+    <LoginContainer>
+      <HeroSection>
+        <HeroBackground>
+          {/* Abstract pattern background */}
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            <circle cx="50%" cy="50%" r="150" fill="currentColor" fillOpacity="0.1" />
+            <circle cx="70%" cy="30%" r="100" fill="currentColor" fillOpacity="0.1" />
+            <circle cx="30%" cy="70%" r="120" fill="currentColor" fillOpacity="0.1" />
+          </svg>
+        </HeroBackground>
+        <HeroContent>
+          <Logo size="large" color={theme.palette.primary.contrastText} />
+          <Typography variant="h4" component="h1" sx={{ mt: 3, fontWeight: 700 }}>
+            Password Reset
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 2, mb: 4, opacity: 0.9 }}>
+            Don&apos;t worry! It happens to the best of us. Enter your email address and we&apos;ll send you a link to
+            reset your password.
+          </Typography>
+        </HeroContent>
+      </HeroSection>
+
+      <FormSection>
+        <FormCard>
+          <Typography variant="h5" component="h2" align="center" sx={{ mb: 3, fontWeight: 600 }}>
+            Reset your password
+          </Typography>
+
+          <Box component={Form} method="post" noValidate>
+            <StyledTextField
+              required
+              fullWidth
+              label="Your Email Address"
+              name="email"
+              autoComplete="email"
+              placeholder="Enter the email you used to register"
+            />
+
+            {actionData?.error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {actionData.error}
+              </Alert>
+            )}
+
+            <SubmitButton type="submit" fullWidth variant="contained" size="large">
+              Send Reset Link
+            </SubmitButton>
+
+            <LinksContainer>
+              <Typography variant="body2" align="center">
+                <MuiLink component={Link} to="/login" underline="hover">
+                  Remember your password? Sign in
+                </MuiLink>
+              </Typography>
+            </LinksContainer>
+          </Box>
+        </FormCard>
+        <Footer />
+      </FormSection>
+    </LoginContainer>
   );
 }
