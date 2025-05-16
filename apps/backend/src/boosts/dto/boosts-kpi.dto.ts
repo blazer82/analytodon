@@ -13,6 +13,10 @@ export class BoostsKpiDto {
   @ApiPropertyOptional({ description: 'Indicates if the current period is the full last period' })
   isLastPeriod?: boolean;
 
-  @ApiPropertyOptional({ description: 'Trend compared to the previous period' })
-  trend?: number;
+  @ApiPropertyOptional({
+    description: 'Trend compared to the previous period (null if cannot be calculated)',
+    type: 'number',
+    nullable: true,
+  })
+  trend?: number | null;
 }

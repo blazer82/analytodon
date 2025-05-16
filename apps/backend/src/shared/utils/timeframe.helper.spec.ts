@@ -319,12 +319,12 @@ describe('TimeframeHelper', () => {
       };
 
       const trend = getKPITrend(kpi);
-      expect(trend).toBe(Infinity);
+      expect(trend).toBe(100); // Now capped at 100 instead of Infinity
     });
 
-    it('should handle undefined values', () => {
-      expect(getKPITrend({})).toBeUndefined();
-      expect(getKPITrend({ currentPeriod: 100 })).toBeUndefined();
+    it('should return null for undefined values', () => {
+      expect(getKPITrend({})).toBeNull();
+      expect(getKPITrend({ currentPeriod: 100 })).toBeNull();
     });
   });
 

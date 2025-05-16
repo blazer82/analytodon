@@ -280,12 +280,12 @@ export async function getPeriodKPI(
   return results;
 }
 
-export const getKPITrend = (kpi: KpiDto): number | undefined => {
+export const getKPITrend = (kpi: KpiDto): number | null => {
   if (kpi.previousPeriod === undefined || kpi.currentPeriod === undefined || kpi.currentPeriodProgress === undefined) {
-    return undefined;
+    return null;
   }
   if (kpi.previousPeriod === 0) {
-    return kpi.currentPeriod > 0 ? Infinity : 0; // Or handle as per requirements
+    return kpi.currentPeriod > 0 ? 100 : 0; // Cap at 100% increase instead of Infinity
   }
   // Adjust current period value based on progress for a fair comparison
   const projectedCurrentPeriod =

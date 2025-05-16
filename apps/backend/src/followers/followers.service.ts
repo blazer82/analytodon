@@ -66,7 +66,11 @@ export class FollowersService {
       getDaysToWeekBeginning,
       'followersCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**
@@ -84,7 +88,11 @@ export class FollowersService {
       getDaysToMonthBeginning,
       'followersCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**
@@ -102,7 +110,11 @@ export class FollowersService {
       getDaysToYearBeginning,
       'followersCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**

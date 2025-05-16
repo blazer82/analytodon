@@ -70,7 +70,11 @@ export class FavoritesService {
       getDaysToWeekBeginning,
       'favouritesCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**
@@ -88,7 +92,11 @@ export class FavoritesService {
       getDaysToMonthBeginning,
       'favouritesCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**
@@ -106,7 +114,11 @@ export class FavoritesService {
       getDaysToYearBeginning,
       'favouritesCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**

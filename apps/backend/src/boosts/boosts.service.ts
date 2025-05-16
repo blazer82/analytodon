@@ -72,7 +72,11 @@ export class BoostsService {
       getDaysToWeekBeginning,
       'boostsCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**
@@ -91,7 +95,11 @@ export class BoostsService {
       getDaysToMonthBeginning,
       'boostsCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**
@@ -110,7 +118,11 @@ export class BoostsService {
       getDaysToYearBeginning,
       'boostsCount',
     );
-    return { ...kpiData, trend: getKPITrend(kpiData) };
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+    };
   }
 
   /**
