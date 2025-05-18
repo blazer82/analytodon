@@ -1,4 +1,4 @@
-import { json, type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
+import { type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
 import { useActionData } from '@remix-run/react';
 import LoginPage from '~/components/LoginPage';
 import { createAuthApi } from '~/services/api.server';
@@ -29,7 +29,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Validate form data
   if (!email || !password) {
-    return json({ error: 'Email and password are required' }, { status: 400 });
+    return new Response(JSON.stringify({ error: 'Email and password are required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -49,14 +52,23 @@ export async function action({ request }: ActionFunctionArgs) {
     if (apiError.response) {
       const status = apiError.response.status;
       if (status === 401) {
-        return json({ error: 'Invalid email or password' }, { status: 401 });
+        return new Response(JSON.stringify({ error: 'Invalid email or password' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       if (status === 429) {
-        return json({ error: 'Too many login attempts. Please try again later.' }, { status: 429 });
+        return new Response(JSON.stringify({ error: 'Too many login attempts. Please try again later.' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
     }
 
-    return json({ error: 'An error occurred during login. Please try again.' }, { status: 500 });
+    return new Response(JSON.stringify({ error: 'An error occurred during login. Please try again.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 

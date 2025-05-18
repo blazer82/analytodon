@@ -1,5 +1,4 @@
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import ProtectedRoute from '~/components/ProtectedRoute';
 import { requireUser } from '~/utils/session.server';
@@ -12,7 +11,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Require user to be logged in, redirects to login if not
   const user = await requireUser(request);
 
-  return json({ user });
+  return { user };
 }
 
 export default function Index() {
