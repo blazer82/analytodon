@@ -12,7 +12,8 @@ import { resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { UserEntity } from '../users/entities/user.entity';
 import { AllTopTootsResponseDto } from './dto/all-top-toots-response.dto';
 import { TootRankingEnum } from './dto/get-top-toots-query.dto';
-import { TootsService } from './toots.service';
+import { RankedTootDto } from './dto/ranked-toot.dto';
+import { RankedTootEntity, TootsService } from './toots.service';
 
 @ApiTags('Toots')
 @ApiBearerAuth()
@@ -40,7 +41,20 @@ export class TootsController {
     const { dateFrom, dateTo, timeframe: resolvedTimeframe } = resolveTimeframe(account.timezone, query.timeframe);
     const limit = 10; // As per legacy
 
-    const [top, topByReplies, topByBoosts, topByFavorites] = await Promise.all([
+    const mapToRankedTootDto = (toots: RankedTootEntity[]): RankedTootDto[] => {
+      return toots.map((toot) => ({
+        id: toot._id.toString(), // Ensure _id is converted to string id
+        content: toot.content,
+        url: toot.url,
+        reblogsCount: toot.reblogsCount,
+        repliesCount: toot.repliesCount,
+        favouritesCount: toot.favouritesCount,
+        createdAt: toot.createdAt,
+        rank: toot.rank,
+      }));
+    };
+
+    const [topEntities, topByRepliesEntities, topByBoostsEntities, topByFavoritesEntities] = await Promise.all([
       this.tootsService.getTopToots({ accountId, ranking: TootRankingEnum.TOP, dateFrom, dateTo, limit }),
       this.tootsService.getTopToots({ accountId, ranking: TootRankingEnum.REPLIES, dateFrom, dateTo, limit }),
       this.tootsService.getTopToots({ accountId, ranking: TootRankingEnum.BOOSTS, dateFrom, dateTo, limit }),
@@ -48,10 +62,10 @@ export class TootsController {
     ]);
 
     return {
-      top: { data: top, timeframe: resolvedTimeframe },
-      topByReplies: { data: topByReplies, timeframe: resolvedTimeframe },
-      topByBoosts: { data: topByBoosts, timeframe: resolvedTimeframe },
-      topByFavorites: { data: topByFavorites, timeframe: resolvedTimeframe },
+      top: { data: mapToRankedTootDto(topEntities), timeframe: resolvedTimeframe },
+      topByReplies: { data: mapToRankedTootDto(topByRepliesEntities), timeframe: resolvedTimeframe },
+      topByBoosts: { data: mapToRankedTootDto(topByBoostsEntities), timeframe: resolvedTimeframe },
+      topByFavorites: { data: mapToRankedTootDto(topByFavoritesEntities), timeframe: resolvedTimeframe },
     };
   }
 }

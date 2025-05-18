@@ -15,15 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  AuthResponseDto,
   LoginDto,
   RefreshTokenDto,
   RegisterUserDto,
   RequestPasswordResetDto,
   ResetPasswordDto,
-  TokenResponseDto,
   UserResponseDto,
 } from '../models/index';
 import {
+    AuthResponseDtoFromJSON,
+    AuthResponseDtoToJSON,
     LoginDtoFromJSON,
     LoginDtoToJSON,
     RefreshTokenDtoFromJSON,
@@ -34,8 +36,6 @@ import {
     RequestPasswordResetDtoToJSON,
     ResetPasswordDtoFromJSON,
     ResetPasswordDtoToJSON,
-    TokenResponseDtoFromJSON,
-    TokenResponseDtoToJSON,
     UserResponseDtoFromJSON,
     UserResponseDtoToJSON,
 } from '../models/index';
@@ -106,7 +106,7 @@ export class AuthenticationApi extends runtime.BaseAPI {
     /**
      * Log in a user
      */
-    async authControllerLoginRaw(requestParameters: AuthControllerLoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenResponseDto>> {
+    async authControllerLoginRaw(requestParameters: AuthControllerLoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthResponseDto>> {
         if (requestParameters['loginDto'] == null) {
             throw new runtime.RequiredError(
                 'loginDto',
@@ -128,13 +128,13 @@ export class AuthenticationApi extends runtime.BaseAPI {
             body: LoginDtoToJSON(requestParameters['loginDto']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => TokenResponseDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuthResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Log in a user
      */
-    async authControllerLogin(requestParameters: AuthControllerLoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenResponseDto> {
+    async authControllerLogin(requestParameters: AuthControllerLoginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthResponseDto> {
         const response = await this.authControllerLoginRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -175,7 +175,7 @@ export class AuthenticationApi extends runtime.BaseAPI {
     /**
      * Refresh access token
      */
-    async authControllerRefreshTokensRaw(requestParameters: AuthControllerRefreshTokensRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenResponseDto>> {
+    async authControllerRefreshTokensRaw(requestParameters: AuthControllerRefreshTokensRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthResponseDto>> {
         if (requestParameters['refreshTokenDto'] == null) {
             throw new runtime.RequiredError(
                 'refreshTokenDto',
@@ -197,13 +197,13 @@ export class AuthenticationApi extends runtime.BaseAPI {
             body: RefreshTokenDtoToJSON(requestParameters['refreshTokenDto']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => TokenResponseDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuthResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Refresh access token
      */
-    async authControllerRefreshTokens(requestParameters: AuthControllerRefreshTokensRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenResponseDto> {
+    async authControllerRefreshTokens(requestParameters: AuthControllerRefreshTokensRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthResponseDto> {
         const response = await this.authControllerRefreshTokensRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -211,7 +211,7 @@ export class AuthenticationApi extends runtime.BaseAPI {
     /**
      * Register a new user
      */
-    async authControllerRegisterRaw(requestParameters: AuthControllerRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenResponseDto>> {
+    async authControllerRegisterRaw(requestParameters: AuthControllerRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthResponseDto>> {
         if (requestParameters['registerUserDto'] == null) {
             throw new runtime.RequiredError(
                 'registerUserDto',
@@ -233,13 +233,13 @@ export class AuthenticationApi extends runtime.BaseAPI {
             body: RegisterUserDtoToJSON(requestParameters['registerUserDto']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => TokenResponseDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuthResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Register a new user
      */
-    async authControllerRegister(requestParameters: AuthControllerRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenResponseDto> {
+    async authControllerRegister(requestParameters: AuthControllerRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthResponseDto> {
         const response = await this.authControllerRegisterRaw(requestParameters, initOverrides);
         return await response.value();
     }

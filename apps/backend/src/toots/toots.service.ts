@@ -4,8 +4,10 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
-import { RankedTootDto } from './dto/ranked-toot.dto';
+// RankedTootDto is now a concern of the controller
 import { TootEntity } from './entities/toot.entity';
+
+export type RankedTootEntity = TootEntity & { rank: number };
 
 @Injectable()
 export class TootsService {
@@ -20,10 +22,10 @@ export class TootsService {
   /**
    * Retrieves top toots based on specified ranking criteria, limit, and date range.
    * @param options - Options for fetching top toots, including accountId, limit, ranking, dateFrom, and dateTo.
-   * @returns A promise that resolves to an array of ranked toot DTOs.
+   * @returns A promise that resolves to an array of TootEntity augmented with a rank.
    * @throws Error if fetching top toots fails.
    */
-  async getTopToots(options: GetTopTootsOptions): Promise<RankedTootDto[]> {
+  async getTopToots(options: GetTopTootsOptions): Promise<RankedTootEntity[]> {
     const { accountId, limit = 5, ranking = TootRankingEnum.TOP, dateFrom, dateTo } = options;
 
     const matchConditions: FilterQuery<TootEntity> = { account: new ObjectId(accountId) };
@@ -65,18 +67,8 @@ export class TootsService {
     ];
 
     try {
-      const results: (TootEntity & { rank: number })[] = await this.em.aggregate(TootEntity, pipeline);
-
-      return results.map((toot) => ({
-        id: toot._id.toString(),
-        content: toot.content,
-        url: toot.url,
-        reblogsCount: toot.reblogsCount,
-        repliesCount: toot.repliesCount,
-        favouritesCount: toot.favouritesCount,
-        createdAt: toot.createdAt,
-        rank: toot.rank,
-      }));
+      const results: RankedTootEntity[] = await this.em.aggregate(TootEntity, pipeline);
+      return results; // Return entities directly with rank
     } catch (error) {
       this.logger.error(`Error fetching top toots for account ${accountId}: ${error.message}`, error.stack);
       throw error; // Or handle more gracefully

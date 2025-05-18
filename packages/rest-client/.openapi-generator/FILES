@@ -17,6 +17,7 @@ src/index.ts
 src/models/AccountResponseDto.ts
 src/models/AccountsControllerConnect200Response.ts
 src/models/AllTopTootsResponseDto.ts
+src/models/AuthResponseDto.ts
 src/models/BoostedTootDto.ts
 src/models/BoostsKpiDto.ts
 src/models/ChartDataPointDto.ts
@@ -35,7 +36,8 @@ src/models/RepliesKpiDto.ts
 src/models/RequestPasswordResetDto.ts
 src/models/ResetPasswordDto.ts
 src/models/SendEmailDto.ts
-src/models/TokenResponseDto.ts
+src/models/SessionAccountDto.ts
+src/models/SessionUserDto.ts
 src/models/TopTootsCategoryDto.ts
 src/models/TotalSnapshotDto.ts
 src/models/UpdateAccountDto.ts

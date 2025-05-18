@@ -28,7 +28,8 @@ export class BoostsController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Weekly boosts KPI data.', type: BoostsKpiDto })
   async getWeeklyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
-    return this.boostsService.getWeeklyKpi(accountId, user);
+    const kpiData = await this.boostsService.getWeeklyKpi(accountId, user);
+    return { ...kpiData } as BoostsKpiDto;
   }
 
   @Get('kpi/monthly')
@@ -37,7 +38,8 @@ export class BoostsController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Monthly boosts KPI data.', type: BoostsKpiDto })
   async getMonthlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
-    return this.boostsService.getMonthlyKpi(accountId, user);
+    const kpiData = await this.boostsService.getMonthlyKpi(accountId, user);
+    return { ...kpiData } as BoostsKpiDto;
   }
 
   @Get('kpi/yearly')
@@ -46,7 +48,8 @@ export class BoostsController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Yearly boosts KPI data.', type: BoostsKpiDto })
   async getYearlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
-    return this.boostsService.getYearlyKpi(accountId, user);
+    const kpiData = await this.boostsService.getYearlyKpi(accountId, user);
+    return { ...kpiData } as BoostsKpiDto;
   }
 
   @Get('kpi/total')
@@ -62,7 +65,11 @@ export class BoostsController {
     @Param('accountId') accountId: string,
     @GetUser() user: UserEntity,
   ): Promise<TotalSnapshotDto | null> {
-    return this.boostsService.getTotalSnapshot(accountId, user);
+    const snapshotData = await this.boostsService.getTotalSnapshot(accountId, user);
+    if (!snapshotData) {
+      return null;
+    }
+    return { ...snapshotData } as TotalSnapshotDto;
   }
 
   @Get('chart')
@@ -76,7 +83,8 @@ export class BoostsController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<ChartDataPointDto[]> {
-    return this.boostsService.getChartData(accountId, query.timeframe, user);
+    const chartInternalData = await this.boostsService.getChartData(accountId, query.timeframe, user);
+    return chartInternalData.map((point) => ({ ...point }) as ChartDataPointDto);
   }
 
   @Get('top-toots')
@@ -90,7 +98,20 @@ export class BoostsController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<BoostedTootDto[]> {
-    return this.boostsService.getTopTootsByBoosts(accountId, query.timeframe, user);
+    const rankedEntities = await this.boostsService.getTopTootsByBoosts(accountId, query.timeframe, user);
+    return rankedEntities.map(
+      (toot) =>
+        ({
+          id: toot._id.toString(),
+          content: toot.content,
+          url: toot.url,
+          reblogsCount: toot.reblogsCount,
+          repliesCount: toot.repliesCount,
+          favouritesCount: toot.favouritesCount,
+          createdAt: toot.createdAt,
+          rank: toot.rank,
+        }) as BoostedTootDto, // Cast needed as BoostedTootDto might not have rank or have it optional
+    );
   }
 
   @Get('csv')

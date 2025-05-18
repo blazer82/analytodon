@@ -159,10 +159,9 @@ describe('AuthService', () => {
       expect(mockUserCredentialsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(
         expect.objectContaining({ refreshToken: 'newRefreshToken' }),
       );
-      expect(result).toEqual({
-        accessToken: 'accessToken',
-        refreshToken: 'newRefreshToken',
-      });
+      expect(result.token).toBe('accessToken');
+      expect(result.refreshToken).toBe('newRefreshToken');
+      expect(result.user).toBe(mockUser);
     });
 
     it('should update oldAccountDeletionNoticeSent if true', async () => {
@@ -245,10 +244,9 @@ describe('AuthService', () => {
       expect(mockMailService.sendEmailVerificationMail).toHaveBeenCalledWith(mockCreatedUser, 'mocked-uuid');
       expect(mockMailService.sendSignupNotificationMail).toHaveBeenCalledWith(mockCreatedUser);
 
-      expect(result).toEqual({
-        accessToken: 'accessToken',
-        refreshToken: 'mocked-uuid',
-      });
+      expect(result.token).toBe('accessToken');
+      expect(result.refreshToken).toBe('mocked-uuid'); // This comes from the login call within registerUser
+      expect(result.user).toBe(mockCreatedUser);
     });
 
     it('should throw ConflictException if user already exists', async () => {
@@ -298,10 +296,13 @@ describe('AuthService', () => {
     it('should return new access and refresh tokens', async () => {
       const result = await service.refreshTokens(refreshToken);
       expect(mockUserCredentialsRepository.findOne).toHaveBeenCalledWith({ refreshToken }, { populate: ['user'] });
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        id: mockUser.id,
-        isActive: true,
-      });
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith(
+        {
+          id: mockUser.id,
+          isActive: true,
+        },
+        { populate: ['accounts'] },
+      );
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         sub: mockUser.id,
         email: mockUser.email,
@@ -310,10 +311,9 @@ describe('AuthService', () => {
       expect(mockUserCredentialsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(
         expect.objectContaining({ refreshToken: 'newRefreshTokenUuid' }),
       );
-      expect(result).toEqual({
-        accessToken: 'newAccessToken',
-        refreshToken: 'newRefreshTokenUuid',
-      });
+      expect(result.token).toBe('newAccessToken');
+      expect(result.refreshToken).toBe('newRefreshTokenUuid');
+      expect(result.user).toBe(mockUser);
     });
 
     it('should throw UnauthorizedException if token is invalid', async () => {

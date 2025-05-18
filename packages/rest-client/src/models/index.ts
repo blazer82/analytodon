@@ -3,6 +3,7 @@
 export * from './AccountResponseDto';
 export * from './AccountsControllerConnect200Response';
 export * from './AllTopTootsResponseDto';
+export * from './AuthResponseDto';
 export * from './BoostedTootDto';
 export * from './BoostsKpiDto';
 export * from './ChartDataPointDto';
@@ -21,7 +22,8 @@ export * from './RepliesKpiDto';
 export * from './RequestPasswordResetDto';
 export * from './ResetPasswordDto';
 export * from './SendEmailDto';
-export * from './TokenResponseDto';
+export * from './SessionAccountDto';
+export * from './SessionUserDto';
 export * from './TopTootsCategoryDto';
 export * from './TotalSnapshotDto';
 export * from './UpdateAccountDto';

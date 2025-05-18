@@ -99,7 +99,7 @@ describe('TootsService', () => {
         ]),
       );
       expect(result.length).toBe(2);
-      expect(result[0].id).toBe(mockTootEntities[1]._id.toString());
+      expect(result[0]._id.toString()).toBe(mockTootEntities[1]._id.toString());
       expect(result[0].rank).toBe(mockTootEntities[1].rank);
     });
 
@@ -238,7 +238,7 @@ describe('TootsService', () => {
 
       expect(result.length).toBe(1);
       const mappedToot = result[0];
-      expect(mappedToot.id).toBe(singleToot._id.toString());
+      expect(mappedToot._id.toString()).toBe(singleToot._id.toString());
       expect(mappedToot.content).toBe(singleToot.content);
       expect(mappedToot.url).toBe(singleToot.url);
       expect(mappedToot.reblogsCount).toBe(singleToot.reblogsCount);

@@ -5,11 +5,12 @@ import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
+import { AccountEntity } from '../../src/accounts/entities/account.entity';
 import { AppModule } from '../../src/app.module';
+import { AuthResponseDto } from '../../src/auth/dto/auth-response.dto';
 import { LoginDto } from '../../src/auth/dto/login.dto';
 import { RegisterUserDto } from '../../src/auth/dto/register-user.dto';
 import { ResetPasswordDto } from '../../src/auth/dto/reset-password.dto';
-import { TokenResponseDto } from '../../src/auth/dto/token-response.dto';
 import { UserCredentialsEntity } from '../../src/auth/entities/user-credentials.entity';
 import { MailService } from '../../src/mail/mail.service';
 import { authConstants } from '../../src/shared/constants/auth.constants';
@@ -74,8 +75,29 @@ describe('AuthController (e2e)', () => {
   const clearDatabase = async () => {
     // Order matters due to foreign key constraints if they were enforced at DB level
     // or for logical cleanup. MikroORM handles this well, but explicit order is safer.
-    await entityManager.nativeDelete(UserCredentialsEntity, {});
+    // Delete entities that might have foreign keys to UserEntity or AccountEntity first.
+    await entityManager.nativeDelete(AccountEntity, {}); // Accounts might reference Users
+    await entityManager.nativeDelete(UserCredentialsEntity, {}); // UserCredentials reference Users
     await entityManager.nativeDelete(UserEntity, {});
+  };
+
+  const createTestAccount = async (user: UserEntity, em: EntityManager): Promise<AccountEntity> => {
+    const accountData = {
+      owner: user,
+      serverURL: 'mastodon.test',
+      name: 'Test Account',
+      username: 'testuser',
+      accountName: '@testuser@mastodon.test',
+      accountURL: 'https://mastodon.test/@testuser',
+      avatarURL: 'https://mastodon.test/avatar.png',
+      isActive: true,
+      setupComplete: true,
+      timezone: 'America/New_York',
+      utcOffset: '-04:00',
+    };
+    const account = em.create(AccountEntity, accountData);
+    await em.persistAndFlush(account);
+    return account;
   };
 
   beforeEach(async () => {
@@ -95,8 +117,10 @@ describe('AuthController (e2e)', () => {
         .send(registerDto)
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toHaveProperty('accessToken');
+      expect(response.body).toHaveProperty('token');
       expect(response.body).toHaveProperty('refreshToken');
+      expect(response.body).toHaveProperty('user');
+      expect(response.body.user.email).toBe(testUser.email);
 
       const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email });
       expect(dbUser).not.toBeNull();
@@ -130,21 +154,61 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('/auth/login (POST)', () => {
+    let testAccount: AccountEntity;
+
     beforeEach(async () => {
       // Register a user to test login
       await request(app.getHttpServer()).post('/auth/register').send(testUser);
+      const registeredUser = await entityManager.findOneOrFail(UserEntity, { email: testUser.email });
+      testAccount = await createTestAccount(registeredUser, entityManager);
     });
 
-    it('should log in an existing user and return tokens', async () => {
+    it('should log in an existing user and return tokens with populated account data', async () => {
       const loginDto: LoginDto = { email: testUser.email, password: testUser.password };
 
       const response = await request(app.getHttpServer()).post('/auth/login').send(loginDto).expect(HttpStatus.OK);
 
-      expect(response.body).toHaveProperty('accessToken');
+      expect(response.body).toHaveProperty('token');
       expect(response.body).toHaveProperty('refreshToken');
+      expect(response.body).toHaveProperty('user');
+      expect(response.body.user.email).toBe(testUser.email);
+      expect(response.body.user.accounts).toBeInstanceOf(Array);
+      expect(response.body.user.accounts.length).toBe(1);
+
+      const accountDto = response.body.user.accounts[0];
+      expect(accountDto._id).toBe(testAccount.id);
+      expect(accountDto.serverURL).toBe(testAccount.serverURL);
+      expect(accountDto.name).toBe(testAccount.name);
+      expect(accountDto.username).toBe(testAccount.username);
+      expect(accountDto.accountName).toBe(testAccount.accountName);
+      expect(accountDto.accountURL).toBe(testAccount.accountURL);
+      expect(accountDto.avatarURL).toBe(testAccount.avatarURL);
+      expect(accountDto.timezone).toBe(testAccount.timezone);
+      expect(accountDto.utcOffset).toBe(testAccount.utcOffset);
 
       const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email }, { populate: ['credentials'] });
       expect(dbUser?.credentials?.refreshToken).toBe(response.body.refreshToken);
+    });
+
+    it('should log in and not include accounts that are not setupComplete', async () => {
+      // Create another account that is not setupComplete
+      const registeredUser = await entityManager.findOneOrFail(UserEntity, { email: testUser.email });
+      const incompleteAccount = entityManager.create(AccountEntity, {
+        owner: registeredUser,
+        serverURL: 'incomplete.test',
+        isActive: true,
+        setupComplete: false, // Key difference
+        timezone: 'Europe/London',
+        utcOffset: '+00:00',
+      });
+      await entityManager.persistAndFlush(incompleteAccount);
+
+      const loginDto: LoginDto = { email: testUser.email, password: testUser.password };
+      const response = await request(app.getHttpServer()).post('/auth/login').send(loginDto).expect(HttpStatus.OK);
+
+      expect(response.body.user.accounts).toBeInstanceOf(Array);
+      expect(response.body.user.accounts.length).toBe(1); // Still 1, because only setupComplete accounts are included
+      expect(response.body.user.accounts[0]._id).toBe(testAccount.id); // Ensure it's the correct account
     });
 
     it('should fail to log in with incorrect password', async () => {
@@ -160,21 +224,40 @@ describe('AuthController (e2e)', () => {
 
   describe('/auth/refresh (POST)', () => {
     let refreshToken: string;
+    let testAccount: AccountEntity;
 
     beforeEach(async () => {
       const registerResponse = await request(app.getHttpServer()).post('/auth/register').send(testUser);
       refreshToken = registerResponse.body.refreshToken;
+      const registeredUser = await entityManager.findOneOrFail(UserEntity, { email: testUser.email });
+      testAccount = await createTestAccount(registeredUser, entityManager);
     });
 
-    it('should refresh tokens with a valid refresh token', async () => {
+    it('should refresh tokens with a valid refresh token and include populated account data', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/refresh')
         .send({ refreshToken })
         .expect(HttpStatus.OK);
 
-      expect(response.body).toHaveProperty('accessToken');
+      expect(response.body).toHaveProperty('token');
       expect(response.body).toHaveProperty('refreshToken');
+      expect(response.body).toHaveProperty('user');
+      expect(response.body.user.email).toBe(testUser.email);
       expect(response.body.refreshToken).not.toBe(refreshToken); // New refresh token should be issued
+
+      expect(response.body.user.accounts).toBeInstanceOf(Array);
+      expect(response.body.user.accounts.length).toBe(1);
+
+      const accountDto = response.body.user.accounts[0];
+      expect(accountDto._id).toBe(testAccount.id);
+      expect(accountDto.serverURL).toBe(testAccount.serverURL);
+      expect(accountDto.name).toBe(testAccount.name);
+      expect(accountDto.username).toBe(testAccount.username);
+      expect(accountDto.accountName).toBe(testAccount.accountName);
+      expect(accountDto.accountURL).toBe(testAccount.accountURL);
+      expect(accountDto.avatarURL).toBe(testAccount.avatarURL);
+      expect(accountDto.timezone).toBe(testAccount.timezone);
+      expect(accountDto.utcOffset).toBe(testAccount.utcOffset);
 
       const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email }, { populate: ['credentials'] });
       expect(dbUser?.credentials?.refreshToken).toBe(response.body.refreshToken);
@@ -197,20 +280,20 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('/auth/profile (GET)', () => {
-    let accessToken: string;
+    let userToken: string;
 
     beforeEach(async () => {
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/register')
         .send(testUser)
-        .then((res) => res.body as TokenResponseDto);
-      accessToken = loginResponse.accessToken;
+        .then((res) => res.body as AuthResponseDto);
+      userToken = loginResponse.token;
     });
 
     it('should get user profile with a valid access token', async () => {
       const response = await request(app.getHttpServer())
         .get('/auth/profile')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${userToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body.email).toBe(testUser.email);
@@ -240,19 +323,19 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('/auth/logout (POST)', () => {
-    let accessToken: string;
+    let userToken: string;
     let initialRefreshToken: string;
 
     beforeEach(async () => {
       const res = await request(app.getHttpServer()).post('/auth/register').send(testUser);
-      accessToken = res.body.accessToken;
+      userToken = res.body.token;
       initialRefreshToken = res.body.refreshToken;
     });
 
     it('should log out a user and invalidate refresh token', async () => {
       await request(app.getHttpServer())
         .post('/auth/logout')
-        .set('Authorization', `Bearer ${accessToken}`)
+        .set('Authorization', `Bearer ${userToken}`)
         .expect(HttpStatus.NO_CONTENT);
 
       const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email }, { populate: ['credentials'] });

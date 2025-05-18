@@ -5,12 +5,14 @@ import { UserResponseDto } from '../users/dto/user-response.dto';
 import { UserEntity } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { GetUser } from './decorators/get-user.decorator';
+import { AuthResponseDto } from './dto/auth-response.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { TokenResponseDto } from './dto/token-response.dto';
+import { SessionAccountDto } from './dto/session-account.dto';
+import { SessionUserDto } from './dto/session-user.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
@@ -26,12 +28,23 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'User successfully registered and logged in.',
-    type: TokenResponseDto,
+    type: AuthResponseDto,
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email already exists.' })
-  async register(@Body() registerUserDto: RegisterUserDto): Promise<TokenResponseDto> {
-    return this.authService.registerUser(registerUserDto);
+  async register(@Body() registerUserDto: RegisterUserDto): Promise<AuthResponseDto> {
+    const result = await this.authService.registerUser(registerUserDto);
+    await result.user.accounts.init(); // Ensure accounts are loaded for SessionUserDto
+    const sessionUser = new SessionUserDto(result.user);
+    sessionUser.accounts = result.user.accounts
+      .getItems()
+      .filter((acc) => acc.setupComplete)
+      .map((acc) => new SessionAccountDto(acc));
+    return {
+      token: result.token,
+      refreshToken: result.refreshToken,
+      user: sessionUser,
+    };
   }
 
   @UseGuards(LocalAuthGuard) // Use LocalAuthGuard for the login route
@@ -42,14 +55,25 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully logged in.',
-    type: TokenResponseDto,
+    type: AuthResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid credentials.',
   })
-  async login(@GetUser() user: UserEntity): Promise<TokenResponseDto> {
-    return this.authService.login(user);
+  async login(@GetUser() user: UserEntity): Promise<AuthResponseDto> {
+    const result = await this.authService.login(user);
+    await result.user.accounts.init(); // Ensure accounts are loaded for SessionUserDto
+    const sessionUser = new SessionUserDto(result.user);
+    sessionUser.accounts = result.user.accounts
+      .getItems()
+      .filter((acc) => acc.setupComplete)
+      .map((acc) => new SessionAccountDto(acc));
+    return {
+      token: result.token,
+      refreshToken: result.refreshToken,
+      user: sessionUser,
+    };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -77,14 +101,25 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Tokens refreshed successfully.',
-    type: TokenResponseDto,
+    type: AuthResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid refresh token.',
   })
-  async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
-    return this.authService.refreshTokens(refreshTokenDto.refreshToken);
+  async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto): Promise<AuthResponseDto> {
+    const result = await this.authService.refreshTokens(refreshTokenDto.refreshToken);
+    await result.user.accounts.init(); // Ensure accounts are loaded for SessionUserDto
+    const sessionUser = new SessionUserDto(result.user);
+    sessionUser.accounts = result.user.accounts
+      .getItems()
+      .filter((acc) => acc.setupComplete)
+      .map((acc) => new SessionAccountDto(acc));
+    return {
+      token: result.token,
+      refreshToken: result.refreshToken,
+      user: sessionUser,
+    };
   }
 
   @UseGuards(JwtAuthGuard)

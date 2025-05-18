@@ -13,9 +13,14 @@ import { UsersService } from '../users/users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { TokenResponseDto } from './dto/token-response.dto';
 import { UserCredentialsEntity } from './entities/user-credentials.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+
+export interface AuthOperationResult {
+  token: string;
+  refreshToken: string;
+  user: UserEntity;
+}
 
 @Injectable()
 export class AuthService {
@@ -65,11 +70,11 @@ export class AuthService {
   }
 
   /**
-   * Logs in a user and returns access and refresh tokens.
+   * Logs in a user and returns tokens and the user entity.
    * @param user - The authenticated user entity.
-   * @returns A promise that resolves to an object containing the access and refresh tokens.
+   * @returns A promise that resolves to an object containing tokens and the user entity.
    */
-  async login(user: UserEntity): Promise<TokenResponseDto> {
+  async login(user: UserEntity): Promise<AuthOperationResult> {
     // At this point, 'user' is authenticated by LocalStrategy
     // We need to ensure the full user entity with credentials is available if it wasn't fully populated by validateUser
     // or if validateUser returned a partial object.
@@ -87,7 +92,7 @@ export class AuthService {
       role: user.role,
     };
 
-    const accessToken = this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload);
     const refreshToken = uuidv4();
 
     // Ensure user.credentials is loaded. It should be if populated in validateUser.
@@ -101,32 +106,38 @@ export class AuthService {
     user.credentials.refreshToken = refreshToken;
     await this.userCredentialsRepository.getEntityManager().persistAndFlush(user.credentials);
 
+    // User entity is returned directly; SessionUserDto construction is moved to controller
     return {
-      accessToken,
+      token,
       refreshToken,
+      user,
     };
   }
 
   /**
    * Refreshes access and refresh tokens using a valid refresh token.
    * @param token - The refresh token.
-   * @returns A promise that resolves to an object containing new access and refresh tokens.
+   * @returns A promise that resolves to an object containing new tokens and the user entity.
    * @throws UnauthorizedException if the refresh token is invalid or the user is not found/active.
    */
-  async refreshTokens(token: string): Promise<TokenResponseDto> {
+  async refreshTokens(token: string): Promise<AuthOperationResult> {
     const userCredentials = await this.userCredentialsRepository.findOne(
       { refreshToken: token },
-      { populate: ['user'] },
+      { populate: ['user'] }, // Ensure user is populated
     );
 
     if (!userCredentials || !userCredentials.user) {
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
-    const user = await this.userRepository.findOne({
-      id: userCredentials.user.id,
-      isActive: true,
-    });
+    const user = await this.userRepository.findOne(
+      {
+        id: userCredentials.user.id,
+        isActive: true,
+      },
+      { populate: ['accounts'] },
+    );
+
     if (!user) {
       throw new UnauthorizedException('User not found or not active.');
     }
@@ -143,15 +154,17 @@ export class AuthService {
       role: user.role,
     };
 
-    const newAccessToken = this.jwtService.sign(payload);
+    const newToken = this.jwtService.sign(payload);
     const newRefreshToken = uuidv4();
 
     userCredentials.refreshToken = newRefreshToken; // Or await bcrypt.hash(newRefreshToken, 10);
     await this.userCredentialsRepository.getEntityManager().persistAndFlush(userCredentials);
 
+    // User entity is returned directly
     return {
-      accessToken: newAccessToken,
+      token: newToken,
       refreshToken: newRefreshToken,
+      user,
     };
   }
 
@@ -179,10 +192,10 @@ export class AuthService {
   /**
    * Registers a new user.
    * @param registerUserDto - DTO containing user registration information.
-   * @returns A promise that resolves to an object containing access and refresh tokens for the new user.
+   * @returns A promise that resolves to an object containing tokens and the new user entity.
    * @throws ConflictException if a user with the given email already exists.
    */
-  async registerUser(registerUserDto: RegisterUserDto): Promise<TokenResponseDto> {
+  async registerUser(registerUserDto: RegisterUserDto): Promise<AuthOperationResult> {
     const { email, password, serverURLOnSignUp, timezone } = registerUserDto;
 
     const existingUser = await this.userRepository.findOne({ email });

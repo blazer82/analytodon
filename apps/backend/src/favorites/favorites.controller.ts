@@ -28,7 +28,8 @@ export class FavoritesController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Weekly favorites KPI data.', type: FavoritesKpiDto })
   async getWeeklyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FavoritesKpiDto> {
-    return this.favoritesService.getWeeklyKpi(accountId, user);
+    const kpiData = await this.favoritesService.getWeeklyKpi(accountId, user);
+    return { ...kpiData } as FavoritesKpiDto;
   }
 
   @Get('kpi/monthly')
@@ -37,7 +38,8 @@ export class FavoritesController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Monthly favorites KPI data.', type: FavoritesKpiDto })
   async getMonthlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FavoritesKpiDto> {
-    return this.favoritesService.getMonthlyKpi(accountId, user);
+    const kpiData = await this.favoritesService.getMonthlyKpi(accountId, user);
+    return { ...kpiData } as FavoritesKpiDto;
   }
 
   @Get('kpi/yearly')
@@ -46,7 +48,8 @@ export class FavoritesController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Yearly favorites KPI data.', type: FavoritesKpiDto })
   async getYearlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FavoritesKpiDto> {
-    return this.favoritesService.getYearlyKpi(accountId, user);
+    const kpiData = await this.favoritesService.getYearlyKpi(accountId, user);
+    return { ...kpiData } as FavoritesKpiDto;
   }
 
   @Get('kpi/total')
@@ -62,7 +65,11 @@ export class FavoritesController {
     @Param('accountId') accountId: string,
     @GetUser() user: UserEntity,
   ): Promise<TotalSnapshotDto | null> {
-    return this.favoritesService.getTotalSnapshot(accountId, user);
+    const snapshotData = await this.favoritesService.getTotalSnapshot(accountId, user);
+    if (!snapshotData) {
+      return null;
+    }
+    return { ...snapshotData } as TotalSnapshotDto;
   }
 
   @Get('chart')
@@ -76,7 +83,8 @@ export class FavoritesController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<ChartDataPointDto[]> {
-    return this.favoritesService.getChartData(accountId, query.timeframe, user);
+    const chartInternalData = await this.favoritesService.getChartData(accountId, query.timeframe, user);
+    return chartInternalData.map((point) => ({ ...point }) as ChartDataPointDto);
   }
 
   @Get('top-toots')
@@ -90,7 +98,20 @@ export class FavoritesController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<FavoritedTootDto[]> {
-    return this.favoritesService.getTopTootsByFavorites(accountId, query.timeframe, user);
+    const rankedEntities = await this.favoritesService.getTopTootsByFavorites(accountId, query.timeframe, user);
+    return rankedEntities.map(
+      (toot) =>
+        ({
+          id: toot._id.toString(),
+          content: toot.content,
+          url: toot.url,
+          reblogsCount: toot.reblogsCount,
+          repliesCount: toot.repliesCount,
+          favouritesCount: toot.favouritesCount,
+          createdAt: toot.createdAt,
+          rank: toot.rank,
+        }) as FavoritedTootDto,
+    );
   }
 
   @Get('csv')

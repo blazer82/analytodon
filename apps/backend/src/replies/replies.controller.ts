@@ -90,7 +90,20 @@ export class RepliesController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<RepliedTootDto[]> {
-    return this.repliesService.getTopTootsByReplies(accountId, query.timeframe, user);
+    const rankedEntities = await this.repliesService.getTopTootsByReplies(accountId, query.timeframe, user);
+    return rankedEntities.map(
+      (toot) =>
+        ({
+          id: toot._id.toString(),
+          content: toot.content,
+          url: toot.url,
+          reblogsCount: toot.reblogsCount,
+          repliesCount: toot.repliesCount,
+          favouritesCount: toot.favouritesCount,
+          createdAt: toot.createdAt,
+          rank: toot.rank,
+        }) as RepliedTootDto,
+    );
   }
 
   @Get('csv')

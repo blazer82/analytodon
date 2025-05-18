@@ -1,4 +1,4 @@
-import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
+import { EntityManager, EntityRepository, Loaded, Rel } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -212,30 +212,24 @@ describe('BoostsService', () => {
   describe('getTopTootsByBoosts', () => {
     it('should return top toots mapped to BoostedTootDto', async () => {
       mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
-      const mockRawToots = [
+      const mockRankedTootEntities: (TootEntity & { rank: number })[] = [
         {
-          _id: new ObjectId(), // Add _id for mapping
-          // id: 'toot1', // This will be overridden by the map if _id is used for mapping
+          _id: new ObjectId(),
+          uri: 'uri1',
+          account: new ObjectId(mockAccountId) as unknown as Rel<AccountEntity>, // Simplified for test
           content: 'Toot 1',
-          url: 'url1',
+          favouritesCount: 5,
+          fetchedAt: new Date(),
+          language: 'en',
           reblogsCount: 10,
           repliesCount: 2,
-          favouritesCount: 5,
+          url: 'http://example.com/toot1',
+          visibility: 'public',
           createdAt: new Date(),
+          rank: 10, // Example rank based on boosts
         },
-      ] as unknown as TootEntity[]; // Cast for simplicity, ensure all fields are present
-      mockTootsService.getTopToots.mockResolvedValue(
-        mockRawToots.map((t) => ({
-          id: t._id.toString(), // Ensure _id is mapped to id string
-          content: t.content,
-          url: t.url,
-          reblogsCount: t.reblogsCount,
-          repliesCount: t.repliesCount,
-          favouritesCount: t.favouritesCount,
-          createdAt: t.createdAt,
-          rank: t.reblogsCount,
-        })),
-      );
+      ];
+      mockTootsService.getTopToots.mockResolvedValue(mockRankedTootEntities);
 
       const result = await service.getTopTootsByBoosts(mockAccountId, 'last7days', mockUser);
 
@@ -246,20 +240,8 @@ describe('BoostsService', () => {
         dateTo: expect.any(Date),
         limit: 10,
       });
-      expect(result).toEqual([
-        {
-          id: mockRawToots[0]._id.toString(),
-          content: 'Toot 1',
-          url: 'url1',
-          reblogsCount: 10,
-          repliesCount: 2,
-          favouritesCount: 5,
-          createdAt: mockRawToots[0].createdAt,
-          // rank is not part of BoostedTootDto in the service mapping,
-          // but the mock for getTopToots includes it, so the result from
-          // getTopTootsByBoosts (which maps from RankedTootDto) will also not have it.
-        },
-      ]);
+      // The service method now returns RankedTootEntity directly
+      expect(result).toEqual(mockRankedTootEntities);
     });
   });
 

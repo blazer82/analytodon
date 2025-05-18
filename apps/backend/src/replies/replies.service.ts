@@ -19,9 +19,9 @@ import {
 } from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { DailyTootStatsEntity } from '../toots/entities/daily-toot-stats.entity';
-import { TootsService } from '../toots/toots.service';
+import { RankedTootEntity, TootsService } from '../toots/toots.service';
 import { UserEntity } from '../users/entities/user.entity';
-import { RepliedTootDto } from './dto/replied-toot.dto';
+// RepliedTootDto is now a concern of the controller
 import { RepliesKpiDto } from './dto/replies-kpi.dto';
 
 @Injectable()
@@ -165,9 +165,9 @@ export class RepliesService {
    * @param accountId - The ID of the account.
    * @param timeframe - The timeframe for ranking (e.g., 'last7days', 'last30days').
    * @param user - The user requesting the top toots.
-   * @returns A promise that resolves to an array of replied toot DTOs.
+   * @returns A promise that resolves to an array of TootEntity augmented with rank.
    */
-  async getTopTootsByReplies(accountId: string, timeframe: string, user: UserEntity): Promise<RepliedTootDto[]> {
+  async getTopTootsByReplies(accountId: string, timeframe: string, user: UserEntity): Promise<RankedTootEntity[]> {
     const account = await this.getAccountOrFail(accountId, user);
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
     const toots = await this.tootsService.getTopToots({
@@ -177,16 +177,7 @@ export class RepliesService {
       dateTo,
       limit: 10, // Default limit from legacy
     });
-    return toots.map((toot) => ({
-      id: toot.id,
-      content: toot.content,
-      url: toot.url,
-      reblogsCount: toot.reblogsCount,
-      repliesCount: toot.repliesCount,
-      favouritesCount: toot.favouritesCount,
-      createdAt: toot.createdAt,
-      rank: toot.rank,
-    })) as RepliedTootDto[];
+    return toots; // Return the entities directly
   }
 
   /**

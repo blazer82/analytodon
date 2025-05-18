@@ -17,12 +17,27 @@ import {
 } from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { DailyTootStatsEntity } from '../toots/entities/daily-toot-stats.entity';
-import { TootsService } from '../toots/toots.service';
+import { RankedTootEntity, TootsService } from '../toots/toots.service';
 import { UserEntity } from '../users/entities/user.entity';
-import { BoostedTootDto } from './dto/boosted-toot.dto';
-import { BoostsKpiDto } from './dto/boosts-kpi.dto';
-import { ChartDataPointDto } from './dto/chart-data-point.dto';
-import { TotalSnapshotDto } from './dto/total-snapshot.dto';
+
+// Define internal data structures or use plain objects directly
+export interface InternalKpiData {
+  currentPeriod?: number;
+  previousPeriod?: number;
+  currentPeriodProgress?: number;
+  isLastPeriod?: boolean;
+  trend?: number | null;
+}
+
+export interface InternalTotalSnapshotData {
+  amount: number;
+  day: Date;
+}
+
+export interface InternalChartDataPoint {
+  time: string;
+  value: number | null;
+}
 
 @Injectable()
 export class BoostsService {
@@ -52,12 +67,10 @@ export class BoostsService {
    * Retrieves weekly Key Performance Indicators (KPIs) for boosts for a specific account.
    * @param accountId - The ID of the account.
    * @param user - The user requesting the KPIs.
-   * @returns A promise that resolves to the boosts KPI DTO.
+   * @returns A promise that resolves to internal KPI data.
    */
-  async getWeeklyKpi(accountId: string, user: UserEntity): Promise<BoostsKpiDto> {
+  async getWeeklyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
     const account = await this.getAccountOrFail(accountId, user);
-    // Placeholder for getPeriodKPI logic (from legacy _legacy/analytodon/helpers/getPeriodKPI.ts)
-    // using 'getDaysToWeekBeginning'
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
       account.id,
@@ -76,11 +89,10 @@ export class BoostsService {
    * Retrieves monthly Key Performance Indicators (KPIs) for boosts for a specific account.
    * @param accountId - The ID of the account.
    * @param user - The user requesting the KPIs.
-   * @returns A promise that resolves to the boosts KPI DTO.
+   * @returns A promise that resolves to internal KPI data.
    */
-  async getMonthlyKpi(accountId: string, user: UserEntity): Promise<BoostsKpiDto> {
+  async getMonthlyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
     const account = await this.getAccountOrFail(accountId, user);
-    // Placeholder for getPeriodKPI logic using 'getDaysToMonthBeginning'
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
       account.id,
@@ -99,11 +111,10 @@ export class BoostsService {
    * Retrieves yearly Key Performance Indicators (KPIs) for boosts for a specific account.
    * @param accountId - The ID of the account.
    * @param user - The user requesting the KPIs.
-   * @returns A promise that resolves to the boosts KPI DTO.
+   * @returns A promise that resolves to internal KPI data.
    */
-  async getYearlyKpi(accountId: string, user: UserEntity): Promise<BoostsKpiDto> {
+  async getYearlyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
     const account = await this.getAccountOrFail(accountId, user);
-    // Placeholder for getPeriodKPI logic using 'getDaysToYearBeginning'
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
       account.id,
@@ -123,9 +134,9 @@ export class BoostsService {
    * This typically represents the cumulative total and the date of the last data point.
    * @param accountId - The ID of the account.
    * @param user - The user requesting the snapshot.
-   * @returns A promise that resolves to the total snapshot DTO, or null if no data exists.
+   * @returns A promise that resolves to internal total snapshot data, or null if no data exists.
    */
-  async getTotalSnapshot(accountId: string, user: UserEntity): Promise<TotalSnapshotDto | null> {
+  async getTotalSnapshot(accountId: string, user: UserEntity): Promise<InternalTotalSnapshotData | null> {
     const account = await this.getAccountOrFail(accountId, user);
     const entry = await this.dailyTootStatsRepository.findOne({ account: account.id }, { orderBy: { day: 'DESC' } });
     if (entry) {
@@ -142,13 +153,11 @@ export class BoostsService {
    * @param accountId - The ID of the account.
    * @param timeframe - The timeframe for the chart data (e.g., 'last7days', 'last30days').
    * @param user - The user requesting the chart data.
-   * @returns A promise that resolves to an array of chart data points.
+   * @returns A promise that resolves to an array of internal chart data points.
    */
-  async getChartData(accountId: string, timeframe: string, user: UserEntity): Promise<ChartDataPointDto[]> {
+  async getChartData(accountId: string, timeframe: string, user: UserEntity): Promise<InternalChartDataPoint[]> {
     const account = await this.getAccountOrFail(accountId, user);
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
-
-    // Placeholder for getChartData logic (from legacy _legacy/analytodon/service/boosts/getChartData.ts)
     const oneDayEarlier = new Date(dateFrom);
     oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
 
@@ -162,7 +171,7 @@ export class BoostsService {
         time: formatDateISO(entry.day, account.timezone)!, // Assert non-null as entry.day exists
         value: index > 0 ? Math.max(0, entry.boostsCount - list[index - 1].boostsCount) : null,
       }))
-      .filter((item): item is ChartDataPointDto => item.value !== null);
+      .filter((item): item is InternalChartDataPoint => item.value !== null);
   }
 
   /**
@@ -170,12 +179,11 @@ export class BoostsService {
    * @param accountId - The ID of the account.
    * @param timeframe - The timeframe for ranking (e.g., 'last7days', 'last30days').
    * @param user - The user requesting the top toots.
-   * @returns A promise that resolves to an array of boosted toot DTOs.
+   * @returns A promise that resolves to an array of TootEntity augmented with rank.
    */
-  async getTopTootsByBoosts(accountId: string, timeframe: string, user: UserEntity): Promise<BoostedTootDto[]> {
+  async getTopTootsByBoosts(accountId: string, timeframe: string, user: UserEntity): Promise<RankedTootEntity[]> {
     const account = await this.getAccountOrFail(accountId, user);
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
-    // Assuming TootsService.getTopToots exists and works similarly to legacy
     const toots = await this.tootsService.getTopToots({
       accountId: account.id,
       ranking: TootRankingEnum.BOOSTS,
@@ -183,17 +191,7 @@ export class BoostsService {
       dateTo,
       limit: 10, // Default limit from legacy
     });
-    // Map to BoostedTootDto, assuming 'toots' is an array of TootEntity or similar
-    return toots.map((toot) => ({
-      id: toot.id,
-      content: toot.content,
-      url: toot.url,
-      reblogsCount: toot.reblogsCount,
-      repliesCount: toot.repliesCount,
-      favouritesCount: toot.favouritesCount,
-      createdAt: toot.createdAt,
-      // rank: (toot as any).rank, // If rank is dynamically added
-    })) as BoostedTootDto[];
+    return toots; // Return the entities directly
   }
 
   /**

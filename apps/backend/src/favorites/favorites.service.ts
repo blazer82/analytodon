@@ -6,8 +6,6 @@ import { Response } from 'express';
 
 import { AccountsService } from '../accounts/accounts.service';
 import { AccountEntity } from '../accounts/entities/account.entity';
-import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto'; // Reusing from boosts
-import { TotalSnapshotDto } from '../boosts/dto/total-snapshot.dto'; // Reusing from boosts
 import {
   formatDateISO,
   getDaysToMonthBeginning,
@@ -19,10 +17,30 @@ import {
 } from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { DailyTootStatsEntity } from '../toots/entities/daily-toot-stats.entity';
-import { TootsService } from '../toots/toots.service';
+import { RankedTootEntity, TootsService } from '../toots/toots.service';
 import { UserEntity } from '../users/entities/user.entity';
-import { FavoritedTootDto } from './dto/favorited-toot.dto';
-import { FavoritesKpiDto } from './dto/favorites-kpi.dto';
+
+// FavoritedTootDto is now a concern of the controller
+// DTOs for KPI, Chart, Total will be handled by the controller
+
+// Define internal data structures or use plain objects directly
+export interface InternalKpiData {
+  currentPeriod?: number;
+  previousPeriod?: number;
+  currentPeriodProgress?: number;
+  isLastPeriod?: boolean;
+  trend?: number | null;
+}
+
+export interface InternalTotalSnapshotData {
+  amount: number;
+  day: Date;
+}
+
+export interface InternalChartDataPoint {
+  time: string;
+  value: number | null;
+}
 
 @Injectable()
 export class FavoritesService {
@@ -52,9 +70,9 @@ export class FavoritesService {
    * Retrieves weekly Key Performance Indicators (KPIs) for favorites for a specific account.
    * @param accountId - The ID of the account.
    * @param user - The user requesting the KPIs.
-   * @returns A promise that resolves to the favorites KPI DTO.
+   * @returns A promise that resolves to internal KPI data.
    */
-  async getWeeklyKpi(accountId: string, user: UserEntity): Promise<FavoritesKpiDto> {
+  async getWeeklyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
     const account = await this.getAccountOrFail(accountId, user);
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
@@ -74,9 +92,9 @@ export class FavoritesService {
    * Retrieves monthly Key Performance Indicators (KPIs) for favorites for a specific account.
    * @param accountId - The ID of the account.
    * @param user - The user requesting the KPIs.
-   * @returns A promise that resolves to the favorites KPI DTO.
+   * @returns A promise that resolves to internal KPI data.
    */
-  async getMonthlyKpi(accountId: string, user: UserEntity): Promise<FavoritesKpiDto> {
+  async getMonthlyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
     const account = await this.getAccountOrFail(accountId, user);
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
@@ -96,9 +114,9 @@ export class FavoritesService {
    * Retrieves yearly Key Performance Indicators (KPIs) for favorites for a specific account.
    * @param accountId - The ID of the account.
    * @param user - The user requesting the KPIs.
-   * @returns A promise that resolves to the favorites KPI DTO.
+   * @returns A promise that resolves to internal KPI data.
    */
-  async getYearlyKpi(accountId: string, user: UserEntity): Promise<FavoritesKpiDto> {
+  async getYearlyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
     const account = await this.getAccountOrFail(accountId, user);
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
@@ -119,9 +137,9 @@ export class FavoritesService {
    * This typically represents the cumulative total and the date of the last data point.
    * @param accountId - The ID of the account.
    * @param user - The user requesting the snapshot.
-   * @returns A promise that resolves to the total snapshot DTO, or null if no data exists.
+   * @returns A promise that resolves to internal total snapshot data, or null if no data exists.
    */
-  async getTotalSnapshot(accountId: string, user: UserEntity): Promise<TotalSnapshotDto | null> {
+  async getTotalSnapshot(accountId: string, user: UserEntity): Promise<InternalTotalSnapshotData | null> {
     const account = await this.getAccountOrFail(accountId, user);
     const entry = await this.dailyTootStatsRepository.findOne({ account: account.id }, { orderBy: { day: 'DESC' } });
     if (entry) {
@@ -138,9 +156,9 @@ export class FavoritesService {
    * @param accountId - The ID of the account.
    * @param timeframe - The timeframe for the chart data (e.g., 'last7days', 'last30days').
    * @param user - The user requesting the chart data.
-   * @returns A promise that resolves to an array of chart data points.
+   * @returns A promise that resolves to an array of internal chart data points.
    */
-  async getChartData(accountId: string, timeframe: string, user: UserEntity): Promise<ChartDataPointDto[]> {
+  async getChartData(accountId: string, timeframe: string, user: UserEntity): Promise<InternalChartDataPoint[]> {
     const account = await this.getAccountOrFail(accountId, user);
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
 
@@ -157,7 +175,7 @@ export class FavoritesService {
         time: formatDateISO(entry.day, account.timezone)!,
         value: index > 0 ? Math.max(0, entry.favouritesCount - list[index - 1].favouritesCount) : null,
       }))
-      .filter((item): item is ChartDataPointDto => item.value !== null);
+      .filter((item): item is InternalChartDataPoint => item.value !== null);
   }
 
   /**
@@ -165,9 +183,9 @@ export class FavoritesService {
    * @param accountId - The ID of the account.
    * @param timeframe - The timeframe for ranking (e.g., 'last7days', 'last30days').
    * @param user - The user requesting the top toots.
-   * @returns A promise that resolves to an array of favorited toot DTOs.
+   * @returns A promise that resolves to an array of TootEntity augmented with rank.
    */
-  async getTopTootsByFavorites(accountId: string, timeframe: string, user: UserEntity): Promise<FavoritedTootDto[]> {
+  async getTopTootsByFavorites(accountId: string, timeframe: string, user: UserEntity): Promise<RankedTootEntity[]> {
     const account = await this.getAccountOrFail(accountId, user);
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
     const toots = await this.tootsService.getTopToots({
@@ -177,16 +195,7 @@ export class FavoritesService {
       dateTo,
       limit: 10, // Default limit from legacy
     });
-    return toots.map((toot) => ({
-      id: toot.id,
-      content: toot.content,
-      url: toot.url,
-      reblogsCount: toot.reblogsCount,
-      repliesCount: toot.repliesCount,
-      favouritesCount: toot.favouritesCount,
-      createdAt: toot.createdAt,
-      rank: toot.rank,
-    })) as FavoritedTootDto[];
+    return toots; // Return the entities directly
   }
 
   /**

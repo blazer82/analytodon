@@ -1,4 +1,4 @@
-import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
+import { EntityManager, EntityRepository, Loaded, Rel } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -12,6 +12,7 @@ import { UserRole } from '../shared/enums/user-role.enum';
 import * as timeframeHelper from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { DailyTootStatsEntity } from '../toots/entities/daily-toot-stats.entity';
+import { TootEntity } from '../toots/entities/toot.entity';
 import { TootsService } from '../toots/toots.service';
 import { UserEntity } from '../users/entities/user.entity';
 import { RepliesService } from './replies.service';
@@ -200,21 +201,26 @@ describe('RepliesService', () => {
   });
 
   describe('getTopTootsByReplies', () => {
-    it('should return top toots mapped to RepliedTootDto', async () => {
+    it('should return top toots as RankedTootEntity', async () => {
       mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
-      const mockRawToots = [
+      const mockRankedTootEntities: (TootEntity & { rank: number })[] = [
         {
-          id: 'toot1', // TootsService.getTopToots returns RankedTootDto which has id as string
+          _id: new ObjectId(),
+          uri: 'uri1',
+          account: new ObjectId(mockAccountId) as unknown as Rel<AccountEntity>, // Simplified for test
           content: 'Toot 1',
-          url: 'url1',
+          favouritesCount: 5,
+          fetchedAt: new Date(),
+          language: 'en',
           reblogsCount: 10,
           repliesCount: 50,
-          favouritesCount: 5,
+          url: 'http://example.com/toot1',
+          visibility: 'public',
           createdAt: new Date(),
-          rank: 50,
+          rank: 50, // Example rank based on replies
         },
       ];
-      mockTootsService.getTopToots.mockResolvedValue(mockRawToots);
+      mockTootsService.getTopToots.mockResolvedValue(mockRankedTootEntities);
 
       const result = await service.getTopTootsByReplies(mockAccountId, 'last7days', mockUser);
 
@@ -225,18 +231,8 @@ describe('RepliesService', () => {
         dateTo: expect.any(Date),
         limit: 10,
       });
-      expect(result).toEqual([
-        {
-          id: 'toot1',
-          content: 'Toot 1',
-          url: 'url1',
-          reblogsCount: 10,
-          repliesCount: 50,
-          favouritesCount: 5,
-          createdAt: mockRawToots[0].createdAt,
-          rank: 50,
-        },
-      ]);
+      // The service method now returns RankedTootEntity directly
+      expect(result).toEqual(mockRankedTootEntities);
     });
   });
 
