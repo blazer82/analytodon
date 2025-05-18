@@ -1,20 +1,22 @@
-import type { MetaFunction } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
+import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
 import ProtectedRoute from '~/components/ProtectedRoute';
-import { useAuth } from '~/utils/auth.context';
+import { requireUser } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }, { name: 'description', content: 'Analytodon Analytics Dashboard' }];
 };
 
-export async function loader() {
-  // This will be replaced with actual auth check later
-  // For now, redirect to login to demonstrate the flow
-  return redirect('/login');
+export async function loader({ request }: LoaderFunctionArgs) {
+  // Require user to be logged in, redirects to login if not
+  const user = await requireUser(request);
+
+  return json({ user });
 }
 
 export default function Index() {
-  const { user } = useAuth();
+  const { user } = useLoaderData<typeof loader>();
 
   return (
     <ProtectedRoute>

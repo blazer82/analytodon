@@ -4,6 +4,7 @@ import { CacheProvider, withEmotionCache } from '@emotion/react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import type { LinksFunction } from '@remix-run/node';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
+import { getUser } from '~/utils/session.server';
 
 import { AuthProvider } from './utils/auth.context';
 import { ClientStyleContext } from './utils/client-style-context';
@@ -26,10 +27,12 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export async function loader() {
-  // TODO: Implement actual auth check using cookies/session
+export async function loader({ request }: { request: Request }) {
+  // Get the user from the session
+  const user = await getUser(request);
+
   return {
-    user: null,
+    user,
     ENV: {
       MARKETING_URL: process.env.MARKETING_URL || 'https://analytodon.com',
       SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || 'support@analytodon.com',

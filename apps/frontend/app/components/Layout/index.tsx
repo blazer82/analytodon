@@ -3,7 +3,7 @@ import * as React from 'react';
 import AccountIcon from '@mui/icons-material/AccountCircle';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MenuIcon from '@mui/icons-material/Menu';
-import { Avatar, Menu, MenuItem } from '@mui/material';
+import { Avatar, Button, Menu, MenuItem } from '@mui/material';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Divider from '@mui/material/Divider';
@@ -11,6 +11,7 @@ import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
+import { Form } from '@remix-run/react';
 
 import Footer from '../Footer';
 import { AppBar, Drawer } from './ux';
@@ -40,9 +41,9 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
   }, []);
 
   const handleLogout = React.useCallback(() => {
-    // Will be implemented later with form submission
-    console.log('Logout clicked');
-  }, []);
+    // The actual logout happens in the Form submission to /logout
+    handleClose();
+  }, [handleClose]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -97,7 +98,13 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              <MenuItem>
+                <Form action="/logout" method="post" style={{ width: '100%' }}>
+                  <Button type="submit" onClick={handleLogout} sx={{ width: '100%', justifyContent: 'flex-start' }}>
+                    Logout
+                  </Button>
+                </Form>
+              </MenuItem>
             </Menu>
           </div>
         </Toolbar>

@@ -1,17 +1,8 @@
 import { createContext, useContext, useState } from 'react';
 
-export interface User {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  role: string;
-  accounts?: {
-    _id: string;
-    accountName: string;
-    accountURL?: string;
-    avatarURL?: string;
-  }[];
-}
+import { SessionUserDto } from '@analytodon/rest-client';
+
+export type User = SessionUserDto;
 
 export interface AuthContextType {
   user: User | null;
@@ -22,7 +13,7 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -34,8 +25,8 @@ export const AuthProvider = ({
   children: React.ReactNode;
   initialUser?: User | null;
 }) => {
-  const [user, _setUser] = useState<User | null>(initialUser);
-  const [isLoading, _setIsLoading] = useState(!initialUser);
+  const [user] = useState<User | null>(initialUser);
+  const [isLoading] = useState(false); // We're not loading since we get user from the server
 
   const value = {
     user,
