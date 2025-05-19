@@ -49,7 +49,12 @@ export async function action({ request }: ActionFunctionArgs) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const serverURL = formData.get('serverURL') as string;
-  const timezone = formData.get('timezone') as string;
+  let timezone = formData.get('timezone') as string;
+
+  // Extract the actual timezone name if it includes the offset part
+  if (timezone && timezone.includes(' (')) {
+    timezone = timezone.split(' (')[0];
+  }
 
   // Validate form data
   if (!email || !password || !serverURL || !timezone) {

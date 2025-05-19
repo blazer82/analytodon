@@ -79,6 +79,19 @@ export async function requireUser(request: Request, redirectTo: string = '/login
     throw redirect(redirectTo);
   }
 
+  const url = new URL(request.url);
+  const currentPath = url.pathname;
+
+  if (!user.emailVerified) {
+    if (currentPath !== '/register/verify') {
+      throw redirect('/register/verify');
+    }
+  } else if (user.accounts.length === 0) {
+    if (currentPath !== '/accounts/connect' && currentPath !== '/accounts/connect/callback') {
+      throw redirect('/accounts/connect');
+    }
+  }
+
   return user;
 }
 
