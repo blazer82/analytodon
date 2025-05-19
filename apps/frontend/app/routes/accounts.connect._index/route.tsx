@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { json, redirect } from '@remix-run/node';
+import { redirect } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { getUser } from '~/utils/session.server';
 
@@ -22,7 +22,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw redirect('/');
   }
 
-  return json({ user });
+  return { user };
 }
 
 export default function ConnectAccountPage() {

@@ -11,7 +11,7 @@ import {
   useTheme,
 } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { json, redirect } from '@remix-run/node';
+import { redirect } from '@remix-run/node';
 import { Link as RemixLink, useLoaderData, useRouteLoaderData } from '@remix-run/react';
 import {
   FormCard,
@@ -91,14 +91,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   }
 
-  return json(
-    {
-      email: user.email, // user.email should be up-to-date if refresh occurred
-      verificationCode,
-      verificationStatus,
-    },
-    { headers: responseHeaders },
-  );
+  // Remix now automatically handles headers for object returns when v3_singleFetch is true
+  // If responseHeaders has entries, we need to construct a Response.
+  // Otherwise, we can return the object directly.
+  const returnData = {
+    email: user.email, // user.email should be up-to-date if refresh occurred
+    verificationCode,
+    verificationStatus,
+  };
+
+  if (Array.from(responseHeaders.keys()).length > 0) {
+    return new Response(JSON.stringify(returnData), {
+      status: 200,
+      headers: responseHeaders,
+    });
+  }
+
+  return returnData;
 }
 
 export default function VerifyEmailPage() {

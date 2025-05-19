@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { json, redirect } from '@remix-run/node';
+import { redirect } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { getUser } from '~/utils/session.server';
 
@@ -26,15 +26,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   if (oauthToken) {
     // Simulate processing
-    return json({
+    return {
       message: 'OAuth callback received. Processing...',
       oauthToken,
       status: 'processing',
-    });
+    };
   }
 
   // If no token, it's an error or direct access
-  return json({ error: 'Invalid OAuth callback.' }, { status: 400 });
+  // For returning an object with a non-200 status, we still need a Response.
+  return new Response(JSON.stringify({ error: 'Invalid OAuth callback.' }), {
+    status: 400,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 export default function AccountsConnectCallbackPage() {
