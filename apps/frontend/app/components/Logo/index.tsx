@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 
 interface LogoProps {
-  size?: 'small' | 'medium' | 'large';
+  size?: 'x-small' | 'small' | 'medium' | 'large';
   color?: string;
   withText?: boolean;
 }
@@ -9,6 +9,8 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({ size = 'medium', color = 'primary', withText = true }) => {
   const getSize = () => {
     switch (size) {
+      case 'x-small':
+        return 40;
       case 'small':
         return 60;
       case 'large':

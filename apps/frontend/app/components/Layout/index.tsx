@@ -3,17 +3,16 @@ import * as React from 'react';
 import AccountIcon from '@mui/icons-material/AccountCircle';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MenuIcon from '@mui/icons-material/Menu';
-import { Avatar, Button, Menu, MenuItem } from '@mui/material';
+import { Avatar, Button, Container, Divider, Menu, MenuItem, Toolbar, Typography, useTheme } from '@mui/material';
 import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import { Form } from '@remix-run/react';
+import { Form, useRouteLoaderData } from '@remix-run/react';
 
+import AccountOwnerNavigation from '../AccountOwnerNavigation';
 import Footer from '../Footer';
+import Logo from '../Logo';
+import { AppBarContent, AppBarTitle, DashboardContainer, DrawerHeader, UserInfo } from './styles';
 import { AppBar, Drawer } from './ux';
 
 interface LayoutProps {
@@ -25,12 +24,14 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username, avatarURL }) => {
+  const theme = useTheme();
   const [open, setOpen] = React.useState(true);
   const toggleDrawer = () => {
     setOpen(!open);
   };
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const { user, currentAccount } = useRouteLoaderData<{ user: any; currentAccount: any }>('routes/app') || {};
 
   const handleMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -45,102 +46,198 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
     handleClose();
   }, [handleClose]);
 
+  // TODO: Implement account switching functionality
+  const handleAccountSwitch = React.useCallback((_accountId: string) => {
+    setAnchorEl(null);
+    // Will be implemented later
+  }, []);
+
   return (
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="absolute" open={open}>
-        <Toolbar
-          sx={{
-            pr: '24px', // keep right padding when drawer closed
-          }}
-        >
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            onClick={toggleDrawer}
-            sx={{
-              marginRight: '36px',
-              ...(open && { display: 'none' }),
-            }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
-            {title} for {accountName || 'Your Account'}
-          </Typography>
-          <Typography variant="caption" color="inherit" noWrap>
-            {username || 'Username'}
-          </Typography>
-          <div>
+      <AppBar position="absolute" open={open} elevation={2}>
+        <Toolbar>
+          <AppBarContent>
             <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
+              edge="start"
               color="inherit"
+              aria-label="open drawer"
+              onClick={toggleDrawer}
+              sx={{
+                marginRight: '24px',
+                ...(open && { display: 'none' }),
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'rotate(180deg)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                },
+              }}
             >
-              {!avatarURL && <AccountIcon />}
-              {avatarURL && <Avatar src={avatarURL} sx={{ width: 24, height: 24 }} />}
+              <MenuIcon />
             </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorEl}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-            >
-              <MenuItem>
-                <Form action="/logout" method="post" style={{ width: '100%' }}>
-                  <Button type="submit" onClick={handleLogout} sx={{ width: '100%', justifyContent: 'flex-start' }}>
-                    Logout
-                  </Button>
-                </Form>
-              </MenuItem>
-            </Menu>
-          </div>
+
+            <AppBarTitle>
+              <Typography component="h1" variant="h6" color="inherit" noWrap>
+                {title} for {accountName || 'Your Account'}
+              </Typography>
+            </AppBarTitle>
+
+            <UserInfo>
+              <Typography variant="body2" color="inherit" noWrap sx={{ opacity: 0.9 }}>
+                {username || 'Username'}
+              </Typography>
+              <IconButton
+                size="medium"
+                aria-label="account of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleMenu}
+                color="inherit"
+                sx={{
+                  transition: 'transform 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                }}
+              >
+                {!avatarURL && <AccountIcon />}
+                {avatarURL && (
+                  <Avatar
+                    src={avatarURL}
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      border: '2px solid rgba(255, 255, 255, 0.5)',
+                    }}
+                  />
+                )}
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                PaperProps={{
+                  elevation: 3,
+                  sx: {
+                    borderRadius: 2,
+                    mt: 1,
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                    overflow: 'visible',
+                    '&:before': {
+                      content: '""',
+                      display: 'block',
+                      position: 'absolute',
+                      top: 0,
+                      right: 14,
+                      width: 10,
+                      height: 10,
+                      bgcolor: 'background.paper',
+                      transform: 'translateY(-50%) rotate(45deg)',
+                      zIndex: 0,
+                    },
+                  },
+                }}
+              >
+                {user &&
+                  user.accounts &&
+                  user.accounts
+                    .filter((item: any) => item.id !== currentAccount?.id)
+                    .map((item: any) => (
+                      <MenuItem
+                        key={item.id}
+                        onClick={() => handleAccountSwitch(item.id)}
+                        sx={{
+                          borderRadius: 1,
+                          mx: 0.5,
+                          my: 0.25,
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            backgroundColor:
+                              theme.palette.mode === 'light' ? 'rgba(69, 90, 100, 0.08)' : 'rgba(97, 125, 139, 0.2)',
+                          },
+                        }}
+                      >
+                        {item.accountName || item.name}
+                      </MenuItem>
+                    ))}
+                {user && user.accounts && user.accounts.length > 1 && <Divider sx={{ my: 1 }} />}
+                <MenuItem sx={{ borderRadius: 1, mx: 0.5, my: 0.25 }}>
+                  <Form action="/logout" method="post" style={{ width: '100%' }}>
+                    <Button
+                      type="submit"
+                      onClick={handleLogout}
+                      sx={{
+                        width: '100%',
+                        justifyContent: 'flex-start',
+                        textTransform: 'none',
+                      }}
+                    >
+                      Logout
+                    </Button>
+                  </Form>
+                </MenuItem>
+              </Menu>
+            </UserInfo>
+          </AppBarContent>
         </Toolbar>
       </AppBar>
+
       <Drawer variant="permanent" open={open}>
-        <Toolbar
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            px: [1],
-          }}
-        >
-          <IconButton onClick={toggleDrawer}>
+        <DrawerHeader>
+          {open && (
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: 2, flexGrow: 1 }}>
+              <Logo size="x-small" withText={false} />
+              <Typography
+                variant="h6"
+                sx={{
+                  ml: 1,
+                  fontWeight: 600,
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Analytodon
+              </Typography>
+            </Box>
+          )}
+          <IconButton
+            onClick={toggleDrawer}
+            sx={{
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'rotate(180deg)',
+                backgroundColor: theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
+              },
+            }}
+          >
             <ChevronLeftIcon />
           </IconButton>
-        </Toolbar>
+        </DrawerHeader>
         <Divider />
-        <List component="nav">{/* Navigation components will be added later */}</List>
+        <List component="nav">
+          <AccountOwnerNavigation />
+        </List>
       </Drawer>
-      <Box
-        component="main"
-        sx={{
-          backgroundColor: (theme) =>
-            theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
-          flexGrow: 1,
-          height: '100vh',
-          overflow: 'auto',
-        }}
-      >
+
+      <DashboardContainer>
         <Toolbar />
         {children}
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Footer />
         </Container>
-      </Box>
+      </DashboardContainer>
     </Box>
   );
 };
