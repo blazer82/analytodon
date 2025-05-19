@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
@@ -20,6 +20,7 @@ import { RepliesService } from './replies.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('accounts/:accountId/replies')
 export class RepliesController {
+  private readonly logger = new Logger(RepliesController.name);
   constructor(private readonly repliesService: RepliesService) {}
 
   @Get('kpi/weekly')
@@ -28,6 +29,7 @@ export class RepliesController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Weekly replies KPI data.', type: RepliesKpiDto })
   async getWeeklyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<RepliesKpiDto> {
+    this.logger.log(`Getting weekly replies KPI for account ${accountId}, user ${user.id}`);
     return this.repliesService.getWeeklyKpi(accountId, user);
   }
 
@@ -37,6 +39,7 @@ export class RepliesController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Monthly replies KPI data.', type: RepliesKpiDto })
   async getMonthlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<RepliesKpiDto> {
+    this.logger.log(`Getting monthly replies KPI for account ${accountId}, user ${user.id}`);
     return this.repliesService.getMonthlyKpi(accountId, user);
   }
 
@@ -46,6 +49,7 @@ export class RepliesController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Yearly replies KPI data.', type: RepliesKpiDto })
   async getYearlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<RepliesKpiDto> {
+    this.logger.log(`Getting yearly replies KPI for account ${accountId}, user ${user.id}`);
     return this.repliesService.getYearlyKpi(accountId, user);
   }
 
@@ -62,6 +66,7 @@ export class RepliesController {
     @Param('accountId') accountId: string,
     @GetUser() user: UserEntity,
   ): Promise<TotalSnapshotDto | null> {
+    this.logger.log(`Getting total replies snapshot for account ${accountId}, user ${user.id}`);
     return this.repliesService.getTotalSnapshot(accountId, user);
   }
 
@@ -76,6 +81,9 @@ export class RepliesController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<ChartDataPointDto[]> {
+    this.logger.log(
+      `Getting replies chart data for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+    );
     return this.repliesService.getChartData(accountId, query.timeframe, user);
   }
 
@@ -90,6 +98,9 @@ export class RepliesController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<RepliedTootDto[]> {
+    this.logger.log(
+      `Getting top toots by replies for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+    );
     const rankedEntities = await this.repliesService.getTopTootsByReplies(accountId, query.timeframe, user);
     return rankedEntities.map(
       (toot) =>
@@ -119,6 +130,7 @@ export class RepliesController {
     @GetUser() user: UserEntity,
     @Res() res: Response,
   ): Promise<void> {
+    this.logger.log(`Exporting replies CSV for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`);
     await this.repliesService.exportCsv(accountId, query.timeframe, user, res);
   }
 }

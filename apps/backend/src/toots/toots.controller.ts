@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Logger, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AccountsService } from '../accounts/accounts.service'; // To get account timezone
@@ -20,6 +20,7 @@ import { RankedTootEntity, TootsService } from './toots.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('accounts/:accountId/toots')
 export class TootsController {
+  private readonly logger = new Logger(TootsController.name);
   constructor(
     private readonly tootsService: TootsService,
     private readonly accountsService: AccountsService, // Inject AccountsService
@@ -36,6 +37,9 @@ export class TootsController {
     @Query() query: TimeframeQueryDto, // Using TimeframeQueryDto from boosts for now
     @GetUser() user: UserEntity,
   ): Promise<AllTopTootsResponseDto> {
+    this.logger.log(
+      `Getting top toots summary for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+    );
     const account = await this.accountsService.findByIdOrFail(accountId, user, true);
 
     const { dateFrom, dateTo, timeframe: resolvedTimeframe } = resolveTimeframe(account.timezone, query.timeframe);

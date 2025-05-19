@@ -37,7 +37,7 @@ export interface AccountsControllerConnectRequest {
 }
 
 export interface AccountsControllerConnectCallbackRequest {
-    token: string;
+    state: string;
     code: string;
 }
 
@@ -111,10 +111,10 @@ export class AccountsApi extends runtime.BaseAPI {
      * Handle Mastodon OAuth callback
      */
     async accountsControllerConnectCallbackRaw(requestParameters: AccountsControllerConnectCallbackRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['token'] == null) {
+        if (requestParameters['state'] == null) {
             throw new runtime.RequiredError(
-                'token',
-                'Required parameter "token" was null or undefined when calling accountsControllerConnectCallback().'
+                'state',
+                'Required parameter "state" was null or undefined when calling accountsControllerConnectCallback().'
             );
         }
 
@@ -127,8 +127,8 @@ export class AccountsApi extends runtime.BaseAPI {
 
         const queryParameters: any = {};
 
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
+        if (requestParameters['state'] != null) {
+            queryParameters['state'] = requestParameters['state'];
         }
 
         if (requestParameters['code'] != null) {

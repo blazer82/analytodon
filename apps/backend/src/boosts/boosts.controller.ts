@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
@@ -20,6 +20,7 @@ import { TotalSnapshotDto } from './dto/total-snapshot.dto';
 @UseGuards(JwtAuthGuard, RolesGuard) // Apply to all routes in this controller
 @Controller('accounts/:accountId/boosts')
 export class BoostsController {
+  private readonly logger = new Logger(BoostsController.name);
   constructor(private readonly boostsService: BoostsService) {}
 
   @Get('kpi/weekly')
@@ -28,6 +29,7 @@ export class BoostsController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Weekly boosts KPI data.', type: BoostsKpiDto })
   async getWeeklyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
+    this.logger.log(`Getting weekly boosts KPI for account ${accountId}, user ${user.id}`);
     const kpiData = await this.boostsService.getWeeklyKpi(accountId, user);
     return { ...kpiData } as BoostsKpiDto;
   }
@@ -38,6 +40,7 @@ export class BoostsController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Monthly boosts KPI data.', type: BoostsKpiDto })
   async getMonthlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
+    this.logger.log(`Getting monthly boosts KPI for account ${accountId}, user ${user.id}`);
     const kpiData = await this.boostsService.getMonthlyKpi(accountId, user);
     return { ...kpiData } as BoostsKpiDto;
   }
@@ -48,6 +51,7 @@ export class BoostsController {
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Yearly boosts KPI data.', type: BoostsKpiDto })
   async getYearlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
+    this.logger.log(`Getting yearly boosts KPI for account ${accountId}, user ${user.id}`);
     const kpiData = await this.boostsService.getYearlyKpi(accountId, user);
     return { ...kpiData } as BoostsKpiDto;
   }
@@ -65,6 +69,7 @@ export class BoostsController {
     @Param('accountId') accountId: string,
     @GetUser() user: UserEntity,
   ): Promise<TotalSnapshotDto | null> {
+    this.logger.log(`Getting total boosts snapshot for account ${accountId}, user ${user.id}`);
     const snapshotData = await this.boostsService.getTotalSnapshot(accountId, user);
     if (!snapshotData) {
       return null;
@@ -83,6 +88,9 @@ export class BoostsController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<ChartDataPointDto[]> {
+    this.logger.log(
+      `Getting boosts chart data for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+    );
     const chartInternalData = await this.boostsService.getChartData(accountId, query.timeframe, user);
     return chartInternalData.map((point) => ({ ...point }) as ChartDataPointDto);
   }
@@ -98,6 +106,9 @@ export class BoostsController {
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<BoostedTootDto[]> {
+    this.logger.log(
+      `Getting top toots by boosts for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+    );
     const rankedEntities = await this.boostsService.getTopTootsByBoosts(accountId, query.timeframe, user);
     return rankedEntities.map(
       (toot) =>
@@ -127,6 +138,7 @@ export class BoostsController {
     @GetUser() user: UserEntity,
     @Res() res: Response,
   ): Promise<void> {
+    this.logger.log(`Exporting boosts CSV for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`);
     await this.boostsService.exportCsv(accountId, query.timeframe, user, res);
   }
 }

@@ -405,7 +405,10 @@ describe('AccountsService', () => {
       expect(entityManager.persistAndFlush).toHaveBeenCalledWith([mockAccountCredentialsEntity, freshAccount]);
       expect(result.redirectUrl).toContain('oauth/authorize');
       expect(result.redirectUrl).toContain(`client_id=${mockMastodonAppEntity.clientID}`);
-      expect(result.redirectUrl).toContain('token%3Dmock-uuid');
+      expect(result.redirectUrl).toContain(
+        'redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Faccounts%2Fconnect%2Fcallback',
+      );
+      expect(result.redirectUrl).toContain('&state=mock-uuid');
     });
 
     it('should register new MastodonApp if not existing and then initiate connection', async () => {
@@ -442,6 +445,10 @@ describe('AccountsService', () => {
       expect(entityManager.persistAndFlush).toHaveBeenCalledWith(expect.any(Object)); // For MastodonApp
       expect(entityManager.persistAndFlush).toHaveBeenCalledWith([mockAccountCredentialsEntity, freshAccount]); // For AccountCredentials
       expect(result.redirectUrl).toContain('client_id=new-server-client-id');
+      expect(result.redirectUrl).toContain(
+        'redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Faccounts%2Fconnect%2Fcallback',
+      );
+      expect(result.redirectUrl).toContain('&state=mock-uuid');
     });
 
     it('should update existing AccountCredentials if found during initiation', async () => {
@@ -484,7 +491,7 @@ describe('AccountsService', () => {
 
   describe('handleConnectionCallback', () => {
     const callbackQueryDto: ConnectAccountCallbackQueryDto = {
-      token: 'connToken',
+      state: 'connToken', // Changed from token to state
       code: 'authCode',
     };
     const mockOwnerHint = mockOwner;
@@ -545,7 +552,7 @@ describe('AccountsService', () => {
       const result = await service.handleConnectionCallback(callbackQueryDto, mockOwnerHint);
 
       expect(accountCredentialsRepository.findOne).toHaveBeenCalledWith(
-        { connectionToken: callbackQueryDto.token },
+        { connectionToken: callbackQueryDto.state }, // Use state here
         { populate: ['account', 'account.owner'] },
       );
       expect(mastodonAppRepository.findOne).toHaveBeenCalledWith({
@@ -556,7 +563,7 @@ describe('AccountsService', () => {
         mockEncryptedMastodonApp.clientID,
         'serverClientSecret', // Decrypted client secret
         callbackQueryDto.code,
-        expect.stringContaining(`/accounts/connect/callback?token=${callbackQueryDto.token}`),
+        'http://localhost:3000/accounts/connect/callback', // Static redirect URI
       );
       expect(mockEncryptionService.encrypt).toHaveBeenCalledWith(rawAccessToken);
       expect(mockMegalodonClient.verifyAccountCredentials).toHaveBeenCalledWith(); // Called with raw token by megalodon client

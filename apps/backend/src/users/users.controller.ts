@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   NotFoundException,
   Param,
   Patch,
@@ -26,6 +27,7 @@ import { UsersService } from './users.service';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
+  private readonly logger = new Logger(UsersController.name);
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
@@ -39,6 +41,7 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email already exists.' })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden resource.' })
   async createUser(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    this.logger.log(`Admin creating user with email: ${createUserDto.email}`);
     const user = await this.usersService.create(createUserDto);
     return new UserResponseDto(user);
   }
@@ -51,6 +54,7 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.OK, description: 'List of users retrieved.', type: [UserResponseDto] })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden resource.' })
   async findAllUsers(): Promise<UserResponseDto[]> {
+    this.logger.log(`Admin fetching all users`);
     const users = await this.usersService.findAll();
     return users.map((user) => new UserResponseDto(user));
   }
@@ -65,6 +69,7 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found.' })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden resource.' })
   async findUserById(@Param('id') id: string): Promise<UserResponseDto> {
+    this.logger.log(`Admin fetching user by ID: ${id}`);
     const user = await this.usersService.findById(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found.`);
@@ -84,6 +89,7 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found.' })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden resource.' })
   async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
+    this.logger.log(`Admin updating user by ID: ${id}`);
     const user = await this.usersService.update(id, updateUserDto);
     return new UserResponseDto(user);
   }
@@ -99,6 +105,7 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden resource.' })
   async sendEmailToUsers(@Body() sendEmailDto: SendEmailDto): Promise<void> {
+    this.logger.log(`Admin sending email to group: ${sendEmailDto.recipientGroup}`);
     await this.usersService.sendEmailToUsers(sendEmailDto);
   }
 
@@ -114,6 +121,7 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Subscription successful.' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
   async subscribe(@Param('type') type: string, @Body() manageSubscriptionDto: ManageSubscriptionDto): Promise<void> {
+    this.logger.log(`User ${manageSubscriptionDto.e} subscribing to list type: ${type}`);
     await this.usersService.manageSubscription(manageSubscriptionDto, type, true);
   }
 
@@ -125,6 +133,7 @@ export class UsersController {
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Unsubscription successful.' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
   async unsubscribe(@Param('type') type: string, @Body() manageSubscriptionDto: ManageSubscriptionDto): Promise<void> {
+    this.logger.log(`User ${manageSubscriptionDto.e} unsubscribing from list type: ${type}`);
     await this.usersService.manageSubscription(manageSubscriptionDto, type, false);
   }
 }

@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   NotFoundException,
   Param,
   Patch,
@@ -32,6 +33,7 @@ import { UpdateAccountDto } from './dto/update-account.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('accounts')
 export class AccountsController {
+  private readonly logger = new Logger(AccountsController.name);
   constructor(
     private readonly accountsService: AccountsService,
     private readonly configService: ConfigService,
@@ -48,6 +50,7 @@ export class AccountsController {
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Account already exists or conflict.' })
   async create(@Body() createAccountDto: CreateAccountDto, @GetUser() user: UserEntity): Promise<AccountResponseDto> {
+    this.logger.log(`User ${user.id} creating account with server URL: ${createAccountDto.serverURL}`);
     const account = await this.accountsService.create(createAccountDto, user);
     return new AccountResponseDto(account);
   }
@@ -60,6 +63,7 @@ export class AccountsController {
     type: [AccountResponseDto],
   })
   async findAll(@GetUser() user: UserEntity): Promise<AccountResponseDto[]> {
+    this.logger.log(`User ${user.id} fetching all accounts`);
     const accounts = await this.accountsService.findAll(user);
     return accounts.map((account) => new AccountResponseDto(account));
   }
@@ -70,6 +74,7 @@ export class AccountsController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Account configuration retrieved.', type: AccountResponseDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Account not found or not owned by user.' })
   async findOne(@Param('id') id: string, @GetUser() user: UserEntity): Promise<AccountResponseDto> {
+    this.logger.log(`User ${user.id} fetching account by ID: ${id}`);
     const account = await this.accountsService.findById(id, user);
     if (!account) {
       throw new NotFoundException(`Account with ID ${id} not found or not owned by user.`);
@@ -93,6 +98,7 @@ export class AccountsController {
     @Body() updateAccountDto: UpdateAccountDto,
     @GetUser() user: UserEntity,
   ): Promise<AccountResponseDto> {
+    this.logger.log(`User ${user.id} updating account by ID: ${id}`);
     const account = await this.accountsService.update(id, updateAccountDto, user);
     return new AccountResponseDto(account);
   }
@@ -104,6 +110,7 @@ export class AccountsController {
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Account configuration successfully deleted.' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Account not found or not owned by user.' })
   async remove(@Param('id') id: string, @GetUser() user: UserEntity): Promise<void> {
+    this.logger.log(`User ${user.id} deleting account by ID: ${id}`);
     await this.accountsService.remove(id, user);
   }
 
@@ -122,6 +129,7 @@ export class AccountsController {
     @GetUser() user: UserEntity,
     // @Body() _connectAccountDto: ConnectAccountBodyDto, // DTO might be empty or have optional redirect post-callback
   ): Promise<ConnectAccountResponseDto> {
+    this.logger.log(`User ${user.id} initiating connection for account ID: ${accountId}`);
     const { redirectUrl } = await this.accountsService.initiateConnection(accountId, user);
     return new ConnectAccountResponseDto(redirectUrl);
   }
@@ -139,6 +147,7 @@ export class AccountsController {
     @Query() connectAccountCallbackQueryDto: ConnectAccountCallbackQueryDto,
     @GetUser() user: UserEntity, // User from JWT, if any. May not be strictly necessary if token implies user.
   ): Promise<{ url: string; statusCode?: number }> {
+    this.logger.log(`Handling connect callback with state: ${connectAccountCallbackQueryDto.state}`);
     // The user from @GetUser might be null if the callback is hit by a browser without an active session cookie
     // The primary link is the `token` in ConnectAccountCallbackQueryDto which maps to `connectionToken`
     // The service method `handleConnectionCallback` should verify ownership via the populated account from connectionToken.

@@ -209,7 +209,8 @@ export class AccountsService {
     const connectionToken = uuidv4();
     const appURL = this.configService.get<string>('FRONTEND_URL');
     const marketingURL = this.configService.get<string>('MARKETING_URL');
-    const redirectUri = `${appURL}/accounts/connect/callback?token=${connectionToken}`;
+    // Use a static redirect URI for app registration and OAuth flow
+    const staticRedirectUri = `${appURL}/accounts/connect/callback`;
 
     let mastodonApp = await this.mastodonAppRepository.findOne({ serverURL: account.serverURL });
     let megalodonClient: MegalodonInterface;
@@ -225,7 +226,7 @@ export class AccountsService {
         }
         const appData = await megalodonClient.registerApp(appName, {
           scopes: SCOPES,
-          redirect_uris: redirectUri, // Important: This exact URI must be used in the OAuth flow
+          redirect_uris: staticRedirectUri, // Use the static redirect URI for registration
           website: marketingURL,
         });
         this.logger.log(`App registered on ${account.serverURL} with clientID ${appData.client_id}`);
@@ -245,7 +246,8 @@ export class AccountsService {
       }
 
       // Construct the authorization URL using the (potentially now shared) clientID
-      const authorizeUrl = `${account.serverURL}/oauth/authorize?client_id=${mastodonApp.clientID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(SCOPES.join(' '))}`;
+      // Pass the connectionToken as the 'state' parameter
+      const authorizeUrl = `${account.serverURL}/oauth/authorize?client_id=${mastodonApp.clientID}&redirect_uri=${encodeURIComponent(staticRedirectUri)}&response_type=code&scope=${encodeURIComponent(SCOPES.join(' '))}&state=${connectionToken}`;
 
       let accountCredentials = await this.accountCredentialsRepository.findOne({ account });
       if (!accountCredentials) {
@@ -288,10 +290,11 @@ export class AccountsService {
     callbackQueryDto: ConnectAccountCallbackQueryDto,
     ownerHint: UserEntity,
   ): Promise<{ accountId: string; isReconnect: boolean }> {
-    const { token: connectionToken, code } = callbackQueryDto;
+    // The 'token' from callbackQueryDto is now the 'state' parameter
+    const { state: connectionToken, code } = callbackQueryDto;
 
     const accountCredentials = await this.accountCredentialsRepository.findOne(
-      { connectionToken },
+      { connectionToken }, // Look up credentials using the state value
       { populate: ['account', 'account.owner'] },
     );
 
@@ -313,8 +316,9 @@ export class AccountsService {
 
     const isReconnect = account.setupComplete;
     const appURL = this.configService.get<string>('FRONTEND_URL');
-    // The redirect URI used here must exactly match the one used during app registration and authorize URL construction.
-    const callbackRedirectUri = `${appURL}/accounts/connect/callback?token=${connectionToken}`;
+    // The redirect URI used here must exactly match the one used during app registration.
+    // It no longer contains the connectionToken/state.
+    const staticCallbackRedirectUri = `${appURL}/accounts/connect/callback`;
     let oauthClient: MegalodonInterface;
     let mastodonClient: MegalodonInterface;
 
@@ -340,7 +344,7 @@ export class AccountsService {
         mastodonApp.clientID,
         decryptedClientSecret, // Use decrypted client secret
         code,
-        callbackRedirectUri,
+        staticCallbackRedirectUri, // Use the static redirect URI for token exchange
       );
 
       const encryptedAccessToken = this.encryptionService.encrypt(tokenData.access_token);

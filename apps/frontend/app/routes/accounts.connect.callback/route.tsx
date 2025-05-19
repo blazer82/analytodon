@@ -23,7 +23,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   let user = await requireUser(request); // Use let as user object might be updated after token refresh
 
   const url = new URL(request.url);
-  const connectionToken = url.searchParams.get('token');
+  const connectionToken = url.searchParams.get('state');
   const code = url.searchParams.get('code');
 
   // Both token and code are required for the OAuth callback
@@ -37,7 +37,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // Call the API to handle the OAuth callback
     const accountsApi = await createAccountsApiWithAuth(request);
     await accountsApi.accountsControllerConnectCallback({
-      token: connectionToken,
+      state: connectionToken,
       code: code,
     });
 
