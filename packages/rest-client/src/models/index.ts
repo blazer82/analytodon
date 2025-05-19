@@ -1,12 +1,12 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './AccountResponseDto';
-export * from './AccountsControllerConnect200Response';
 export * from './AllTopTootsResponseDto';
 export * from './AuthResponseDto';
 export * from './BoostedTootDto';
 export * from './BoostsKpiDto';
 export * from './ChartDataPointDto';
+export * from './ConnectAccountResponseDto';
 export * from './CreateAccountDto';
 export * from './CreateUserDto';
 export * from './FavoritedTootDto';

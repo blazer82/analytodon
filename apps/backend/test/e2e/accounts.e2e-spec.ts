@@ -133,6 +133,19 @@ describe('AccountsController (e2e)', () => {
       });
       expect(dbAccount).not.toBeNull();
       expect(dbAccount?.serverURL).toBe(createAccountDto1.serverURL);
+      expect(dbAccount?.id).toBe(response.body.id);
+
+      // Verify the account is in the user's accounts collection
+      const updatedUser = await entityManager.findOneOrFail(
+        UserEntity,
+        { id: testUser.id },
+        { populate: ['accounts'] },
+      );
+      expect(updatedUser.accounts.isInitialized()).toBe(true);
+      // After beforeEach clears accounts, this should be the first one
+      expect(updatedUser.accounts.count()).toBe(1);
+      const foundInCollection = updatedUser.accounts.getItems().some((acc) => acc.id === response.body.id);
+      expect(foundInCollection).toBe(true);
     });
 
     it('should fail to create account if not authenticated', async () => {

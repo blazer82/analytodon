@@ -3,7 +3,7 @@ import { redirect } from '@remix-run/node';
 import { refreshAccessToken, sessionStorage } from '~/utils/session.server';
 
 // Base URL for the API
-const API_BASE_URL = process.env.API_URL || 'http://localhost:3000';
+export const API_BASE_URL = process.env.API_URL || 'http://localhost:3000';
 
 /**
  * Creates an authenticated API client configuration with token refresh capability
@@ -22,55 +22,112 @@ export async function createApiClientWithAuth(request: Request) {
     return Promise.resolve(session.get('accessToken') as string);
   };
 
-  // Base configuration using the dynamic token provider from the start
-  const baseConfig = new Configuration({
+  // This config is primarily to get a fetcher that might be more than global fetch,
+  // and to ensure it's configured similarly regarding basePath if needed for its internal logic.
+  const baseConfigForFetcher = new Configuration({
     basePath: API_BASE_URL,
-    accessToken: dynamicAccessTokenProvider,
+    accessToken: dynamicAccessTokenProvider, // Match token provider logic if fetchApi uses it
   });
 
-  const originalFetch = baseConfig.fetchApi || fetch; // Default to global fetch
+  const customFetch = async function (this: Configuration, input: RequestInfo | URL, init?: RequestInit) {
+    let absoluteInputUrl: string;
 
-  const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (typeof input === 'string') {
+      // Check if input is already an absolute URL
+      if (input.startsWith('http://') || input.startsWith('https://')) {
+        absoluteInputUrl = input;
+      } else {
+        // Input is a relative path, prepend basePath from 'this' (finalConfig)
+        const basePath = (this.basePath || '').replace(/\/$/, ''); // Ensure no trailing slash
+        const relativePath = input.replace(/^\//, ''); // Ensure no leading slash
+        absoluteInputUrl = `${basePath}/${relativePath}`;
+      }
+    } else if (input instanceof URL) {
+      absoluteInputUrl = input.href;
+    } else {
+      // input is a Request object
+      absoluteInputUrl = input.url;
+      // If init is not provided by the caller, derive from the Request object
+      // This is important as the original Request object's properties should be used if init is undefined.
+      if (init === undefined) {
+        init = {
+          method: input.method,
+          headers: input.headers,
+          // Request.body is a ReadableStream, ensure it's handled correctly or passed as is.
+          // For simplicity, if the generated client passes a Request object, it should also pass 'init'.
+          // If body is needed and not in init, it might require more complex handling.
+          // body: input.body, // This might be problematic if stream already read.
+          credentials: input.credentials,
+          cache: input.cache,
+          redirect: input.redirect,
+          integrity: input.integrity,
+          keepalive: input.keepalive,
+          mode: input.mode,
+          referrer: input.referrer,
+          referrerPolicy: input.referrerPolicy,
+          signal: input.signal,
+        };
+      }
+    }
+
+    // Helper to call the underlying fetcher, preserving 'this' context for baseConfigForFetcher.fetchApi
+    const callUnderlyingFetcher = async (url: string, fetchInit?: RequestInit) => {
+      if (baseConfigForFetcher.fetchApi && typeof baseConfigForFetcher.fetchApi === 'function') {
+        return baseConfigForFetcher.fetchApi(url, fetchInit);
+      }
+      return fetch(url, fetchInit); // Fallback to global fetch
+    };
+
     try {
-      // First attempt uses token from dynamicAccessTokenProvider via OpenAPI runtime
-      const response = await originalFetch(input, init);
+      // The dynamicAccessTokenProvider is part of the Configuration, so the OpenAPI client runtime
+      // should have already used it to set the Authorization header in 'init' before calling this fetchApi.
+      const response = await callUnderlyingFetcher(absoluteInputUrl, init);
 
       if (response.status === 401) {
-        const currentRefreshToken = session.get('refreshToken') as string; // Use latest refresh token
+        const currentRefreshToken = session.get('refreshToken') as string;
         const newAuthResponse = await refreshAccessToken(currentRefreshToken);
 
         if (!newAuthResponse) {
+          // Refresh failed, or no refresh token available
           throw redirect('/login');
         }
 
+        // Update session with new tokens and user data
         session.set('accessToken', newAuthResponse.token);
         session.set('refreshToken', newAuthResponse.refreshToken);
         session.set('user', newAuthResponse.user);
 
+        // Prepare for retry: update Authorization header in a copy of original 'init'
         const newHeaders = new Headers(init?.headers);
         newHeaders.set('Authorization', `Bearer ${newAuthResponse.token}`);
         const retryInit = { ...init, headers: newHeaders };
 
+        // Commit session and store cookie for handleApiResponse
         const cookie = await sessionStorage.commitSession(session);
-        (request as { __newSessionCookie?: string }).__newSessionCookie = cookie; // TODO: Consider type augmentation for request
+        // Type assertion for adding __newSessionCookie to request; consider formal type augmentation
+        (request as unknown as { __newSessionCookie?: string }).__newSessionCookie = cookie;
 
-        return originalFetch(input, retryInit);
+        // Retry the request with the new token
+        return callUnderlyingFetcher(absoluteInputUrl, retryInit);
       }
       return response;
     } catch (error) {
       if (error instanceof Response) {
-        // Re-throw any Response (like redirects)
+        // Re-throw redirect responses or other Response errors
         throw error;
       }
-      console.error('API request failed:', error);
+      // Log other errors and re-throw
+      console.error('API request failed in customFetch:', error);
       throw error;
     }
   };
 
-  // Final configuration with the custom fetch wrapper
+  // finalConfig will have customFetch as its fetchApi.
+  // 'this' in customFetch will refer to this finalConfig instance when called by API client methods.
   const finalConfig = new Configuration({
-    ...baseConfig, // Spreads basePath and dynamicAccessTokenProvider
-    fetchApi: customFetch,
+    basePath: API_BASE_URL,
+    accessToken: dynamicAccessTokenProvider,
+    fetchApi: customFetch, // Assigning the function here
   });
 
   return { config: finalConfig, session };

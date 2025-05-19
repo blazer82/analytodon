@@ -101,6 +101,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   };
 
   if (Array.from(responseHeaders.keys()).length > 0) {
+    responseHeaders.set('Content-Type', 'application/json');
     return new Response(JSON.stringify(returnData), {
       status: 200,
       headers: responseHeaders,

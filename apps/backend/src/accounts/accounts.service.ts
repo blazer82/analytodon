@@ -16,7 +16,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { EncryptionService } from '../shared/services/encryption.service'; // Import EncryptionService
 
 import { UserEntity } from '../users/entities/user.entity';
-import { UsersService } from '../users/users.service';
 import { ConnectAccountCallbackQueryDto } from './dto/connect-account-callback.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -40,7 +39,6 @@ export class AccountsService {
     private readonly accountCredentialsRepository: EntityRepository<AccountCredentialsEntity>,
     @InjectRepository(MastodonAppEntity)
     private readonly mastodonAppRepository: EntityRepository<MastodonAppEntity>,
-    private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly encryptionService: EncryptionService, // Inject EncryptionService
   ) {}
@@ -220,7 +218,11 @@ export class AccountsService {
       if (!mastodonApp) {
         this.logger.log(`No Mastodon app registered for server ${account.serverURL}. Registering now.`);
         megalodonClient = generator('mastodon', account.serverURL);
-        const appName = this.configService.get<string>('MASTODON_APP_NAME', 'Analytodon');
+        let appName = this.configService.get<string>('MASTODON_APP_NAME', 'Analytodon');
+        const nodeEnv = this.configService.get<string>('NODE_ENV');
+        if (nodeEnv && nodeEnv !== 'production') {
+          appName = `${appName} (${nodeEnv.toUpperCase()})`;
+        }
         const appData = await megalodonClient.registerApp(appName, {
           scopes: SCOPES,
           redirect_uris: redirectUri, // Important: This exact URI must be used in the OAuth flow
@@ -243,7 +245,7 @@ export class AccountsService {
       }
 
       // Construct the authorization URL using the (potentially now shared) clientID
-      const authorizeUrl = `${account.serverURL}/oauth/authorize?client_id=${mastodonApp.clientID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${SCOPES.join(' ')}`;
+      const authorizeUrl = `${account.serverURL}/oauth/authorize?client_id=${mastodonApp.clientID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(SCOPES.join(' '))}`;
 
       let accountCredentials = await this.accountCredentialsRepository.findOne({ account });
       if (!accountCredentials) {

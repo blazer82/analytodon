@@ -1,6 +1,5 @@
 .gitignore
 .npmignore
-.openapi-generator-ignore
 README.md
 package.json
 src/apis/AccountsApi.ts
@@ -15,12 +14,12 @@ src/apis/UsersApi.ts
 src/apis/index.ts
 src/index.ts
 src/models/AccountResponseDto.ts
-src/models/AccountsControllerConnect200Response.ts
 src/models/AllTopTootsResponseDto.ts
 src/models/AuthResponseDto.ts
 src/models/BoostedTootDto.ts
 src/models/BoostsKpiDto.ts
 src/models/ChartDataPointDto.ts
+src/models/ConnectAccountResponseDto.ts
 src/models/CreateAccountDto.ts
 src/models/CreateUserDto.ts
 src/models/FavoritedTootDto.ts

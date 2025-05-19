@@ -16,15 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   AccountResponseDto,
-  AccountsControllerConnect200Response,
+  ConnectAccountResponseDto,
   CreateAccountDto,
   UpdateAccountDto,
 } from '../models/index';
 import {
     AccountResponseDtoFromJSON,
     AccountResponseDtoToJSON,
-    AccountsControllerConnect200ResponseFromJSON,
-    AccountsControllerConnect200ResponseToJSON,
+    ConnectAccountResponseDtoFromJSON,
+    ConnectAccountResponseDtoToJSON,
     CreateAccountDtoFromJSON,
     CreateAccountDtoToJSON,
     UpdateAccountDtoFromJSON,
@@ -66,7 +66,7 @@ export class AccountsApi extends runtime.BaseAPI {
     /**
      * Initiate Mastodon OAuth connection for an account
      */
-    async accountsControllerConnectRaw(requestParameters: AccountsControllerConnectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountsControllerConnect200Response>> {
+    async accountsControllerConnectRaw(requestParameters: AccountsControllerConnectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConnectAccountResponseDto>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -96,13 +96,13 @@ export class AccountsApi extends runtime.BaseAPI {
             body: requestParameters['body'] as any,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => AccountsControllerConnect200ResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ConnectAccountResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Initiate Mastodon OAuth connection for an account
      */
-    async accountsControllerConnect(requestParameters: AccountsControllerConnectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountsControllerConnect200Response> {
+    async accountsControllerConnect(requestParameters: AccountsControllerConnectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConnectAccountResponseDto> {
         const response = await this.accountsControllerConnectRaw(requestParameters, initOverrides);
         return await response.value();
     }

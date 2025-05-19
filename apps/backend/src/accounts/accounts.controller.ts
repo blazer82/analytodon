@@ -22,6 +22,7 @@ import { UserEntity } from '../users/entities/user.entity';
 import { AccountsService } from './accounts.service';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { ConnectAccountCallbackQueryDto } from './dto/connect-account-callback.dto';
+import { ConnectAccountResponseDto } from './dto/connect-account-response.dto';
 import { ConnectAccountBodyDto } from './dto/connect-account.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -113,15 +114,16 @@ export class AccountsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Returns the Mastodon OAuth authorization URL to redirect the user to.',
-    schema: { type: 'object', properties: { redirectUrl: { type: 'string' } } },
+    type: ConnectAccountResponseDto,
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Account not found or not owned by user.' })
   async connect(
     @Param('id') accountId: string,
     @GetUser() user: UserEntity,
     // @Body() _connectAccountDto: ConnectAccountBodyDto, // DTO might be empty or have optional redirect post-callback
-  ): Promise<{ redirectUrl: string }> {
-    return this.accountsService.initiateConnection(accountId, user);
+  ): Promise<ConnectAccountResponseDto> {
+    const { redirectUrl } = await this.accountsService.initiateConnection(accountId, user);
+    return new ConnectAccountResponseDto(redirectUrl);
   }
 
   @Get('connect/callback')
@@ -151,7 +153,7 @@ export class AccountsController {
     if (isReconnect) {
       redirectPath = `/settings/accounts`; // Or a specific page for successful reconnection
     } else {
-      redirectPath = `/settings/accounts/setup-complete?accountId=${accountId}`; // Or just /dashboard/${accountId}
+      redirectPath = `/accounts/setup-complete?accountId=${accountId}`; // Or just /dashboard/${accountId}
     }
 
     // For OAuth callbacks, it's common to redirect the user's browser.
