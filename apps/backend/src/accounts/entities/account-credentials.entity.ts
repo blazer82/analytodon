@@ -12,12 +12,6 @@ export class AccountCredentialsEntity extends BaseEntity {
   account!: Rel<AccountEntity>;
 
   @Property({ nullable: true })
-  clientID?: string;
-
-  @Property({ nullable: true })
-  clientSecret?: string;
-
-  @Property({ nullable: true })
   accessToken?: string;
 
   @Property({ nullable: true })

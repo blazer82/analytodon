@@ -6,11 +6,12 @@ import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
 import { AccountCredentialsEntity } from './entities/account-credentials.entity';
 import { AccountEntity } from './entities/account.entity';
+import { MastodonAppEntity } from './entities/mastodon-app.entity';
 
 @Module({
   imports: [
     MikroOrmModule.forFeature({
-      entities: [AccountEntity, AccountCredentialsEntity],
+      entities: [AccountEntity, AccountCredentialsEntity, MastodonAppEntity],
     }),
     UsersModule,
   ],

@@ -20,6 +20,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { AccountCredentialsEntity } from './entities/account-credentials.entity';
 import { AccountEntity } from './entities/account.entity';
+import { MastodonAppEntity } from './entities/mastodon-app.entity';
 
 // Mocks
 jest.mock('uuid');
@@ -69,7 +70,13 @@ const mockAccountCredentialsRepository = {
   create: jest.fn(),
   findOne: jest.fn(),
   nativeDelete: jest.fn(),
-  assign: jest.fn((entity, dto) => Object.assign(entity, dto)), // Simple mock for assign
+  assign: jest.fn((entity, dto) => Object.assign(entity, dto)),
+};
+
+const mockMastodonAppRepository = {
+  create: jest.fn(),
+  findOne: jest.fn(),
+  assign: jest.fn((entity, dto) => Object.assign(entity, dto)),
 };
 
 const mockUsersService = {
@@ -91,6 +98,7 @@ describe('AccountsService', () => {
   let entityManager: jest.Mocked<EntityManager>;
   let accountRepository: jest.Mocked<EntityRepository<AccountEntity>>;
   let accountCredentialsRepository: jest.Mocked<EntityRepository<AccountCredentialsEntity>>;
+  let mastodonAppRepository: jest.Mocked<EntityRepository<MastodonAppEntity>>;
 
   const ownerId = new ObjectId().toHexString();
   const mockOwner = {
@@ -123,10 +131,18 @@ describe('AccountsService', () => {
   const mockAccountCredentialsEntity = {
     id: new ObjectId().toHexString(),
     account: mockAccountEntity,
-    clientID: 'clientId',
-    clientSecret: 'clientSecret',
+    // clientID and clientSecret are removed
     connectionToken: 'connToken',
   } as AccountCredentialsEntity;
+
+  const mockMastodonAppEntity = {
+    id: new ObjectId().toHexString(),
+    serverURL: mockAccountEntity.serverURL,
+    clientID: 'serverClientId',
+    clientSecret: 'serverClientSecret',
+    appName: 'TestApp',
+    scopes: ['read:accounts'],
+  } as MastodonAppEntity;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -136,8 +152,8 @@ describe('AccountsService', () => {
 
     // Mock configService.get to return default values
     mockConfigService.get.mockImplementation((key: string, defaultValue?: unknown) => {
-      if (key === 'API_URL') return 'http://localhost:3000';
-      if (key === 'MARKETING_URL') return 'http://localhost:3000';
+      if (key === 'FRONTEND_URL') return 'http://localhost:3000';
+      if (key === 'MARKETING_URL') return 'https://www.analytodon.com';
       if (key === 'MASTODON_APP_NAME') return 'TestApp';
       return defaultValue;
     });
@@ -148,6 +164,7 @@ describe('AccountsService', () => {
         { provide: EntityManager, useValue: mockEntityManager },
         { provide: getRepositoryToken(AccountEntity), useValue: mockAccountRepository },
         { provide: getRepositoryToken(AccountCredentialsEntity), useValue: mockAccountCredentialsRepository },
+        { provide: getRepositoryToken(MastodonAppEntity), useValue: mockMastodonAppRepository },
         { provide: UsersService, useValue: mockUsersService },
         { provide: ConfigService, useValue: mockConfigService },
       ],
@@ -159,6 +176,7 @@ describe('AccountsService', () => {
     entityManager = mockEntityManager as unknown as jest.Mocked<EntityManager>;
     accountRepository = module.get(getRepositoryToken(AccountEntity));
     accountCredentialsRepository = module.get(getRepositoryToken(AccountCredentialsEntity));
+    mastodonAppRepository = module.get(getRepositoryToken(MastodonAppEntity));
   });
 
   it('should be defined', () => {
@@ -361,54 +379,78 @@ describe('AccountsService', () => {
   describe('initiateConnection', () => {
     const accountId = mockAccountEntity.id;
 
-    it('should initiate connection and return redirect URL', async () => {
+    it('should initiate connection with existing MastodonApp and return redirect URL', async () => {
       const freshAccount = { ...mockAccountEntity, setupComplete: false, credentials: null } as AccountEntity;
       jest.spyOn(service, 'findById').mockResolvedValue(freshAccount);
-      accountCredentialsRepository.create.mockReturnValue(mockAccountCredentialsEntity);
-      mockMegalodonClient.registerApp.mockResolvedValue({
-        client_id: 'test-client-id',
-        client_secret: 'test-client-secret',
-      });
+      mastodonAppRepository.findOne.mockResolvedValue(mockMastodonAppEntity); // MastodonApp exists
+      accountCredentialsRepository.create.mockReturnValue(mockAccountCredentialsEntity); // For new AccountCredentials
       entityManager.persistAndFlush.mockResolvedValue(undefined);
 
       const result = await service.initiateConnection(accountId, mockOwner);
 
       expect(service.findById).toHaveBeenCalledWith(accountId, mockOwner);
-      expect(mockMegalodonClient.registerApp).toHaveBeenCalled();
-      expect(accountCredentialsRepository.create).toHaveBeenCalled();
+      expect(mastodonAppRepository.findOne).toHaveBeenCalledWith({ serverURL: freshAccount.serverURL });
+      expect(mockMegalodonClient.registerApp).not.toHaveBeenCalled(); // Should not register new app
+      expect(accountCredentialsRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ account: freshAccount, connectionToken: 'mock-uuid' }),
+      );
       expect(entityManager.persistAndFlush).toHaveBeenCalledWith([mockAccountCredentialsEntity, freshAccount]);
       expect(result.redirectUrl).toContain('oauth/authorize');
-      expect(result.redirectUrl).toContain('client_id=test-client-id');
-      expect(result.redirectUrl).toContain('token%3Dmock-uuid'); // Check for URL-encoded token
+      expect(result.redirectUrl).toContain(`client_id=${mockMastodonAppEntity.clientID}`);
+      expect(result.redirectUrl).toContain('token%3Dmock-uuid');
     });
 
-    it('should update existing credentials if found', async () => {
+    it('should register new MastodonApp if not existing and then initiate connection', async () => {
+      const freshAccount = { ...mockAccountEntity, setupComplete: false, credentials: null } as AccountEntity;
+      jest.spyOn(service, 'findById').mockResolvedValue(freshAccount);
+      mastodonAppRepository.findOne.mockResolvedValue(null); // MastodonApp does NOT exist
+      mockMegalodonClient.registerApp.mockResolvedValue({
+        client_id: 'new-server-client-id',
+        client_secret: 'new-server-client-secret',
+      });
+      mastodonAppRepository.create.mockReturnValue({
+        ...mockMastodonAppEntity,
+        clientID: 'new-server-client-id', // ensure the created one has the new ID
+        clientSecret: 'new-server-client-secret',
+      });
+      accountCredentialsRepository.create.mockReturnValue(mockAccountCredentialsEntity);
+      entityManager.persistAndFlush.mockResolvedValue(undefined); // For MastodonApp, then for AccountCredentials
+
+      const result = await service.initiateConnection(accountId, mockOwner);
+
+      expect(mockMegalodonClient.registerApp).toHaveBeenCalled();
+      expect(mastodonAppRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          serverURL: freshAccount.serverURL,
+          clientID: 'new-server-client-id',
+          clientSecret: 'new-server-client-secret',
+        }),
+      );
+      expect(entityManager.persistAndFlush).toHaveBeenCalledWith(expect.any(Object)); // For MastodonApp
+      expect(entityManager.persistAndFlush).toHaveBeenCalledWith([mockAccountCredentialsEntity, freshAccount]); // For AccountCredentials
+      expect(result.redirectUrl).toContain('client_id=new-server-client-id');
+    });
+
+    it('should update existing AccountCredentials if found during initiation', async () => {
       const existingCredentials = { ...mockAccountCredentialsEntity, accessToken: 'oldToken' };
       const accountWithExistingCreds = {
         ...mockAccountEntity,
-        setupComplete: true, // e.g. reconnecting
+        setupComplete: true,
         credentials: existingCredentials as Loaded<AccountCredentialsEntity>,
       } as AccountEntity;
 
       jest.spyOn(service, 'findById').mockResolvedValue(accountWithExistingCreds);
-      accountCredentialsRepository.findOne.mockResolvedValue(existingCredentials); // Simulate finding existing credentials
-
-      mockMegalodonClient.registerApp.mockResolvedValue({
-        client_id: 'new-client-id',
-        client_secret: 'new-client-secret',
-      });
+      mastodonAppRepository.findOne.mockResolvedValue(mockMastodonAppEntity);
+      accountCredentialsRepository.findOne.mockResolvedValue(existingCredentials); // Simulate finding existing AccountCredentials
       entityManager.persistAndFlush.mockResolvedValue(undefined);
 
       await service.initiateConnection(accountId, mockOwner);
 
-      expect(accountCredentialsRepository.create).not.toHaveBeenCalled(); // Should not create new
-      // Check that our central mockEntityAssignFunction was called with the correct data
+      expect(accountCredentialsRepository.create).not.toHaveBeenCalled();
       expect(mockEntityAssignFunction).toHaveBeenCalledWith(
         expect.objectContaining({
-          clientID: 'new-client-id',
-          clientSecret: 'new-client-secret',
           connectionToken: 'mock-uuid',
-          accessToken: undefined, // Old access token cleared
+          accessToken: undefined,
         }),
       );
       expect(entityManager.persistAndFlush).toHaveBeenCalledWith([existingCredentials, accountWithExistingCreds]);
@@ -419,8 +461,9 @@ describe('AccountsService', () => {
       await expect(service.initiateConnection(accountId, mockOwner)).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw InternalServerErrorException if Megalodon fails to register app', async () => {
+    it('should throw InternalServerErrorException if Megalodon fails to register app (when MastodonApp is new)', async () => {
       jest.spyOn(service, 'findById').mockResolvedValue(mockAccountEntity as AccountEntity);
+      mastodonAppRepository.findOne.mockResolvedValue(null); // Force app registration
       mockMegalodonClient.registerApp.mockRejectedValue(new Error('Megalodon error'));
       await expect(service.initiateConnection(accountId, mockOwner)).rejects.toThrow(InternalServerErrorException);
     });
@@ -454,6 +497,8 @@ describe('AccountsService', () => {
       accountCredentialsRepository.findOne.mockResolvedValue(
         populatedAccountCredentials as Loaded<AccountCredentialsEntity, 'account.owner'>,
       );
+      // Mock that MastodonApp for the account's serverURL exists
+      mastodonAppRepository.findOne.mockResolvedValue(mockMastodonAppEntity);
 
       mockMegalodonClient.fetchAccessToken.mockResolvedValue({
         access_token: 'newAccessToken',
@@ -465,7 +510,7 @@ describe('AccountsService', () => {
           url: 'https://mastodon.social/@mastodonuser',
           avatar: 'avatar.png',
         } as MegalodonEntities.Account,
-      } as MegalodonResponse<MegalodonEntities.Account>); // Adjust type as per actual Megalodon response structure
+      } as MegalodonResponse<MegalodonEntities.Account>);
       entityManager.persistAndFlush.mockResolvedValue(undefined);
     });
 
@@ -476,10 +521,16 @@ describe('AccountsService', () => {
         { connectionToken: callbackQueryDto.token },
         { populate: ['account', 'account.owner'] },
       );
-      expect(mockMegalodonClient.fetchAccessToken).toHaveBeenCalled();
+      expect(mastodonAppRepository.findOne).toHaveBeenCalledWith({
+        serverURL: populatedAccountCredentials.account.serverURL,
+      });
+      expect(mockMegalodonClient.fetchAccessToken).toHaveBeenCalledWith(
+        mockMastodonAppEntity.clientID,
+        mockMastodonAppEntity.clientSecret,
+        callbackQueryDto.code,
+        expect.stringContaining(`/accounts/connect/callback?token=${callbackQueryDto.token}`),
+      );
       expect(mockMegalodonClient.verifyAccountCredentials).toHaveBeenCalled();
-
-      // Check that our central mockEntityAssignFunction was called with the correct data
       expect(mockEntityAssignFunction).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Mastodon User',
@@ -504,6 +555,13 @@ describe('AccountsService', () => {
       accountCredentialsRepository.findOne.mockResolvedValue(null);
       await expect(service.handleConnectionCallback(callbackQueryDto, mockOwnerHint)).rejects.toThrow(
         NotFoundException,
+      );
+    });
+
+    it('should throw InternalServerErrorException if MastodonApp not found during callback', async () => {
+      mastodonAppRepository.findOne.mockResolvedValue(null); // Simulate MastodonApp not found
+      await expect(service.handleConnectionCallback(callbackQueryDto, mockOwnerHint)).rejects.toThrow(
+        InternalServerErrorException,
       );
     });
 

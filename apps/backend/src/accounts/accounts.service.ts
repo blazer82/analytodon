@@ -20,6 +20,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { AccountCredentialsEntity } from './entities/account-credentials.entity';
 import { AccountEntity } from './entities/account.entity';
+import { MastodonAppEntity } from './entities/mastodon-app.entity';
 
 import * as timezones from '../shared/data/timezones.json';
 
@@ -35,6 +36,8 @@ export class AccountsService {
     private readonly accountRepository: EntityRepository<AccountEntity>,
     @InjectRepository(AccountCredentialsEntity)
     private readonly accountCredentialsRepository: EntityRepository<AccountCredentialsEntity>,
+    @InjectRepository(MastodonAppEntity)
+    private readonly mastodonAppRepository: EntityRepository<MastodonAppEntity>,
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {}
@@ -52,12 +55,6 @@ export class AccountsService {
 
     // Normalize serverURL (e.g., ensure https, remove trailing slash)
     const normalizedServerURL = this.normalizeServerURL(serverURL);
-
-    // Check if an account with the same serverURL and owner already exists (optional, depends on desired constraints)
-    // const existing = await this.accountRepository.findOne({ serverURL: normalizedServerURL, owner });
-    // if (existing) {
-    //   throw new ConflictException('An account with this server URL already exists for this user.');
-    // }
 
     // Max accounts check
     if (typeof owner.maxAccounts === 'number') {
@@ -209,48 +206,60 @@ export class AccountsService {
     }
 
     const connectionToken = uuidv4();
-    const appURL = this.configService.get<string>('API_URL');
+    const appURL = this.configService.get<string>('FRONTEND_URL');
     const marketingURL = this.configService.get<string>('MARKETING_URL');
-    const redirectUri = `${appURL}/api/accounts/connect/callback?token=${connectionToken}`;
+    const redirectUri = `${appURL}/accounts/connect/callback?token=${connectionToken}`;
 
-    let client: MegalodonInterface;
+    let mastodonApp = await this.mastodonAppRepository.findOne({ serverURL: account.serverURL });
+    let megalodonClient: MegalodonInterface;
+
     try {
-      client = generator('mastodon', account.serverURL);
-      const appName = this.configService.get<string>('MASTODON_APP_NAME', 'Analytodon');
-      const appData = await client.registerApp(appName, {
-        scopes: SCOPES,
-        redirect_uris: redirectUri,
-        website: marketingURL,
-      });
-      this.logger.log(`App registered on ${account.serverURL} for account ${accountId}`);
+      if (!mastodonApp) {
+        this.logger.log(`No Mastodon app registered for server ${account.serverURL}. Registering now.`);
+        megalodonClient = generator('mastodon', account.serverURL);
+        const appName = this.configService.get<string>('MASTODON_APP_NAME', 'Analytodon');
+        const appData = await megalodonClient.registerApp(appName, {
+          scopes: SCOPES,
+          redirect_uris: redirectUri, // Important: This exact URI must be used in the OAuth flow
+          website: marketingURL,
+        });
+        this.logger.log(`App registered on ${account.serverURL} with clientID ${appData.client_id}`);
+        mastodonApp = this.mastodonAppRepository.create({
+          serverURL: account.serverURL,
+          clientID: appData.client_id,
+          clientSecret: appData.client_secret,
+          appName,
+          scopes: SCOPES,
+        });
+        await this.em.persistAndFlush(mastodonApp);
+      }
 
-      // Construct the authorization URL
-      const authorizeUrl = `${account.serverURL}/oauth/authorize?client_id=${appData.client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${SCOPES.join(' ')}`;
+      // Construct the authorization URL using the (potentially now shared) clientID
+      const authorizeUrl = `${account.serverURL}/oauth/authorize?client_id=${mastodonApp.clientID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${SCOPES.join(' ')}`;
 
       let accountCredentials = await this.accountCredentialsRepository.findOne({ account });
       if (!accountCredentials) {
         accountCredentials = this.accountCredentialsRepository.create({
           account,
-          clientID: appData.client_id,
-          clientSecret: appData.client_secret,
           connectionToken,
         });
-        account.credentials = accountCredentials;
+        account.credentials = accountCredentials; // Link it to the account
       } else {
         wrap(accountCredentials).assign({
-          clientID: appData.client_id,
-          clientSecret: appData.client_secret,
           connectionToken,
-          accessToken: undefined, // Clear old access token if any
+          accessToken: undefined, // Clear old access token if any, for re-connections
         });
       }
 
-      await this.em.persistAndFlush([accountCredentials, account]);
+      await this.em.persistAndFlush([accountCredentials, account]); // Persist account if it was modified (e.g. linking credentials)
       return { redirectUrl: authorizeUrl };
     } catch (error) {
-      this.logger.error(`Failed to register app on ${account.serverURL}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to initiate connection for account ${accountId} on ${account.serverURL}: ${error.message}`,
+        error.stack,
+      );
       throw new InternalServerErrorException(
-        `Unable to connect to Mastodon instance ${account.serverURL}. Please ensure the server URL is correct and the instance is reachable.`,
+        `Unable to connect to Mastodon instance ${account.serverURL}. Please ensure the server URL is correct, the instance is reachable, and the redirect URI is correctly configured if this is a new server.`,
       );
     }
   }
@@ -293,18 +302,27 @@ export class AccountsService {
     }
 
     const isReconnect = account.setupComplete;
-    const appURL = this.configService.get<string>('API_URL');
-    const callbackRedirectUri = `${appURL}/api/accounts/connect/callback?token=${connectionToken}`;
+    const appURL = this.configService.get<string>('FRONTEND_URL');
+    // The redirect URI used here must exactly match the one used during app registration and authorize URL construction.
+    const callbackRedirectUri = `${appURL}/accounts/connect/callback?token=${connectionToken}`;
     let oauthClient: MegalodonInterface;
     let mastodonClient: MegalodonInterface;
+
+    const mastodonApp = await this.mastodonAppRepository.findOne({ serverURL: account.serverURL });
+    if (!mastodonApp) {
+      this.logger.error(
+        `Mastodon app credentials not found for server ${account.serverURL} during callback for token ${connectionToken}. This should not happen.`,
+      );
+      throw new InternalServerErrorException('Mastodon application credentials not found for this server.');
+    }
 
     try {
       oauthClient = generator('mastodon', account.serverURL);
       const tokenData: MegalodonEntities.Token = await oauthClient.fetchAccessToken(
-        accountCredentials.clientID!, // clientID and clientSecret should exist
-        accountCredentials.clientSecret!,
+        mastodonApp.clientID,
+        mastodonApp.clientSecret,
         code,
-        callbackRedirectUri, // Must match exactly what was used in registerApp
+        callbackRedirectUri,
       );
 
       accountCredentials.accessToken = tokenData.access_token;
