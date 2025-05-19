@@ -13,6 +13,8 @@ import { ObjectId } from 'bson';
 import generator, { Entity as MegalodonEntities, MegalodonInterface } from 'megalodon';
 import { v4 as uuidv4 } from 'uuid';
 
+import { EncryptionService } from '../shared/services/encryption.service'; // Import EncryptionService
+
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { ConnectAccountCallbackQueryDto } from './dto/connect-account-callback.dto';
@@ -40,6 +42,7 @@ export class AccountsService {
     private readonly mastodonAppRepository: EntityRepository<MastodonAppEntity>,
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
+    private readonly encryptionService: EncryptionService, // Inject EncryptionService
   ) {}
 
   /**
@@ -224,10 +227,15 @@ export class AccountsService {
           website: marketingURL,
         });
         this.logger.log(`App registered on ${account.serverURL} with clientID ${appData.client_id}`);
+        const encryptedClientSecret = this.encryptionService.encrypt(appData.client_secret);
+        if (!encryptedClientSecret) {
+          this.logger.error(`Failed to encrypt client secret for ${account.serverURL}`);
+          throw new InternalServerErrorException('Failed to secure client credentials.');
+        }
         mastodonApp = this.mastodonAppRepository.create({
           serverURL: account.serverURL,
           clientID: appData.client_id,
-          clientSecret: appData.client_secret,
+          clientSecret: encryptedClientSecret, // Store encrypted client secret
           appName,
           scopes: SCOPES,
         });
@@ -317,17 +325,31 @@ export class AccountsService {
     }
 
     try {
+      const decryptedClientSecret = this.encryptionService.decrypt(mastodonApp.clientSecret);
+      if (!decryptedClientSecret) {
+        this.logger.error(
+          `Failed to decrypt client secret for MastodonApp ${mastodonApp.id} on server ${account.serverURL}`,
+        );
+        throw new InternalServerErrorException('Failed to retrieve client credentials for authentication.');
+      }
+
       oauthClient = generator('mastodon', account.serverURL);
       const tokenData: MegalodonEntities.Token = await oauthClient.fetchAccessToken(
         mastodonApp.clientID,
-        mastodonApp.clientSecret,
+        decryptedClientSecret, // Use decrypted client secret
         code,
         callbackRedirectUri,
       );
 
-      accountCredentials.accessToken = tokenData.access_token;
+      const encryptedAccessToken = this.encryptionService.encrypt(tokenData.access_token);
+      if (!encryptedAccessToken) {
+        this.logger.error(`Failed to encrypt access token for account ${account.id}`);
+        throw new InternalServerErrorException('Failed to secure access token.');
+      }
+      accountCredentials.accessToken = encryptedAccessToken; // Store encrypted access token
       accountCredentials.connectionToken = undefined; // Clear the connection token
 
+      // Use the original, unencrypted access token for the Megalodon client
       mastodonClient = generator('mastodon', account.serverURL, tokenData.access_token);
       const mastodonAccountInfoResponse = await mastodonClient.verifyAccountCredentials();
       const mastodonAccountInfo: MegalodonEntities.Account = mastodonAccountInfoResponse.data;

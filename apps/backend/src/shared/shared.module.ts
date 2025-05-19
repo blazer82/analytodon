@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
 
+import { EncryptionService } from './services/encryption.service';
+
 @Module({
-  providers: [
-    // Add shared providers here (e.g., utility services, custom pipes, guards)
-  ],
-  exports: [
-    // Export shared providers to make them available in other modules
-  ],
+  providers: [EncryptionService],
+  exports: [EncryptionService],
 })
 export class SharedModule {}

@@ -12,6 +12,8 @@ import { ObjectId } from 'bson';
 import megalodon, { Entity as MegalodonEntities, Response as MegalodonResponse } from 'megalodon';
 import { v4 as uuidv4 } from 'uuid';
 
+import { EncryptionService } from '../shared/services/encryption.service'; // Import EncryptionService
+
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { AccountsService } from './accounts.service';
@@ -85,6 +87,11 @@ const mockUsersService = {
 
 const mockConfigService = {
   get: jest.fn(),
+};
+
+const mockEncryptionService = {
+  encrypt: jest.fn((text) => (text ? `encrypted(${text})` : null)),
+  decrypt: jest.fn((text) => (text ? text.replace('encrypted(', '').replace(')', '') : null)),
 };
 
 const mockMegalodonClient = {
@@ -167,6 +174,7 @@ describe('AccountsService', () => {
         { provide: getRepositoryToken(MastodonAppEntity), useValue: mockMastodonAppRepository },
         { provide: UsersService, useValue: mockUsersService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: EncryptionService, useValue: mockEncryptionService }, // Add EncryptionService mock
       ],
     }).compile();
     // Disable logger for tests
@@ -404,14 +412,18 @@ describe('AccountsService', () => {
       const freshAccount = { ...mockAccountEntity, setupComplete: false, credentials: null } as AccountEntity;
       jest.spyOn(service, 'findById').mockResolvedValue(freshAccount);
       mastodonAppRepository.findOne.mockResolvedValue(null); // MastodonApp does NOT exist
+      const rawClientSecret = 'new-server-client-secret';
       mockMegalodonClient.registerApp.mockResolvedValue({
         client_id: 'new-server-client-id',
-        client_secret: 'new-server-client-secret',
+        client_secret: rawClientSecret,
       });
+      const encryptedClientSecret = `encrypted(${rawClientSecret})`;
+      mockEncryptionService.encrypt.mockReturnValueOnce(encryptedClientSecret); // Mock encryption for client secret
+
       mastodonAppRepository.create.mockReturnValue({
         ...mockMastodonAppEntity,
-        clientID: 'new-server-client-id', // ensure the created one has the new ID
-        clientSecret: 'new-server-client-secret',
+        clientID: 'new-server-client-id',
+        clientSecret: encryptedClientSecret, // Store the "encrypted" version
       });
       accountCredentialsRepository.create.mockReturnValue(mockAccountCredentialsEntity);
       entityManager.persistAndFlush.mockResolvedValue(undefined); // For MastodonApp, then for AccountCredentials
@@ -419,11 +431,12 @@ describe('AccountsService', () => {
       const result = await service.initiateConnection(accountId, mockOwner);
 
       expect(mockMegalodonClient.registerApp).toHaveBeenCalled();
+      expect(mockEncryptionService.encrypt).toHaveBeenCalledWith(rawClientSecret);
       expect(mastodonAppRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           serverURL: freshAccount.serverURL,
           clientID: 'new-server-client-id',
-          clientSecret: 'new-server-client-secret',
+          clientSecret: encryptedClientSecret, // Expect encrypted secret
         }),
       );
       expect(entityManager.persistAndFlush).toHaveBeenCalledWith(expect.any(Object)); // For MastodonApp
@@ -476,6 +489,10 @@ describe('AccountsService', () => {
     };
     const mockOwnerHint = mockOwner;
 
+    let mockEncryptedMastodonApp: typeof mockMastodonAppEntity;
+    let rawAccessToken: string;
+    let encryptedAccessToken: string;
+
     const populatedAccountCredentials = {
       ...mockAccountCredentialsEntity,
       account: {
@@ -493,15 +510,25 @@ describe('AccountsService', () => {
       } as Loaded<AccountEntity, 'owner'>;
 
       populatedAccountCredentials.account = fullyPopulatedAccount;
+      // Simulate MastodonAppEntity having an encrypted client secret
+      mockEncryptedMastodonApp = {
+        ...mockMastodonAppEntity,
+        clientSecret: 'encrypted(serverClientSecret)',
+      };
+      rawAccessToken = 'newAccessToken';
+      encryptedAccessToken = `encrypted(${rawAccessToken})`;
 
       accountCredentialsRepository.findOne.mockResolvedValue(
         populatedAccountCredentials as Loaded<AccountCredentialsEntity, 'account.owner'>,
       );
       // Mock that MastodonApp for the account's serverURL exists
-      mastodonAppRepository.findOne.mockResolvedValue(mockMastodonAppEntity);
+      mastodonAppRepository.findOne.mockResolvedValue(mockEncryptedMastodonApp); // Use the one with encrypted secret
+
+      mockEncryptionService.decrypt.mockReturnValueOnce('serverClientSecret'); // For clientSecret
+      mockEncryptionService.encrypt.mockReturnValueOnce(encryptedAccessToken); // For accessToken
 
       mockMegalodonClient.fetchAccessToken.mockResolvedValue({
-        access_token: 'newAccessToken',
+        access_token: rawAccessToken, // Megalodon returns raw token
       } as MegalodonEntities.Token);
       mockMegalodonClient.verifyAccountCredentials.mockResolvedValue({
         data: {
@@ -524,13 +551,15 @@ describe('AccountsService', () => {
       expect(mastodonAppRepository.findOne).toHaveBeenCalledWith({
         serverURL: populatedAccountCredentials.account.serverURL,
       });
+      expect(mockEncryptionService.decrypt).toHaveBeenCalledWith('encrypted(serverClientSecret)');
       expect(mockMegalodonClient.fetchAccessToken).toHaveBeenCalledWith(
-        mockMastodonAppEntity.clientID,
-        mockMastodonAppEntity.clientSecret,
+        mockEncryptedMastodonApp.clientID,
+        'serverClientSecret', // Decrypted client secret
         callbackQueryDto.code,
         expect.stringContaining(`/accounts/connect/callback?token=${callbackQueryDto.token}`),
       );
-      expect(mockMegalodonClient.verifyAccountCredentials).toHaveBeenCalled();
+      expect(mockEncryptionService.encrypt).toHaveBeenCalledWith(rawAccessToken);
+      expect(mockMegalodonClient.verifyAccountCredentials).toHaveBeenCalledWith(); // Called with raw token by megalodon client
       expect(mockEntityAssignFunction).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Mastodon User',
@@ -542,7 +571,7 @@ describe('AccountsService', () => {
           isActive: true,
         }),
       );
-      expect(populatedAccountCredentials.accessToken).toBe('newAccessToken');
+      expect(populatedAccountCredentials.accessToken).toBe(encryptedAccessToken); // Encrypted access token
       expect(populatedAccountCredentials.connectionToken).toBeUndefined();
       expect(entityManager.persistAndFlush).toHaveBeenCalledWith([
         populatedAccountCredentials.account,

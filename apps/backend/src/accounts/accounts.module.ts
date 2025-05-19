@@ -1,6 +1,7 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 
+import { SharedModule } from '../shared/shared.module';
 import { UsersModule } from '../users/users.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
@@ -14,6 +15,7 @@ import { MastodonAppEntity } from './entities/mastodon-app.entity';
       entities: [AccountEntity, AccountCredentialsEntity, MastodonAppEntity],
     }),
     UsersModule,
+    SharedModule,
   ],
   controllers: [AccountsController],
   providers: [AccountsService],
