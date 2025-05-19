@@ -3,7 +3,7 @@ import { createCookieSessionStorage, redirect } from '@remix-run/node';
 import { createAuthApi } from '~/services/api.server';
 
 // Define the session storage
-const sessionStorage = createCookieSessionStorage({
+export const sessionStorage = createCookieSessionStorage({
   cookie: {
     name: 'analytodon_session',
     httpOnly: true,
@@ -124,4 +124,25 @@ export async function refreshAccessToken(refreshToken: string): Promise<AuthResp
     console.error('Failed to refresh token:', error);
     return null;
   }
+}
+
+/**
+ * Handle API response and update session if tokens were refreshed
+ */
+export async function handleApiResponse<T>(request: Request, response: T): Promise<T> {
+  // Check if the request has a new session cookie from token refresh
+  const newSessionCookie = (request as { __newSessionCookie?: string }).__newSessionCookie;
+  if (newSessionCookie) {
+    // If we have a new session cookie, we need to add it to the response headers
+    const headers = new Headers();
+    headers.set('Set-Cookie', newSessionCookie);
+
+    // Throw a response that will be caught by the loader/action
+    throw new Response(null, {
+      status: 200,
+      headers,
+    });
+  }
+
+  return response;
 }

@@ -23,14 +23,15 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAuthApi } from '~/services/api.server';
-import { getUser } from '~/utils/session.server';
+import { getUser, refreshAccessToken, sessionStorage } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Verify Your Email' }];
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUser(request);
+  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  let user = await getUser(request); // Use let to allow reassignment after refresh
   const url = new URL(request.url);
   const verificationCode = url.searchParams.get('c');
 
@@ -38,21 +39,50 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw redirect('/login');
   }
 
-  if (user.emailVerified) {
-    if (user.accounts.length === 0) {
-      throw redirect('/accounts/connect');
-    }
-    throw redirect('/');
-  }
+  // This check should use the potentially updated user object later in the flow
+  // if (user.emailVerified) { ... }
 
   // If we have a verification code, process it
   let verificationStatus = null;
+  const responseHeaders = new Headers();
+
   if (verificationCode) {
+    if (user.emailVerified) {
+      // If already verified (e.g. user re-clicks link), redirect immediately
+      if (user.accounts.length === 0) {
+        throw redirect('/accounts/connect');
+      }
+      throw redirect('/');
+    }
     try {
-      const authApi = createAuthApi();
+      const authApi = createAuthApi(); // No token needed for verify email
       await authApi.authControllerVerifyEmail({ code: verificationCode });
+
+      // After successful verification, refresh the session to get updated user data
+      const currentRefreshToken = session.get('refreshToken');
+      if (currentRefreshToken) {
+        const newAuthResponse = await refreshAccessToken(currentRefreshToken);
+        if (newAuthResponse) {
+          session.set('accessToken', newAuthResponse.token);
+          session.set('refreshToken', newAuthResponse.refreshToken);
+          session.set('user', newAuthResponse.user);
+          user = newAuthResponse.user; // Update local user variable
+          responseHeaders.set('Set-Cookie', await sessionStorage.commitSession(session));
+        } else {
+          // Refresh token failed, log out user
+          throw redirect('/logout');
+        }
+      } else {
+        // No refresh token, this shouldn't happen for a logged-in user
+        throw redirect('/logout');
+      }
+
       verificationStatus = { success: true, message: 'Your email has been successfully verified!' };
     } catch (error) {
+      if (error instanceof Response) {
+        // Re-throw redirects
+        throw error;
+      }
       console.error('Email verification error:', error);
       verificationStatus = {
         success: false,
@@ -61,11 +91,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   }
 
-  return json({
-    email: user.email,
-    verificationCode,
-    verificationStatus,
-  });
+  return json(
+    {
+      email: user.email, // user.email should be up-to-date if refresh occurred
+      verificationCode,
+      verificationStatus,
+    },
+    { headers: responseHeaders },
+  );
 }
 
 export default function VerifyEmailPage() {
