@@ -12,7 +12,7 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAccountsApiWithAuth } from '~/services/api.server';
-import { getUser, refreshAccessToken, sessionStorage } from '~/utils/session.server';
+import { refreshAccessToken, requireUser, sessionStorage } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Account Connected - Analytodon' }];
@@ -20,18 +20,11 @@ export const meta: MetaFunction = () => {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await sessionStorage.getSession(request.headers.get('Cookie'));
-  let user = await getUser(request); // Get user, allow reassignment after refresh
+  let user = await requireUser(request); // Use let as user object might be updated after token refresh
+
   const url = new URL(request.url);
   const connectionToken = url.searchParams.get('token');
   const code = url.searchParams.get('code');
-
-  if (!user) {
-    throw redirect('/login'); // Should have a user session to reach here
-  }
-
-  if (!user.emailVerified) {
-    throw redirect('/register/verify'); // Email should be verified before account connection
-  }
 
   // Both token and code are required for the OAuth callback
   if (!connectionToken || !code) {

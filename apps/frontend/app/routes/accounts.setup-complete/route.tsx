@@ -1,6 +1,5 @@
 import { useTheme } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
 import AccountSetupComplete from '~/components/AccountSetupComplete';
 import {
   FormCard,
@@ -11,29 +10,14 @@ import {
   LoginContainer,
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
-import { getUser } from '~/utils/session.server';
+import { requireUser } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Account Setup Complete - Analytodon' }];
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUser(request);
-
-  if (!user) {
-    throw redirect('/login');
-  }
-
-  if (!user.emailVerified) {
-    throw redirect('/register/verify');
-  }
-
-  // If the user has no accounts, they shouldn't be on this page
-  if (user.accounts.length === 0) {
-    throw redirect('/accounts/connect');
-  }
-
-  return { user };
+  await requireUser(request);
 }
 
 export default function AccountsSetupCompletePage() {

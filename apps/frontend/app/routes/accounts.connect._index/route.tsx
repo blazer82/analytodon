@@ -13,23 +13,17 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAccountsApiWithAuth } from '~/services/api.server';
-import { getUser } from '~/utils/session.server';
+import { requireUser } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Connect Your Mastodon Account' }];
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUser(request);
+  const user = await requireUser(request);
 
-  if (!user) {
-    throw redirect('/login');
-  }
-
-  if (!user.emailVerified) {
-    throw redirect('/register/verify');
-  }
-
+  // If user already has accounts, redirect to dashboard.
+  // requireUser allows access to this page if accounts.length is 0.
   if (user.accounts.length > 0) {
     throw redirect('/');
   }
@@ -47,11 +41,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const user = await getUser(request);
-
-  if (!user) {
-    throw redirect('/login');
-  }
+  await requireUser(request);
 
   const formData = await request.formData();
   const action = formData.get('_action');

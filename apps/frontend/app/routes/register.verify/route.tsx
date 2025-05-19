@@ -23,7 +23,7 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAuthApi } from '~/services/api.server';
-import { getUser, refreshAccessToken, sessionStorage } from '~/utils/session.server';
+import { refreshAccessToken, requireUser, sessionStorage } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Verify Your Email' }];
@@ -31,13 +31,10 @@ export const meta: MetaFunction = () => {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await sessionStorage.getSession(request.headers.get('Cookie'));
-  let user = await getUser(request); // Use let to allow reassignment after refresh
+  let user = await requireUser(request); // Use let as user object might be updated after token refresh
+
   const url = new URL(request.url);
   const verificationCode = url.searchParams.get('c');
-
-  if (!user) {
-    throw redirect('/login');
-  }
 
   // This check should use the potentially updated user object later in the flow
   // if (user.emailVerified) { ... }
