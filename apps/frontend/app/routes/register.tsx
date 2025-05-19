@@ -12,7 +12,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { type MetaFunction } from '@remix-run/node';
+import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
 import { Form, Link, useActionData } from '@remix-run/react';
 import Footer from '~/components/Footer';
 import {
@@ -27,20 +27,96 @@ import {
   SubmitButton,
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
+import { createAuthApi } from '~/services/api.server';
+import { createUserSession, getUser } from '~/utils/session.server';
 import timezones from '~/utils/timezones.json';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Sign up for Analytodon' }];
 };
 
-export async function loader() {
-  // TODO: Check if user is already authenticated and redirect to dashboard if so
+export async function loader({ request }: LoaderFunctionArgs) {
+  // Check if user is already authenticated and redirect to dashboard if so
+  const user = await getUser(request);
+  if (user) {
+    return redirect('/');
+  }
   return null;
 }
 
-export async function action() {
-  // This will be implemented later to handle the actual registration
-  return { error: 'Registration functionality will be implemented soon' };
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+  const serverURL = formData.get('serverURL') as string;
+  const timezone = formData.get('timezone') as string;
+
+  // Validate form data
+  if (!email || !password || !serverURL || !timezone) {
+    return new Response(JSON.stringify({ error: 'All fields are required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (password.length < 8) {
+    return new Response(JSON.stringify({ error: 'Password must be at least 8 characters long' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const authApi = createAuthApi();
+    const authResponse = await authApi.authControllerRegister({
+      registerUserDto: {
+        email,
+        password,
+        serverURLOnSignUp: serverURL,
+        timezone,
+      },
+    });
+
+    return createUserSession(authResponse, '/');
+  } catch (error: unknown) {
+    console.error('Registration error:', error);
+
+    const apiError = error as { response?: { status: number; json: () => Promise<{ message?: string | string[] }> } };
+    if (apiError.response) {
+      const status = apiError.response.status;
+      let errorMessage = 'An error occurred during registration. Please try again.';
+      try {
+        const errorJson = await apiError.response.json();
+        if (errorJson.message) {
+          errorMessage = Array.isArray(errorJson.message) ? errorJson.message.join(', ') : errorJson.message;
+        }
+      } catch (_e) {
+        // Ignore if parsing error body fails
+      }
+
+      if (status === 400) {
+        return new Response(JSON.stringify({ error: `Invalid data: ${errorMessage}` }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (status === 409) {
+        return new Response(JSON.stringify({ error: 'Email already registered. Please try to login.' }), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }
 
 export default function Register() {
