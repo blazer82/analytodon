@@ -13,6 +13,6 @@
   "license": "GPL-3.0-only",
   "packageManager": "pnpm@10.5.2",
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.20.0"
+    "@openapitools/openapi-generator-cli": "^2.20.2"
   }
 }
