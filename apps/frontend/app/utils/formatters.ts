@@ -14,3 +14,14 @@ export function formatDate(date: string | Date): string {
     year: 'numeric',
   }).format(date);
 }
+
+/**
+ * Formats a number using the current locale's number formatting.
+ * e.g., 12345.67 -> "12,345.67" (for en-US)
+ * @param num The number to format.
+ * @returns The formatted number string.
+ */
+export function formatNumber(num: number): string {
+  if (num == null) return '0'; // Or handle as an error/empty string
+  return new Intl.NumberFormat().format(num);
+}
