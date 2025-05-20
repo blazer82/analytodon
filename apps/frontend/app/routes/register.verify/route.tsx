@@ -23,14 +23,15 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAuthApi } from '~/services/api.server';
-import { refreshAccessToken, requireUser, sessionStorage } from '~/utils/session.server';
+import { refreshAccessToken, requireUser, withSessionHandling } from '~/utils/session.server'; // Import withSessionHandling
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Verify Your Email' }];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
+  // request.__apiClientSession is guaranteed to be set by withSessionHandling
+  const session = request.__apiClientSession!;
   let user = await requireUser(request); // Use let as user object might be updated after token refresh
 
   const url = new URL(request.url);
@@ -41,7 +42,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // If we have a verification code, process it
   let verificationStatus = null;
-  const responseHeaders = new Headers();
 
   if (verificationCode) {
     if (user.emailVerified) {
@@ -60,24 +60,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
       if (currentRefreshToken) {
         const newAuthResponse = await refreshAccessToken(currentRefreshToken);
         if (newAuthResponse) {
+          // Session is already request.__apiClientSession from HOF
           session.set('accessToken', newAuthResponse.token);
           session.set('refreshToken', newAuthResponse.refreshToken);
           session.set('user', newAuthResponse.user);
           user = newAuthResponse.user; // Update local user variable
-          responseHeaders.set('Set-Cookie', await sessionStorage.commitSession(session));
+          // Session commit will be handled by HOF
         } else {
           // Refresh token failed, log out user
-          throw redirect('/logout');
+          throw redirect('/logout'); // HOF will handle cookie for redirect
         }
       } else {
         // No refresh token, this shouldn't happen for a logged-in user
-        throw redirect('/logout');
+        throw redirect('/logout'); // HOF will handle cookie for redirect
       }
 
       verificationStatus = { success: true, message: 'Your email has been successfully verified!' };
     } catch (error) {
       if (error instanceof Response) {
-        // Re-throw redirects
+        // Re-throw redirects, HOF will handle cookie
         throw error;
       }
       console.error('Email verification error:', error);
@@ -88,25 +89,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   }
 
-  // Remix now automatically handles headers for object returns when v3_singleFetch is true
-  // If responseHeaders has entries, we need to construct a Response.
-  // Otherwise, we can return the object directly.
-  const returnData = {
+  // HOF will wrap this data in a Response and commit session
+  return {
     email: user.email, // user.email should be up-to-date if refresh occurred
     verificationCode,
     verificationStatus,
   };
-
-  if (Array.from(responseHeaders.keys()).length > 0) {
-    responseHeaders.set('Content-Type', 'application/json');
-    return new Response(JSON.stringify(returnData), {
-      status: 200,
-      headers: responseHeaders,
-    });
-  }
-
-  return returnData;
-}
+});
 
 export default function VerifyEmailPage() {
   const { email, verificationStatus } = useLoaderData<typeof loader>();

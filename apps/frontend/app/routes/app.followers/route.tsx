@@ -12,7 +12,7 @@ import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
 import { createFollowersApiWithAuth } from '~/services/api.server';
 import { getKPITrend } from '~/utils/getKPITrend';
-import { handleApiResponse, requireUser, sessionStorage } from '~/utils/session.server';
+import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Followers Analytics - Analytodon' }];
@@ -28,9 +28,9 @@ interface LoaderData {
   accountId: string | null;
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
-  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  const session = request.__apiClientSession!;
   const activeAccountId = session.get('activeAccountId') as string | undefined;
 
   const currentAccount = activeAccountId
@@ -66,7 +66,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       followersApi.followersControllerGetChartData({ accountId, timeframe: timeframeParam }).catch(() => []),
     ]);
 
-    return handleApiResponse(request, {
+    return {
       weeklyKPI,
       monthlyKPI,
       yearlyKPI,
@@ -74,14 +74,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
       chart: chartData,
       initialTimeframe: timeframeParam,
       accountId,
-    });
+    };
   } catch (error) {
+    // If error is a Response (e.g. redirect from API client), HOF will handle it.
     if (error instanceof Response) {
-      // Re-throw redirect responses or other Response errors from handleApiResponse
       throw error;
     }
     console.error('Failed to load followers data:', error);
-    return handleApiResponse(request, {
+    return {
       weeklyKPI: null,
       monthlyKPI: null,
       yearlyKPI: null,
@@ -89,9 +89,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       chart: [],
       initialTimeframe: timeframeParam,
       accountId,
-    });
+    };
   }
-}
+});
 
 export default function FollowersPage() {
   const {

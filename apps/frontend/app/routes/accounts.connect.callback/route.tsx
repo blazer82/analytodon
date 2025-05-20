@@ -12,14 +12,14 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAccountsApiWithAuth } from '~/services/api.server';
-import { refreshAccessToken, requireUser, sessionStorage } from '~/utils/session.server';
+import { refreshAccessToken, requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Account Connected - Analytodon' }];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
+  const session = request.__apiClientSession!;
   let user = await requireUser(request); // Use let as user object might be updated after token refresh
 
   const url = new URL(request.url);
@@ -30,8 +30,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!connectionToken || !code) {
     throw redirect('/accounts/connect');
   }
-
-  const responseHeaders = new Headers();
 
   try {
     // Call the API to handle the OAuth callback
@@ -48,42 +46,34 @@ export async function loader({ request }: LoaderFunctionArgs) {
     if (currentRefreshToken) {
       const newAuthResponse = await refreshAccessToken(currentRefreshToken);
       if (newAuthResponse) {
+        // Session is already request.__apiClientSession from HOF
         session.set('accessToken', newAuthResponse.token);
         session.set('refreshToken', newAuthResponse.refreshToken);
         session.set('user', newAuthResponse.user);
         user = newAuthResponse.user; // Update local user variable
-        responseHeaders.set('Set-Cookie', await sessionStorage.commitSession(session));
+        // Session commit will be handled by HOF
       } else {
         // Refresh token failed, log out user
-        throw redirect('/logout');
+        throw redirect('/logout'); // HOF will handle cookie for redirect
       }
     } else {
       // No refresh token, this shouldn't happen for a logged-in user
-      throw redirect('/logout');
+      throw redirect('/logout'); // HOF will handle cookie for redirect
     }
 
-    const returnData = { status: 'success', user }; // Include updated user if needed by component
-
-    if (Array.from(responseHeaders.keys()).length > 0) {
-      responseHeaders.set('Content-Type', 'application/json');
-      return new Response(JSON.stringify(returnData), {
-        status: 200,
-        headers: responseHeaders,
-      });
-    }
-
-    return returnData;
+    // HOF will wrap this data in a Response and commit session
+    return { status: 'success', user };
   } catch (error) {
     if (error instanceof Response) {
-      // Re-throw redirects
+      // Re-throw redirects, HOF will handle cookie
       throw error;
     }
     console.error('Error in OAuth callback:', error);
 
-    // If there's an error, redirect back to the connect page
+    // If there's an error, redirect back to the connect page. HOF will handle cookie.
     throw redirect('/accounts/connect?error=connection_failed');
   }
-}
+});
 
 export default function AccountsConnectCallbackPage() {
   const theme = useTheme();

@@ -1,25 +1,44 @@
 import { Configuration } from '@analytodon/rest-client';
 import { redirect } from '@remix-run/node';
-import { refreshAccessToken, sessionStorage } from '~/utils/session.server';
+import { refreshAccessToken } from '~/utils/session.server';
 
 // Base URL for the API
 export const API_BASE_URL = process.env.API_URL || 'http://localhost:3000';
 
 /**
- * Creates an authenticated API client configuration with token refresh capability
+ * Creates an authenticated API client configuration with token refresh capability.
+ * Expects `request.__apiClientSession` to be populated by `withSessionHandling` HOF.
  */
 export async function createApiClientWithAuth(request: Request) {
-  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
-  const initialAccessToken = session.get('accessToken');
-  const refreshToken = session.get('refreshToken');
+  const session = request.__apiClientSession;
 
-  if (!initialAccessToken || !refreshToken) {
+  if (!session) {
+    // This should ideally not happen if loaders are correctly wrapped.
+    console.error('Session not found on request. Ensure loader is wrapped with withSessionHandling.');
+    throw redirect('/login'); // Or a more specific error
+  }
+
+  const initialAccessToken = session.get('accessToken') as string | undefined;
+  const initialRefreshToken = session.get('refreshToken') as string | undefined;
+
+  if (!initialAccessToken || !initialRefreshToken) {
+    // If tokens are missing from the session object provided by HOF, redirect to login.
     throw redirect('/login');
   }
 
-  // Dynamically provides the current access token from the session
+  // Dynamically provides the current access token from the request-scoped session
   const dynamicAccessTokenProvider = () => {
-    return Promise.resolve(session.get('accessToken') as string);
+    // Ensure session is still valid and has the token
+    const currentSession = request.__apiClientSession;
+    if (!currentSession) {
+      // This case should be rare, implies session was removed from request mid-flight
+      throw new Error('Session disappeared from request during token provision.');
+    }
+    const token = currentSession.get('accessToken') as string | undefined;
+    if (!token) {
+      throw new Error('Access token missing from session during token provision.');
+    }
+    return Promise.resolve(token);
   };
 
   // This config is primarily to get a fetcher that might be more than global fetch,
@@ -84,30 +103,37 @@ export async function createApiClientWithAuth(request: Request) {
       const response = await callUnderlyingFetcher(absoluteInputUrl, init);
 
       if (response.status === 401) {
-        const currentRefreshToken = session.get('refreshToken') as string;
-        const newAuthResponse = await refreshAccessToken(currentRefreshToken);
+        const currentSession = request.__apiClientSession;
+        if (!currentSession) {
+          // Should not happen if session was validated at the start of createApiClientWithAuth
+          throw new Error('Session disappeared from request during 401 handling.');
+        }
+        const currentRefreshToken = currentSession.get('refreshToken') as string | undefined;
 
-        if (!newAuthResponse) {
-          // Refresh failed, or no refresh token available
+        if (!currentRefreshToken) {
+          // No refresh token available on the session
           throw redirect('/login');
         }
 
-        // Update session with new tokens and user data
-        session.set('accessToken', newAuthResponse.token);
-        session.set('refreshToken', newAuthResponse.refreshToken);
-        session.set('user', newAuthResponse.user);
+        const newAuthResponse = await refreshAccessToken(currentRefreshToken);
+
+        if (!newAuthResponse) {
+          // Refresh failed
+          throw redirect('/login');
+        }
+
+        // Update the request-scoped session with new tokens and user data
+        currentSession.set('accessToken', newAuthResponse.token);
+        currentSession.set('refreshToken', newAuthResponse.refreshToken);
+        currentSession.set('user', newAuthResponse.user);
 
         // Prepare for retry: update Authorization header in a copy of original 'init'
         const newHeaders = new Headers(init?.headers);
         newHeaders.set('Authorization', `Bearer ${newAuthResponse.token}`);
         const retryInit = { ...init, headers: newHeaders };
 
-        // Commit session and store cookie for handleApiResponse
-        const cookie = await sessionStorage.commitSession(session);
-        // Type assertion for adding __newSessionCookie to request; consider formal type augmentation
-        (request as unknown as { __newSessionCookie?: string }).__newSessionCookie = cookie;
-
-        // Retry the request with the new token
+        // Retry the request with the new token. The updated session on `request.__apiClientSession`
+        // will be committed by the `withSessionHandling` HOF at the end of the loader/action.
         return callUnderlyingFetcher(absoluteInputUrl, retryInit);
       }
       return response;
@@ -130,5 +156,5 @@ export async function createApiClientWithAuth(request: Request) {
     fetchApi: customFetch, // Assigning the function here
   });
 
-  return { config: finalConfig, session };
+  return { config: finalConfig };
 }

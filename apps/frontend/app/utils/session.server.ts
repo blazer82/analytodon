@@ -1,4 +1,5 @@
-import { AuthResponseDto, SessionUserDto } from '@analytodon/rest-client';
+import type { AuthResponseDto, SessionUserDto } from '@analytodon/rest-client';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { createCookieSessionStorage, redirect } from '@remix-run/node';
 import { createAuthApi } from '~/services/api.server';
 
@@ -128,23 +129,101 @@ export async function refreshAccessToken(refreshToken: string): Promise<AuthResp
   }
 }
 
+// Type for the original loader/action function that will be wrapped
+type OriginalLoaderOrAction = (
+  args: LoaderFunctionArgs | ActionFunctionArgs,
+  // Optionally, the HOF could pass the session instance directly to the loader/action
+  // session: Session
+) => Promise<Response | unknown>;
+
 /**
- * Handle API response and update session if tokens were refreshed
+ * Higher-Order Function to wrap Remix loaders and actions for session handling.
+ * It retrieves the session, makes it available as `request.__apiClientSession`,
+ * executes the loader/action, and then commits the session, adding any
+ * `Set-Cookie` header to the response.
  */
-export async function handleApiResponse<T>(request: Request, response: T): Promise<T> {
-  // Check if the request has a new session cookie from token refresh
-  const newSessionCookie = (request as { __newSessionCookie?: string }).__newSessionCookie;
-  if (newSessionCookie) {
-    // If we have a new session cookie, we need to add it to the response headers
-    const headers = new Headers();
-    headers.set('Set-Cookie', newSessionCookie);
+export function withSessionHandling(originalLoaderOrAction: OriginalLoaderOrAction) {
+  return async (args: LoaderFunctionArgs | ActionFunctionArgs): Promise<Response> => {
+    const session = await sessionStorage.getSession(args.request.headers.get('Cookie'));
+    args.request.__apiClientSession = session; // Make session available on the request object
 
-    // Throw a response that will be caught by the loader/action
-    throw new Response(null, {
-      status: 200,
-      headers,
+    let resultOrResponse: Response | unknown;
+    let errorOccurred: Error | undefined;
+    let thrownResponse: Response | undefined;
+
+    try {
+      resultOrResponse = await originalLoaderOrAction(args);
+    } catch (e) {
+      if (e instanceof Response) {
+        // If the loader/action threw a Response (e.g., redirect), capture it.
+        thrownResponse = e;
+        resultOrResponse = e; // Ensure resultOrResponse is assigned
+      } else if (e instanceof Error) {
+        errorOccurred = e;
+        resultOrResponse = undefined; // Ensure resultOrResponse is assigned
+      } else {
+        // Unknown error type
+        errorOccurred = new Error('An unknown error occurred');
+        resultOrResponse = undefined; // Ensure resultOrResponse is assigned
+      }
+    }
+
+    // Always try to commit the session, even if an error occurred or a Response was thrown,
+    // as a token refresh might have happened before the error/throw.
+    const sessionToCommit = args.request.__apiClientSession || session; // Fallback to initially fetched session
+    const cookie = await sessionStorage.commitSession(sessionToCommit);
+    const responseHeaders = new Headers();
+    if (cookie) {
+      responseHeaders.set('Set-Cookie', cookie);
+    }
+
+    if (thrownResponse) {
+      // If the loader/action threw a Response (e.g. redirect),
+      // create a new Response to carry over its status and existing headers,
+      // plus our Set-Cookie header.
+      const newHeaders = new Headers(thrownResponse.headers);
+      if (cookie) {
+        newHeaders.append('Set-Cookie', cookie); // Append to allow multiple Set-Cookie headers
+      }
+      // Read the body if it exists and is not null, to forward it.
+      // For redirects, body is often null.
+      const body = thrownResponse.body ? await thrownResponse.arrayBuffer() : null;
+      return new Response(body, {
+        status: thrownResponse.status,
+        statusText: thrownResponse.statusText,
+        headers: newHeaders,
+      });
+    }
+
+    if (errorOccurred) {
+      // If an error was caught, re-throw it. The session commit attempt was made.
+      // Consider if a generic error response with the cookie should be returned instead.
+      // For now, re-throwing preserves original error handling.
+      console.error('Error in wrapped loader/action, session commit attempted:', errorOccurred);
+      throw errorOccurred;
+    }
+
+    if (resultOrResponse instanceof Response) {
+      // If the loader/action returned a Response, merge Set-Cookie.
+      const newHeaders = new Headers(resultOrResponse.headers);
+      if (cookie) {
+        newHeaders.append('Set-Cookie', cookie);
+      }
+      const body = resultOrResponse.body ? await resultOrResponse.arrayBuffer() : null;
+      return new Response(body, {
+        status: resultOrResponse.status,
+        statusText: resultOrResponse.statusText,
+        headers: newHeaders,
+      });
+    }
+
+    // If the loader/action returned data, create a JSON response with it.
+    // responseHeaders already contains the Set-Cookie if needed.
+    const body = JSON.stringify(resultOrResponse);
+    responseHeaders.set('Content-Type', 'application/json; charset=utf-8');
+    return new Response(body, {
+      status: 200, // Default status for successful data responses
+      headers: responseHeaders,
     });
-  }
-
-  return response;
+  };
 }

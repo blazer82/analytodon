@@ -9,15 +9,15 @@ import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/s
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
-import { handleApiResponse, requireUser, sessionStorage } from '~/utils/session.server';
+import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
-  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  const session = request.__apiClientSession!;
   const activeAccountId = session.get('activeAccountId') as string | undefined;
 
   const currentAccount = activeAccountId
@@ -67,25 +67,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
       favouritesCount: toot.favouritesCount,
     }));
 
-    return handleApiResponse(request, {
+    return {
       total,
       chart,
       top,
-    });
+    };
   } catch (error) {
+    // If error is a Response (e.g. redirect from API client), HOF will handle it.
     if (error instanceof Response) {
-      // Re-throw redirect responses or other Response errors from handleApiResponse
       throw error;
     }
     console.error('Failed to load dashboard data:', error);
-    // Return empty data on error to allow the page to render gracefully
-    return handleApiResponse(request, {
+    return {
       total: null,
       chart: [],
       top: null,
-    });
+    };
   }
-}
+});
 
 export default function Dashboard() {
   const { total, chart, top } = useLoaderData<typeof loader>() as {

@@ -4,73 +4,56 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remi
 import { redirect } from '@remix-run/node';
 import { Outlet, useLoaderData, useLocation } from '@remix-run/react';
 import Layout from '~/components/Layout';
-import { requireUser, sessionStorage } from '~/utils/session.server';
+import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request); // Ensures user is logged in and handles basic redirects
 
-  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  const session = request.__apiClientSession!;
   let activeAccountId = session.get('activeAccountId') as string | undefined;
-  let sessionModified = false;
 
   if (user.accounts && user.accounts.length > 0) {
     const accountExists = activeAccountId ? user.accounts.some((acc) => acc.id === activeAccountId) : false;
     if (!activeAccountId || !accountExists) {
       activeAccountId = user.accounts[0].id; // Default to the first account
       session.set('activeAccountId', activeAccountId);
-      sessionModified = true;
+      // Session modification will be handled by withSessionHandling HOF
     }
   } else {
     // No accounts, ensure activeAccountId is not set
     if (activeAccountId) {
       session.unset('activeAccountId');
       activeAccountId = undefined;
-      sessionModified = true;
+      // Session modification will be handled by withSessionHandling HOF
     }
   }
 
   const currentAccount = activeAccountId ? user.accounts.find((acc) => acc.id === activeAccountId) : null;
 
-  const headers = new Headers();
-  if (sessionModified) {
-    headers.set('Set-Cookie', await sessionStorage.commitSession(session));
-  }
-
-  if (headers.has('Set-Cookie')) {
-    return new Response(JSON.stringify({ user, currentAccount }), {
-      status: 200,
-      headers: {
-        ...Object.fromEntries(headers.entries()),
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-
+  // The HOF will handle creating the Response and committing the session
   return { user, currentAccount };
-}
+});
 
-export async function action({ request }: ActionFunctionArgs) {
+export const action = withSessionHandling(async ({ request }: ActionFunctionArgs) => {
   await requireUser(request); // Ensure user is authenticated
   const formData = await request.formData();
   const accountId = formData.get('accountId') as string;
 
   if (!accountId) {
-    return redirect('/app', { status: 400 }); // Bad request
+    throw redirect('/app', { status: 400 }); // Bad request
   }
 
-  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  // request.__apiClientSession is guaranteed to be set by withSessionHandling
+  const session = request.__apiClientSession!;
   session.set('activeAccountId', accountId);
 
-  return redirect('/app', {
-    headers: {
-      'Set-Cookie': await sessionStorage.commitSession(session),
-    },
-  });
-}
+  // The HOF will handle committing the session and forming the redirect Response
+  throw redirect('/app'); // Throw redirect, HOF will add cookie
+});
 
 export default function AppLayout() {
   const { user, currentAccount } = useLoaderData<typeof loader>();
