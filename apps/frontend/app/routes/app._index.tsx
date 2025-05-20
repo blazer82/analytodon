@@ -39,7 +39,7 @@ export default function Dashboard() {
   const hasChart = React.useMemo(() => (chart?.length ?? 0) > 0, [chart]);
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4, position: 'relative', zIndex: 1 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4, position: 'relative' }}>
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 8, lg: 9 }}>
           <ChartPaper>
@@ -64,7 +64,10 @@ export default function Dashboard() {
                 We&apos;ll send you an email once your data is ready.
                 <br />
                 <br />
-                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <Box
+                  component="span"
+                  sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
+                >
                   If this message persists please{' '}
                   <Link
                     href={`mailto:${supportEmail}?subject=Support`}

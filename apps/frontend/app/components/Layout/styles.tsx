@@ -31,19 +31,9 @@ export const DashboardContainer = styled(Box)(({ theme }) => ({
   height: '100vh',
   overflow: 'auto',
   position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='dashboard_grid' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='${encodeURIComponent(
-      theme.palette.divider,
-    )}' stroke-width='0.5'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23dashboard_grid)'/%3E%3C/svg%3E")`,
-    opacity: 0.8, // Adjusted opacity for a more subtle grid
-    zIndex: 0,
-  },
+  backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='dashboard_grid' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='${encodeURIComponent(
+    theme.palette.divider,
+  )}' stroke-width='0.5'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23dashboard_grid)'/%3E%3C/svg%3E")`,
 }));
 
 export const EnhancedPaper = styled(Paper)(({ theme }) => ({
@@ -129,7 +119,7 @@ export const AppBarTitle = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   '& h1': {
     fontWeight: 600,
-    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+    background: `linear-gradient(45deg, ${theme.palette.primary.contrastText}, ${theme.palette.secondary.light})`,
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',

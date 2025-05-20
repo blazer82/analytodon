@@ -15,7 +15,7 @@ export function useAppTheme() {
         palette: {
           mode: prefersDarkMode ? 'dark' : 'light',
           primary: {
-            main: '#455a64', // Slate blue color
+            main: prefersDarkMode ? '#8eb2c3' : '#455a64', // Slate blue color
             light: '#718792',
             dark: '#1c313a',
             contrastText: '#ffffff',

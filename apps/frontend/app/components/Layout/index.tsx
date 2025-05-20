@@ -143,7 +143,6 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                       height: 10,
                       bgcolor: 'background.paper',
                       transform: 'translateY(-50%) rotate(45deg)',
-                      zIndex: 0,
                     },
                   },
                 }}
