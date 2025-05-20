@@ -9,7 +9,7 @@ import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/s
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
-import { requireUser, sessionStorage } from '~/utils/session.server';
+import { handleApiResponse, requireUser, sessionStorage } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }];
@@ -67,19 +67,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
       favouritesCount: toot.favouritesCount,
     }));
 
-    return {
+    return handleApiResponse(request, {
       total,
       chart,
       top,
-    };
+    });
   } catch (error) {
+    if (error instanceof Response) {
+      // Re-throw redirect responses or other Response errors from handleApiResponse
+      throw error;
+    }
     console.error('Failed to load dashboard data:', error);
     // Return empty data on error to allow the page to render gracefully
-    return {
+    return handleApiResponse(request, {
       total: null,
       chart: [],
       top: null,
-    };
+    });
   }
 }
 

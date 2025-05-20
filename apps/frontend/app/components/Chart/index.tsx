@@ -52,6 +52,7 @@ const Chart: React.FunctionComponent<{
     style: theme.typography.body2,
     domain: ['auto', 'auto'] as [number | string, number | string], // Explicitly type domain
     tick: { fill: theme.palette.text.secondary, fontSize: 12 },
+    allowDecimals: false,
   };
 
   const commonCartesianGridProps = {

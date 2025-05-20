@@ -12,7 +12,7 @@ import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
 import { createFollowersApiWithAuth } from '~/services/api.server';
 import { getKPITrend } from '~/utils/getKPITrend';
-import { requireUser, sessionStorage } from '~/utils/session.server';
+import { handleApiResponse, requireUser, sessionStorage } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Followers Analytics - Analytodon' }];
@@ -66,7 +66,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       followersApi.followersControllerGetChartData({ accountId, timeframe: timeframeParam }).catch(() => []),
     ]);
 
-    return {
+    return handleApiResponse(request, {
       weeklyKPI,
       monthlyKPI,
       yearlyKPI,
@@ -74,10 +74,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
       chart: chartData,
       initialTimeframe: timeframeParam,
       accountId,
-    };
+    });
   } catch (error) {
+    if (error instanceof Response) {
+      // Re-throw redirect responses or other Response errors from handleApiResponse
+      throw error;
+    }
     console.error('Failed to load followers data:', error);
-    return {
+    return handleApiResponse(request, {
       weeklyKPI: null,
       monthlyKPI: null,
       yearlyKPI: null,
@@ -85,7 +89,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       chart: [],
       initialTimeframe: timeframeParam,
       accountId,
-    };
+    });
   }
 }
 
