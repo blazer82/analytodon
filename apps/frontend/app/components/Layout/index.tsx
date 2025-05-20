@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { SessionUserDto } from '@analytodon/rest-client';
 import AccountIcon from '@mui/icons-material/AccountCircle';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -14,6 +15,8 @@ import Footer from '../Footer';
 import Logo from '../Logo';
 import { AppBarContent, AppBarTitle, DashboardContainer, DrawerHeader, UserInfo } from './styles';
 import { AppBar, Drawer } from './ux';
+
+type AccountDto = SessionUserDto['accounts'][0];
 
 interface LayoutProps {
   title: string;
@@ -31,7 +34,14 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
   };
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const { user, currentAccount } = useRouteLoaderData<{ user: any; currentAccount: any }>('routes/app') || {};
+
+  interface AppLoaderData {
+    user?: SessionUserDto;
+    currentAccount?: AccountDto | null;
+  }
+  const routeLoaderData = useRouteLoaderData('routes/app') as AppLoaderData | undefined;
+  const user = routeLoaderData?.user;
+  const currentAccount = routeLoaderData?.currentAccount;
 
   const handleMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -41,16 +51,10 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
     setAnchorEl(null);
   }, []);
 
-  const handleLogout = React.useCallback(() => {
-    // The actual logout happens in the Form submission to /logout
+  // Logout is handled by Form submission, this just closes the menu
+  const handleLogoutClick = React.useCallback(() => {
     handleClose();
   }, [handleClose]);
-
-  // TODO: Implement account switching functionality
-  const handleAccountSwitch = React.useCallback((_accountId: string) => {
-    setAnchorEl(null);
-    // Will be implemented later
-  }, []);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -150,15 +154,16 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                 {user &&
                   user.accounts &&
                   user.accounts
-                    .filter((item: any) => item.id !== currentAccount?.id)
-                    .map((item: any) => (
+                    .filter((item: AccountDto) => item.id !== currentAccount?.id)
+                    .map((item: AccountDto) => (
                       <MenuItem
                         key={item.id}
-                        onClick={() => handleAccountSwitch(item.id)}
+                        onClick={handleClose} // Close menu on click, form submission handles the rest
                         sx={{
                           borderRadius: 1,
                           mx: 0.5,
                           my: 0.25,
+                          p: 0, // Remove padding for the Form/Button to fill
                           transition: 'all 0.2s ease',
                           '&:hover': {
                             backgroundColor:
@@ -166,15 +171,30 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                           },
                         }}
                       >
-                        {item.accountName || item.name}
+                        <Form method="post" action="/app" style={{ width: '100%' }}>
+                          <input type="hidden" name="accountId" value={item.id} />
+                          <Button
+                            type="submit"
+                            sx={{
+                              width: '100%',
+                              justifyContent: 'flex-start',
+                              textTransform: 'none',
+                              padding: '6px 16px', // Mimic MenuItem padding
+                              color: 'inherit',
+                              fontWeight: 'inherit',
+                            }}
+                          >
+                            {item.accountName || item.name}
+                          </Button>
+                        </Form>
                       </MenuItem>
                     ))}
                 {user && user.accounts && user.accounts.length > 1 && <Divider sx={{ my: 1 }} />}
-                <MenuItem sx={{ borderRadius: 1, mx: 0.5, my: 0.25 }}>
+                <MenuItem sx={{ borderRadius: 1, mx: 0.5, my: 0.25, p: 0 }}>
                   <Form action="/logout" method="post" style={{ width: '100%' }}>
                     <Button
                       type="submit"
-                      onClick={handleLogout}
+                      onClick={handleLogoutClick} // Use the renamed handler
                       sx={{
                         width: '100%',
                         justifyContent: 'flex-start',

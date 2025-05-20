@@ -19,6 +19,7 @@ interface SessionData {
   accessToken: string;
   refreshToken: string;
   user: SessionUserDto;
+  activeAccountId?: string;
 }
 
 /**
@@ -45,15 +46,16 @@ export async function createUserSession(authResponse: AuthResponseDto, redirectT
 export async function getUserSession(request: Request): Promise<SessionData | null> {
   const session = await sessionStorage.getSession(request.headers.get('Cookie'));
 
-  const accessToken = session.get('accessToken');
-  const refreshToken = session.get('refreshToken');
-  const user = session.get('user');
+  const accessToken = session.get('accessToken') as string | undefined;
+  const refreshToken = session.get('refreshToken') as string | undefined;
+  const user = session.get('user') as SessionUserDto | undefined;
+  const activeAccountId = session.get('activeAccountId') as string | undefined;
 
   if (!accessToken || !refreshToken || !user) {
     return null;
   }
 
-  return { accessToken, refreshToken, user };
+  return { accessToken, refreshToken, user, activeAccountId };
 }
 
 /**

@@ -9,7 +9,7 @@ import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/s
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
-import { requireUser } from '~/utils/session.server';
+import { requireUser, sessionStorage } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }];
@@ -17,13 +17,22 @@ export const meta: MetaFunction = () => {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireUser(request);
-  const currentAccount = user.accounts.length > 0 ? user.accounts[0] : null;
+  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  const activeAccountId = session.get('activeAccountId') as string | undefined;
+
+  const currentAccount = activeAccountId
+    ? user.accounts.find((acc) => acc.id === activeAccountId)
+    : user.accounts.length > 0
+      ? user.accounts[0]
+      : null;
 
   if (!currentAccount || !currentAccount.id) {
+    // This should ideally be handled by requireUser or app.tsx loader redirecting if no accounts exist or setup is incomplete.
+    // If we reach here with no currentAccount, it implies a state that should be fixed upstream or is an error.
     return {
       total: null,
       chart: [],
-      top: null,
+      top: [], // Ensure 'top' is an array as per type Toot[] | null, default to empty array
     };
   }
 

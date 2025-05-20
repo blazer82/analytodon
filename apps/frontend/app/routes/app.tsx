@@ -1,25 +1,75 @@
 import { useEffect } from 'react';
 
-import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
+import { redirect } from '@remix-run/node';
 import { Outlet, useLoaderData, useLocation } from '@remix-run/react';
 import Layout from '~/components/Layout';
-import { requireUser } from '~/utils/session.server';
+import { requireUser, sessionStorage } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }];
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  // Require user to be logged in, redirects to login if not
-  const user = await requireUser(request);
+  const user = await requireUser(request); // Ensures user is logged in and handles basic redirects
 
-  // TODO: Fetch the current active account or default to the first account
-  const currentAccount = user.accounts.length > 0 ? user.accounts[0] : null;
+  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  let activeAccountId = session.get('activeAccountId') as string | undefined;
+  let sessionModified = false;
 
-  return {
-    user,
-    currentAccount,
-  };
+  if (user.accounts && user.accounts.length > 0) {
+    const accountExists = activeAccountId ? user.accounts.some((acc) => acc.id === activeAccountId) : false;
+    if (!activeAccountId || !accountExists) {
+      activeAccountId = user.accounts[0].id; // Default to the first account
+      session.set('activeAccountId', activeAccountId);
+      sessionModified = true;
+    }
+  } else {
+    // No accounts, ensure activeAccountId is not set
+    if (activeAccountId) {
+      session.unset('activeAccountId');
+      activeAccountId = undefined;
+      sessionModified = true;
+    }
+  }
+
+  const currentAccount = activeAccountId ? user.accounts.find((acc) => acc.id === activeAccountId) : null;
+
+  const headers = new Headers();
+  if (sessionModified) {
+    headers.set('Set-Cookie', await sessionStorage.commitSession(session));
+  }
+
+  if (headers.has('Set-Cookie')) {
+    return new Response(JSON.stringify({ user, currentAccount }), {
+      status: 200,
+      headers: {
+        ...Object.fromEntries(headers.entries()),
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  return { user, currentAccount };
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  await requireUser(request); // Ensure user is authenticated
+  const formData = await request.formData();
+  const accountId = formData.get('accountId') as string;
+
+  if (!accountId) {
+    return redirect('/app', { status: 400 }); // Bad request
+  }
+
+  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  session.set('activeAccountId', accountId);
+
+  return redirect('/app', {
+    headers: {
+      'Set-Cookie': await sessionStorage.commitSession(session),
+    },
+  });
 }
 
 export default function AppLayout() {
