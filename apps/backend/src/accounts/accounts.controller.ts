@@ -18,7 +18,10 @@ import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { UserRole } from '../shared/enums/user-role.enum';
 import { UserEntity } from '../users/entities/user.entity';
 import { AccountsService } from './accounts.service';
 import { AccountResponseDto } from './dto/account-response.dto';
@@ -30,7 +33,7 @@ import { UpdateAccountDto } from './dto/update-account.dto';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('accounts')
 export class AccountsController {
   private readonly logger = new Logger(AccountsController.name);
@@ -40,6 +43,7 @@ export class AccountsController {
   ) {}
 
   @Post()
+  @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: 'Create a new Mastodon account configuration' })
   @ApiBody({ type: CreateAccountDto })
   @ApiResponse({
@@ -56,6 +60,7 @@ export class AccountsController {
   }
 
   @Get()
+  @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: "Get all of the authenticated user's Mastodon account configurations" })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -69,6 +74,7 @@ export class AccountsController {
   }
 
   @Get(':id')
+  @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: 'Get a specific Mastodon account configuration by ID' })
   @ApiParam({ name: 'id', description: 'Account ID (MongoDB ObjectId)', type: String })
   @ApiResponse({ status: HttpStatus.OK, description: 'Account configuration retrieved.', type: AccountResponseDto })
@@ -83,6 +89,7 @@ export class AccountsController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: 'Update a Mastodon account configuration' })
   @ApiParam({ name: 'id', description: 'Account ID', type: String })
   @ApiBody({ type: UpdateAccountDto })
@@ -104,6 +111,7 @@ export class AccountsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.AccountOwner)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a Mastodon account configuration' })
   @ApiParam({ name: 'id', description: 'Account ID', type: String })
@@ -115,6 +123,7 @@ export class AccountsController {
   }
 
   @Post(':id/connect')
+  @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: 'Initiate Mastodon OAuth connection for an account' })
   @ApiParam({ name: 'id', description: 'Account ID to connect', type: String })
   @ApiBody({ type: ConnectAccountBodyDto, required: false }) // Body might be empty
@@ -135,6 +144,7 @@ export class AccountsController {
   }
 
   @Get('connect/callback')
+  @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: 'Handle Mastodon OAuth callback' })
   @ApiResponse({
     status: HttpStatus.FOUND,
