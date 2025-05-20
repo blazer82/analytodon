@@ -319,7 +319,7 @@ describe('TimeframeHelper', () => {
       };
 
       const trend = getKPITrend(kpi);
-      expect(trend).toBe(100); // Now capped at 100 instead of Infinity
+      expect(trend).toBeNull();
     });
 
     it('should return null for undefined values', () => {

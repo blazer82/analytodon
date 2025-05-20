@@ -281,15 +281,30 @@ export async function getPeriodKPI(
 }
 
 export const getKPITrend = (kpi: KpiDto): number | null => {
+  // Align with legacy behavior:
+  // Legacy `if (!previousPeriod || !currentPeriod || !currentPeriodProgress)` would return undefined (null in JSON)
+  // if any of these were undefined or 0.
+
   if (kpi.previousPeriod === undefined || kpi.currentPeriod === undefined || kpi.currentPeriodProgress === undefined) {
+    return null; // Handles undefined inputs
+  }
+
+  // Handle cases where legacy would return undefined due to zero values, leading to no trend calculation
+  if (kpi.previousPeriod === 0) {
     return null;
   }
-  if (kpi.previousPeriod === 0) {
-    return kpi.currentPeriod > 0 ? 100 : 0; // Cap at 100% increase instead of Infinity
+  if (kpi.currentPeriod === 0) {
+    // In legacy, `!currentPeriod` (if 0) would cause an early exit.
+    // If previousPeriod is non-zero, this implies a -100% trend.
+    // To strictly match legacy's early exit for `currentPeriod === 0`:
+    return null;
   }
-  // Adjust current period value based on progress for a fair comparison
-  const projectedCurrentPeriod =
-    kpi.currentPeriodProgress > 0 ? kpi.currentPeriod / kpi.currentPeriodProgress : kpi.currentPeriod;
+  if (kpi.currentPeriodProgress === 0) {
+    return null;
+  }
+
+  // At this point, all kpi values (previousPeriod, currentPeriod, currentPeriodProgress) are defined and non-zero.
+  const projectedCurrentPeriod = kpi.currentPeriod / kpi.currentPeriodProgress;
   return (projectedCurrentPeriod - kpi.previousPeriod) / kpi.previousPeriod;
 };
 

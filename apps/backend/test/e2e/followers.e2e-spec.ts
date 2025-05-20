@@ -267,7 +267,7 @@ describe('FollowersController (e2e)', () => {
       if (response.body.length > 0) {
         expect(response.body[0]).toHaveProperty('time');
         expect(response.body[0]).toHaveProperty('value');
-        expect(response.body[0].value).toBe(10);
+        expect(response.body[0].value).toBe(180);
       }
     });
 
@@ -292,9 +292,8 @@ describe('FollowersController (e2e)', () => {
         `attachment; filename=followers-${testAccount.id}-${timeframe}.csv`,
       );
       expect(response.text).toContain('Date;Followers');
-      // Based on seeded data, (190-180)=10, (200-190)=10
       // The exact dates depend on test execution time.
-      expect(response.text).toContain(';10');
+      expect(response.text).toContain(';180');
     });
 
     it('should return 400 if timeframe is missing for CSV export', async () => {

@@ -159,27 +159,24 @@ describe('FollowersService', () => {
       const dateTo = new Date('2023-01-12T00:00:00.000Z');
       mockedResolveTimeframe.mockReturnValue({ dateFrom, dateTo, timeframe: 'custom' });
 
+      // Mock stats should only include data within the dateFrom and dateTo range
       const mockStats = [
-        { day: new Date('2023-01-09T00:00:00.000Z'), followersCount: 5 },
         { day: new Date('2023-01-10T00:00:00.000Z'), followersCount: 15 },
         { day: new Date('2023-01-11T00:00:00.000Z'), followersCount: 20 },
-        { day: new Date('2023-01-12T00:00:00.000Z'), followersCount: 20 },
+        { day: new Date('2023-01-12T00:00:00.000Z'), followersCount: 22 },
       ] as DailyAccountStatsEntity[];
       mockDailyAccountStatsRepository.find.mockResolvedValue(mockStats);
 
       const result = await service.getChartData(mockAccountId, 'last30days', mockUser);
 
-      const oneDayEarlier = new Date(dateFrom);
-      oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
-
       expect(mockDailyAccountStatsRepository.find).toHaveBeenCalledWith(
-        { account: mockAccountId, day: { $gte: oneDayEarlier, $lte: dateTo } },
+        { account: mockAccountId, day: { $gte: dateFrom, $lte: dateTo } }, // No oneDayEarlier
         { orderBy: { day: 'ASC' } },
       );
       expect(result).toEqual([
-        { time: '2023-01-10', value: 10 }, // 15 - 5
-        { time: '2023-01-11', value: 5 }, // 20 - 15
-        { time: '2023-01-12', value: 0 }, // 20 - 20
+        { time: '2023-01-10', value: 15 },
+        { time: '2023-01-11', value: 20 },
+        { time: '2023-01-12', value: 22 },
       ]);
     });
 
