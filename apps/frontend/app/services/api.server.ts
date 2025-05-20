@@ -1,4 +1,11 @@
-import { AccountsApi, AuthenticationApi, Configuration, UsersApi } from '@analytodon/rest-client';
+import {
+  AccountsApi,
+  AuthenticationApi,
+  Configuration,
+  FollowersApi,
+  TootsApi,
+  UsersApi,
+} from '@analytodon/rest-client';
 
 import { API_BASE_URL, createApiClientWithAuth } from './api-client.server';
 
@@ -37,4 +44,20 @@ export async function createAccountsApiWithAuth(request: Request): Promise<Accou
 export async function createUsersApiWithAuth(request: Request): Promise<UsersApi> {
   const { config } = await createApiClientWithAuth(request);
   return new UsersApi(config);
+}
+
+/**
+ * Creates an authenticated instance of the Followers API client with token refresh
+ */
+export async function createFollowersApiWithAuth(request: Request): Promise<FollowersApi> {
+  const { config } = await createApiClientWithAuth(request);
+  return new FollowersApi(config);
+}
+
+/**
+ * Creates an authenticated instance of the Toots API client with token refresh
+ */
+export async function createTootsApiWithAuth(request: Request): Promise<TootsApi> {
+  const { config } = await createApiClientWithAuth(request);
+  return new TootsApi(config);
 }

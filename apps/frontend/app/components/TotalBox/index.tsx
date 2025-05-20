@@ -4,17 +4,11 @@ import { Box, Link } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import { Link as RemixLink } from '@remix-run/react';
 import Title from '~/components/Title';
+import { formatDate } from '~/utils/formatters';
 
 // TODO: Import proper formatting utilities
 const formatNumber = (num: number): string => {
   return new Intl.NumberFormat().format(num);
-};
-
-const formatDate = (date: Date | string): string => {
-  if (typeof date === 'string') {
-    date = new Date(date);
-  }
-  return new Intl.DateTimeFormat().format(date);
 };
 
 const TotalBox: React.FunctionComponent<{

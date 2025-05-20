@@ -1,36 +1,85 @@
 import * as React from 'react';
 
+import type { ChartDataPointDto, RankedTootDto, TotalSnapshotDto } from '@analytodon/rest-client';
 import { Box, Container, Grid, Link, Typography } from '@mui/material';
-import type { MetaFunction } from '@remix-run/node';
+import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { useLoaderData, useRouteLoaderData } from '@remix-run/react';
 import Chart from '~/components/Chart';
 import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/styles';
-import TopToots from '~/components/TopToots';
+import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
+import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
+import { requireUser } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }];
 };
 
-// Define types for our data
-interface TotalData {
-  amount: number;
-  day: string | Date;
-}
+export async function loader({ request }: LoaderFunctionArgs) {
+  const user = await requireUser(request);
+  const currentAccount = user.accounts.length > 0 ? user.accounts[0] : null;
 
-export async function loader() {
-  // TODO: Load dashboard data (followers, chart data, top toots)
+  if (!currentAccount || !currentAccount.id) {
+    return {
+      total: null,
+      chart: [],
+      top: null,
+    };
+  }
 
-  // For now, return empty data
-  return {
-    total: null as TotalData | null,
-    chart: [] as Array<{ time: string; value: number }>,
-    top: null as any[] | null,
-  };
+  const accountId = currentAccount.id;
+
+  try {
+    const followersApi = await createFollowersApiWithAuth(request);
+    const tootsApi = await createTootsApiWithAuth(request);
+
+    // Fetch all data in parallel
+    const [totalSnapshotResponse, chartDataResponse, topTootsResponse] = await Promise.allSettled([
+      followersApi.followersControllerGetTotalSnapshot({ accountId }),
+      followersApi.followersControllerGetChartData({ accountId, timeframe: 'last30days' }),
+      tootsApi.tootsControllerGetTopTootsSummary({ accountId, timeframe: 'last30days' }),
+    ]);
+
+    const total: TotalSnapshotDto | null =
+      totalSnapshotResponse.status === 'fulfilled' ? totalSnapshotResponse.value : null;
+
+    const chart: ChartDataPointDto[] = chartDataResponse.status === 'fulfilled' ? chartDataResponse.value : [];
+
+    const topTootsRaw: RankedTootDto[] =
+      topTootsResponse.status === 'fulfilled' && topTootsResponse.value.top ? topTootsResponse.value.top.data : [];
+
+    const top: Toot[] = topTootsRaw.map((toot) => ({
+      uri: toot.id, // Using id as uri for key compatibility
+      url: toot.url,
+      content: toot.content,
+      createdAt: toot.createdAt,
+      repliesCount: toot.repliesCount,
+      reblogsCount: toot.reblogsCount,
+      favouritesCount: toot.favouritesCount,
+    }));
+
+    return {
+      total,
+      chart,
+      top,
+    };
+  } catch (error) {
+    console.error('Failed to load dashboard data:', error);
+    // Return empty data on error to allow the page to render gracefully
+    return {
+      total: null,
+      chart: [],
+      top: null,
+    };
+  }
 }
 
 export default function Dashboard() {
-  const { total, chart, top } = useLoaderData<typeof loader>();
+  const { total, chart, top } = useLoaderData<typeof loader>() as {
+    total: TotalSnapshotDto | null;
+    chart: ChartDataPointDto[];
+    top: Toot[] | null;
+  };
 
   // Get ENV from the root loader data for support email
   const rootData = useRouteLoaderData<{ ENV: { SUPPORT_EMAIL: string } }>('root');
@@ -130,10 +179,9 @@ export default function Dashboard() {
         </Grid>
         <Grid size={{ xs: 12 }}>
           <DataTablePaper>
-            {top && (
+            {top && top.length > 0 ? (
               <TopToots data={top} title="Top Posts Last 30 Days" linkText="See more top posts" link="/app/top-posts" />
-            )}
-            {!top && (
+            ) : (
               <Typography
                 sx={{
                   textAlign: 'center',

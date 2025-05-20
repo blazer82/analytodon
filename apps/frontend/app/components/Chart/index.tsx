@@ -19,7 +19,7 @@ import {
 // Define types similar to legacy app
 export interface ChartData {
   time: string;
-  value: number;
+  value: number | null;
 }
 
 export type ChartType = 'line' | 'bar' | 'area';
@@ -38,6 +38,39 @@ const Chart: React.FunctionComponent<{
 
   const gradientId = React.useMemo(() => `chart-gradient-${Math.random().toString(36).substring(2, 9)}`, []);
 
+  const commonXAxisProps = {
+    dataKey: 'time',
+    stroke: theme.palette.text.secondary,
+    style: theme.typography.body2,
+    tick: { fill: theme.palette.text.secondary, fontSize: 12 },
+    tickFormatter: (tick: string) =>
+      new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(tick)),
+  };
+
+  const commonYAxisProps = {
+    stroke: theme.palette.text.secondary,
+    style: theme.typography.body2,
+    domain: ['auto', 'auto'] as [number | string, number | string], // Explicitly type domain
+    tick: { fill: theme.palette.text.secondary, fontSize: 12 },
+  };
+
+  const commonCartesianGridProps = {
+    strokeDasharray: '3 3',
+    stroke: theme.palette.divider,
+    strokeOpacity: 0.5,
+  };
+
+  const commonTooltipProps = {
+    contentStyle: {
+      backgroundColor: theme.palette.background.paper,
+      borderRadius: 8,
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+      border: 'none',
+    },
+    labelFormatter: (label: string) =>
+      new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(label)),
+  };
+
   return (
     <React.Fragment>
       {title && <Title>{title}</Title>}
@@ -53,32 +86,11 @@ const Chart: React.FunctionComponent<{
                 left: 24,
               }}
             >
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.8} />
-                  <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} strokeOpacity={0.5} />
-              <XAxis
-                dataKey="time"
-                stroke={theme.palette.text.secondary}
-                style={theme.typography.body2}
-                tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              />
-              <YAxis
-                stroke={theme.palette.text.secondary}
-                style={theme.typography.body2}
-                domain={['auto', 'auto']}
-                tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              />
+              <CartesianGrid {...commonCartesianGridProps} />
+              <XAxis {...commonXAxisProps} />
+              <YAxis {...commonYAxisProps} />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: theme.palette.background.paper,
-                  borderRadius: 8,
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  border: 'none',
-                }}
+                {...commonTooltipProps}
                 cursor={{ stroke: theme.palette.primary.main, strokeWidth: 1, strokeOpacity: 0.5 }}
               />
               <Line
@@ -116,28 +128,10 @@ const Chart: React.FunctionComponent<{
                   <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0.4} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} strokeOpacity={0.5} />
-              <XAxis
-                dataKey="time"
-                stroke={theme.palette.text.secondary}
-                style={theme.typography.body2}
-                tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              />
-              <YAxis
-                stroke={theme.palette.text.secondary}
-                style={theme.typography.body2}
-                domain={['auto', 'auto']}
-                tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: theme.palette.background.paper,
-                  borderRadius: 8,
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  border: 'none',
-                }}
-                cursor={{ fill: theme.palette.primary.main, fillOpacity: 0.1 }}
-              />
+              <CartesianGrid {...commonCartesianGridProps} />
+              <XAxis {...commonXAxisProps} />
+              <YAxis {...commonYAxisProps} />
+              <Tooltip {...commonTooltipProps} cursor={{ fill: theme.palette.primary.main, fillOpacity: 0.1 }} />
               <Bar dataKey="value" name={dataLabel} fill={`url(#${gradientId})`} radius={[4, 4, 0, 0]} />
             </BarChart>
           ) : isAreaChart ? (
@@ -156,27 +150,10 @@ const Chart: React.FunctionComponent<{
                   <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0.1} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} strokeOpacity={0.5} />
-              <XAxis
-                dataKey="time"
-                stroke={theme.palette.text.secondary}
-                style={theme.typography.body2}
-                tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              />
-              <YAxis
-                stroke={theme.palette.text.secondary}
-                style={theme.typography.body2}
-                domain={['auto', 'auto']}
-                tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: theme.palette.background.paper,
-                  borderRadius: 8,
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                  border: 'none',
-                }}
-              />
+              <CartesianGrid {...commonCartesianGridProps} />
+              <XAxis {...commonXAxisProps} />
+              <YAxis {...commonYAxisProps} />
+              <Tooltip {...commonTooltipProps} />
               <Area
                 type="monotone"
                 dataKey="value"
