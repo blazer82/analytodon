@@ -3,6 +3,7 @@ import {
   AuthenticationApi,
   BoostsApi,
   Configuration,
+  FavoritesApi,
   FollowersApi,
   RepliesApi,
   TootsApi,
@@ -78,4 +79,12 @@ export async function createBoostsApiWithAuth(request: Request): Promise<BoostsA
 export async function createRepliesApiWithAuth(request: Request): Promise<RepliesApi> {
   const { config } = await createApiClientWithAuth(request);
   return new RepliesApi(config);
+}
+
+/**
+ * Creates an authenticated instance of the Favorites API client with token refresh
+ */
+export async function createFavoritesApiWithAuth(request: Request): Promise<FavoritesApi> {
+  const { config } = await createApiClientWithAuth(request);
+  return new FavoritesApi(config);
 }
