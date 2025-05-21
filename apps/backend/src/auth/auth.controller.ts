@@ -1,7 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { UserResponseDto } from '../users/dto/user-response.dto';
 import { UserEntity } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { GetUser } from './decorators/get-user.decorator';
@@ -86,16 +85,23 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User profile retrieved successfully.',
-    type: UserResponseDto,
+    type: SessionUserDto,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized.',
   })
-  getProfile(@GetUser() user: UserEntity): UserResponseDto {
+  async getProfile(@GetUser() user: UserEntity): Promise<SessionUserDto> {
     this.logger.log(`Fetching profile for user ID: ${user.id}`);
     // request.user is populated by JwtStrategy.validate()
-    return new UserResponseDto(user);
+    // We need to ensure accounts are loaded, similar to login/register flows
+    await user.accounts.init();
+    const sessionUser = new SessionUserDto(user);
+    sessionUser.accounts = user.accounts
+      .getItems()
+      .filter((acc) => acc.setupComplete)
+      .map((acc) => new SessionAccountDto(acc));
+    return sessionUser;
   }
 
   @Post('refresh')

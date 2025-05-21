@@ -21,7 +21,7 @@ import type {
   RegisterUserDto,
   RequestPasswordResetDto,
   ResetPasswordDto,
-  UserResponseDto,
+  SessionUserDto,
 } from '../models/index';
 import {
     AuthResponseDtoFromJSON,
@@ -36,8 +36,8 @@ import {
     RequestPasswordResetDtoToJSON,
     ResetPasswordDtoFromJSON,
     ResetPasswordDtoToJSON,
-    UserResponseDtoFromJSON,
-    UserResponseDtoToJSON,
+    SessionUserDtoFromJSON,
+    SessionUserDtoToJSON,
 } from '../models/index';
 
 export interface AuthControllerLoginRequest {
@@ -72,7 +72,7 @@ export class AuthenticationApi extends runtime.BaseAPI {
     /**
      * Get current user profile
      */
-    async authControllerGetProfileRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserResponseDto>> {
+    async authControllerGetProfileRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SessionUserDto>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -92,13 +92,13 @@ export class AuthenticationApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserResponseDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => SessionUserDtoFromJSON(jsonValue));
     }
 
     /**
      * Get current user profile
      */
-    async authControllerGetProfile(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponseDto> {
+    async authControllerGetProfile(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SessionUserDto> {
         const response = await this.authControllerGetProfileRaw(initOverrides);
         return await response.value();
     }

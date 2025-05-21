@@ -7,7 +7,6 @@ import * as request from 'supertest';
 
 import { AccountEntity } from '../../src/accounts/entities/account.entity';
 import { AppModule } from '../../src/app.module';
-import { AuthResponseDto } from '../../src/auth/dto/auth-response.dto';
 import { LoginDto } from '../../src/auth/dto/login.dto';
 import { RegisterUserDto } from '../../src/auth/dto/register-user.dto';
 import { ResetPasswordDto } from '../../src/auth/dto/reset-password.dto';
@@ -281,23 +280,66 @@ describe('AuthController (e2e)', () => {
 
   describe('/auth/profile (GET)', () => {
     let userToken: string;
+    let registeredUserEntity: UserEntity;
+    let testAccount: AccountEntity;
 
     beforeEach(async () => {
-      const loginResponse = await request(app.getHttpServer())
+      // Register user
+      const registerResponse = await request(app.getHttpServer())
         .post('/auth/register')
         .send(testUser)
-        .then((res) => res.body as AuthResponseDto);
-      userToken = loginResponse.token;
+        .expect(HttpStatus.CREATED);
+      userToken = registerResponse.body.token;
+
+      // Fetch the registered user to create an account for them
+      registeredUserEntity = await entityManager.findOneOrFail(UserEntity, { email: testUser.email });
+      // Create an account for this user
+      testAccount = await createTestAccount(registeredUserEntity, entityManager);
     });
 
-    it('should get user profile with a valid access token', async () => {
+    it('should get user profile with a valid access token and populated accounts', async () => {
       const response = await request(app.getHttpServer())
         .get('/auth/profile')
         .set('Authorization', `Bearer ${userToken}`)
         .expect(HttpStatus.OK);
 
+      expect(response.body._id).toBe(registeredUserEntity.id);
       expect(response.body.email).toBe(testUser.email);
       expect(response.body.role).toBe(UserRole.AccountOwner);
+      expect(response.body.emailVerified).toBe(false); // As per registration default
+      expect(response.body.serverURLOnSignUp).toBe(testUser.serverURLOnSignUp);
+      expect(response.body.timezone).toBe(testUser.timezone);
+
+      expect(response.body.accounts).toBeInstanceOf(Array);
+      expect(response.body.accounts.length).toBe(1);
+
+      const accountDto = response.body.accounts[0];
+      expect(accountDto._id).toBe(testAccount.id);
+      expect(accountDto.serverURL).toBe(testAccount.serverURL);
+      expect(accountDto.name).toBe(testAccount.name);
+      // Add other SessionAccountDto assertions as needed
+    });
+
+    it('should get user profile and not include accounts that are not setupComplete', async () => {
+      // Create another account for the same user that is not setupComplete
+      const incompleteAccount = entityManager.create(AccountEntity, {
+        owner: registeredUserEntity,
+        serverURL: 'incomplete.test',
+        isActive: true,
+        setupComplete: false, // Key difference
+        timezone: 'Europe/London',
+        utcOffset: '+00:00',
+      });
+      await entityManager.persistAndFlush(incompleteAccount);
+
+      const response = await request(app.getHttpServer())
+        .get('/auth/profile')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.accounts).toBeInstanceOf(Array);
+      expect(response.body.accounts.length).toBe(1); // Still 1, because only setupComplete accounts are included
+      expect(response.body.accounts[0]._id).toBe(testAccount.id); // Ensure it's the correct, complete account
     });
 
     it('should fail to get profile without an access token', async () => {
