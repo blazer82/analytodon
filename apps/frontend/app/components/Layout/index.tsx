@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
     user?: SessionUserDto;
     currentAccount?: AccountDto | null;
   }
-  const routeLoaderData = useRouteLoaderData('routes/app') as AppLoaderData | undefined;
+  const routeLoaderData = useRouteLoaderData('routes/_app') as AppLoaderData | undefined;
   const user = routeLoaderData?.user;
   const currentAccount = routeLoaderData?.currentAccount;
 
@@ -171,7 +171,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                           },
                         }}
                       >
-                        <Form method="post" action="/app" style={{ width: '100%' }}>
+                        <Form method="post" action="/api/switch-account" style={{ width: '100%' }}>
                           <input type="hidden" name="accountId" value={item.id} />
                           <Button
                             type="submit"

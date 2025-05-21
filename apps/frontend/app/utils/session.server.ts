@@ -19,7 +19,7 @@ export const sessionStorage = createCookieSessionStorage({
 interface SessionData {
   accessToken: string;
   refreshToken: string;
-  user: SessionUserDto;
+  userId: string; // Store only userId instead of the full user object
   activeAccountId?: string;
 }
 
@@ -32,7 +32,7 @@ export async function createUserSession(authResponse: AuthResponseDto, redirectT
   // Store auth data in the session
   session.set('accessToken', authResponse.token);
   session.set('refreshToken', authResponse.refreshToken);
-  session.set('user', authResponse.user);
+  session.set('userId', authResponse.user.id); // Store userId
 
   return redirect(redirectTo, {
     headers: {
@@ -49,26 +49,80 @@ export async function getUserSession(request: Request): Promise<SessionData | nu
 
   const accessToken = session.get('accessToken') as string | undefined;
   const refreshToken = session.get('refreshToken') as string | undefined;
-  const user = session.get('user') as SessionUserDto | undefined;
+  const userId = session.get('userId') as string | undefined; // Get userId
   const activeAccountId = session.get('activeAccountId') as string | undefined;
 
-  if (!accessToken || !refreshToken || !user) {
+  if (!accessToken || !refreshToken || !userId) {
+    // Check for userId
     return null;
   }
 
-  return { accessToken, refreshToken, user, activeAccountId };
+  return { accessToken, refreshToken, userId, activeAccountId }; // Return userId
 }
 
 /**
- * Get the current user from the session
+ * Get the current user from the session by fetching their profile from the API.
  */
 export async function getUser(request: Request): Promise<SessionUserDto | null> {
   const sessionData = await getUserSession(request);
-  if (!sessionData) {
-    return null;
+
+  if (!sessionData || !sessionData.userId) {
+    return null; // No session or userId, so no user.
   }
 
-  return sessionData.user;
+  const { accessToken, refreshToken } = sessionData;
+
+  try {
+    // Attempt to fetch user profile with the current access token
+    const authApi = createAuthApi(accessToken);
+    const userProfile = await authApi.authControllerGetProfile();
+    return userProfile;
+  } catch (e: unknown) {
+    // Check if the error is due to an expired token (e.g., 401)
+    // This condition might need adjustment based on how your API client surfaces errors.
+    const error = e as { response?: { status: number } };
+    if (error && error.response && error.response.status === 401 && refreshToken) {
+      console.log('Access token expired in getUser, attempting refresh...');
+      const newAuthResponse = await refreshAccessToken(refreshToken);
+
+      if (newAuthResponse) {
+        // Token refreshed successfully, update the session
+        // Note: The actual commit of this session update relies on `withSessionHandling` HOF
+        // if `getUser` is called within a loader/action wrapped by it.
+        const currentRequestSession = request.__apiClientSession;
+        if (currentRequestSession) {
+          currentRequestSession.set('accessToken', newAuthResponse.token);
+          currentRequestSession.set('refreshToken', newAuthResponse.refreshToken);
+          currentRequestSession.set('userId', newAuthResponse.user.id); // Store new userId
+        } else {
+          // This case is less ideal, as direct session commit here is complex.
+          // For now, we log and proceed, hoping HOF handles it.
+          console.warn(
+            'Session object not found on request in getUser after token refresh. Session might not be committed.',
+          );
+        }
+
+        // Retry fetching profile with the new token
+        try {
+          const refreshedAuthApi = createAuthApi(newAuthResponse.token);
+          const userProfile = await refreshedAuthApi.authControllerGetProfile();
+          return userProfile;
+        } catch (retryError) {
+          console.error('Failed to fetch profile after token refresh in getUser:', retryError);
+          // Potentially trigger logout or redirect if this is critical
+          return null; // Or throw, leading to error handling upstream
+        }
+      } else {
+        // Refresh token failed
+        console.error('Token refresh failed in getUser.');
+        // Consider redirecting to logout or returning null to trigger auth protection
+        return null;
+      }
+    }
+    // For other errors or if no refresh token was available for the 401
+    console.error('Failed to get user profile in getUser:', error);
+    return null;
+  }
 }
 
 /**

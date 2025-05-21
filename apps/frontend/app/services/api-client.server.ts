@@ -125,7 +125,7 @@ export async function createApiClientWithAuth(request: Request) {
         // Update the request-scoped session with new tokens and user data
         currentSession.set('accessToken', newAuthResponse.token);
         currentSession.set('refreshToken', newAuthResponse.refreshToken);
-        currentSession.set('user', newAuthResponse.user);
+        currentSession.set('userId', newAuthResponse.user.id); // Store userId
 
         // Prepare for retry: update Authorization header in a copy of original 'init'
         const newHeaders = new Headers(init?.headers);

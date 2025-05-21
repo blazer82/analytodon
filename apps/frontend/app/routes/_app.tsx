@@ -44,7 +44,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
   const accountId = formData.get('accountId') as string;
 
   if (!accountId) {
-    throw redirect('/app', { status: 400 }); // Bad request
+    throw redirect('/', { status: 400 }); // Bad request
   }
 
   // request.__apiClientSession is guaranteed to be set by withSessionHandling
@@ -52,7 +52,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
   session.set('activeAccountId', accountId);
 
   // The HOF will handle committing the session and forming the redirect Response
-  throw redirect('/app'); // Throw redirect, HOF will add cookie
+  throw redirect('/dashboard'); // Throw redirect, HOF will add cookie
 });
 
 export default function AppLayout() {

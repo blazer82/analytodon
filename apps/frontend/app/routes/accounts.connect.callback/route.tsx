@@ -49,7 +49,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
         // Session is already request.__apiClientSession from HOF
         session.set('accessToken', newAuthResponse.token);
         session.set('refreshToken', newAuthResponse.refreshToken);
-        session.set('user', newAuthResponse.user);
+        session.set('userId', newAuthResponse.user.id); // Store userId
         user = newAuthResponse.user; // Update local user variable
         // Session commit will be handled by HOF
       } else {
