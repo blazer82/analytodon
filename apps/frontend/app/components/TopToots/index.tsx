@@ -110,7 +110,7 @@ const TopToots: React.FunctionComponent<{
                       fontWeight: 500,
                       transition: 'all 0.2s ease',
                       '&:hover': {
-                        color: 'primary.dark',
+                        color: 'primary.main', // TODO: Choose a different color for hover
                         textDecoration: 'underline',
                       },
                     }}
