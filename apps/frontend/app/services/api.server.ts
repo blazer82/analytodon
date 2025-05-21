@@ -4,6 +4,7 @@ import {
   BoostsApi,
   Configuration,
   FollowersApi,
+  RepliesApi,
   TootsApi,
   UsersApi,
 } from '@analytodon/rest-client';
@@ -69,4 +70,12 @@ export async function createTootsApiWithAuth(request: Request): Promise<TootsApi
 export async function createBoostsApiWithAuth(request: Request): Promise<BoostsApi> {
   const { config } = await createApiClientWithAuth(request);
   return new BoostsApi(config);
+}
+
+/**
+ * Creates an authenticated instance of the Replies API client with token refresh
+ */
+export async function createRepliesApiWithAuth(request: Request): Promise<RepliesApi> {
+  const { config } = await createApiClientWithAuth(request);
+  return new RepliesApi(config);
 }

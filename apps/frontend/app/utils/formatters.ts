@@ -25,3 +25,14 @@ export function formatNumber(num: number): string {
   if (num == null) return '0'; // Or handle as an error/empty string
   return new Intl.NumberFormat().format(num);
 }
+
+/**
+ * Shortens a toot's content to a specified length, removing HTML tags.
+ * @param content The toot content to shorten.
+ * @param length The maximum length of the shortened content.
+ * @returns The shortened content string.
+ */
+export function shortenToot(content: string, length = 95): string {
+  const cleaned = content.replace(/<[^>]*>/g, '');
+  return cleaned.length > length ? cleaned.substring(0, length - 1) + '…' : cleaned;
+}

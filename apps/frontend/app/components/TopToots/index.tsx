@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { Link as RemixLink } from '@remix-run/react';
 import Title from '~/components/Title';
+import { formatDate, shortenToot } from '~/utils/formatters';
 
 // Define types similar to legacy app
 export interface Toot {
@@ -14,20 +15,6 @@ export interface Toot {
   reblogsCount: number;
   favouritesCount: number;
 }
-
-// TODO: Import proper formatting utilities
-const formatDate = (date: Date | string): string => {
-  if (typeof date === 'string') {
-    date = new Date(date);
-  }
-  return new Intl.DateTimeFormat().format(date);
-};
-
-// Simple function to shorten toot content
-const shortenToot = (content: string, maxLength = 50): string => {
-  if (content.length <= maxLength) return content;
-  return content.substring(0, maxLength) + '...';
-};
 
 const TopToots: React.FunctionComponent<{
   data: Toot[];
