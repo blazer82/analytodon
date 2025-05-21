@@ -100,12 +100,7 @@ const Chart: React.FunctionComponent<{
                 name={dataLabel}
                 stroke={theme.palette.primary.main}
                 strokeWidth={3}
-                dot={{
-                  r: 4,
-                  strokeWidth: 2,
-                  fill: theme.palette.background.paper,
-                  stroke: theme.palette.primary.main,
-                }}
+                dot={false}
                 activeDot={{
                   r: 6,
                   strokeWidth: 0,

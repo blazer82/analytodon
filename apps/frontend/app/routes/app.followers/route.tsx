@@ -260,11 +260,39 @@ export default function FollowersPage() {
                 We&apos;ll send you an email once your data is ready.
                 <br />
                 <br />
-                If this message persists please{' '}
-                <Link href={`mailto:${supportEmail}?subject=Support`} sx={{ textDecoration: 'underline', mx: 0.5 }}>
-                  contact support
-                </Link>
-                .
+                <Box
+                  component="span"
+                  sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
+                >
+                  If this message persists please{' '}
+                  <Link
+                    href={`mailto:${supportEmail}?subject=Support`}
+                    sx={{
+                      textDecoration: 'none',
+                      position: 'relative',
+                      mx: 0.5,
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: -2,
+                        left: 0,
+                        width: '100%',
+                        height: '2px',
+                        backgroundColor: 'primary.main',
+                        borderRadius: '2px',
+                        opacity: 0.7,
+                      },
+                      '&:hover': {
+                        '&::after': {
+                          opacity: 1,
+                        },
+                      },
+                    }}
+                  >
+                    contact support
+                  </Link>
+                  .
+                </Box>
               </Typography>
             )}
           </ChartPaper>
