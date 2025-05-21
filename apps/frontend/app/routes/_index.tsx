@@ -8,7 +8,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // If user is logged in, redirect to app dashboard
   if (user) {
-    return redirect('/app');
+    return redirect('/dashboard');
   }
 
   // If not logged in, redirect to login page

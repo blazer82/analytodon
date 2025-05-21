@@ -20,7 +20,7 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
       {
         label: 'Analytics',
         items: [
-          { label: 'Dashboard', link: `/`, icon: <DashboardIcon /> },
+          { label: 'Dashboard', link: `/dashboard`, icon: <DashboardIcon /> },
           { label: 'Followers', link: `/followers`, icon: <FollowersIcon /> },
           { label: 'Replies', link: `/replies`, icon: <RepliesIcon /> },
           { label: 'Boosts', link: `/boosts`, icon: <BoostsIcon /> },

@@ -63,7 +63,7 @@ export default function AppLayout() {
   const getPageTitle = () => {
     const path = location.pathname;
 
-    if (path === '/') return 'Dashboard';
+    if (path === '/dashboard') return 'Dashboard';
     if (path === '/followers') return 'Followers';
     if (path === '/replies') return 'Replies';
     if (path === '/boosts') return 'Boosts';

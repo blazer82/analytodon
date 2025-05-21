@@ -27,7 +27,9 @@ import {
   useTheme,
 } from '@mui/material';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { Link, redirect, useActionData, useLoaderData, useNavigate, useSubmit } from '@remix-run/react';
+import { redirect, useActionData, useLoaderData, useNavigate, useSubmit } from '@remix-run/react';
+import AccountSetup from '~/components/AccountSetup';
+import AccountSetupComplete from '~/components/AccountSetupComplete';
 import { DataTablePaper } from '~/components/Layout/styles';
 import Title from '~/components/Title';
 import { createAccountsApiWithAuth } from '~/services/api.server';
@@ -41,6 +43,8 @@ export const meta: MetaFunction = () => {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const url = new URL(request.url);
+  const setupComplete = url.searchParams.get('setup_complete') === 'true';
 
   try {
     const accountsApi = await createAccountsApiWithAuth(request);
@@ -50,6 +54,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       accounts,
       user,
       canAddAccount: (user.maxAccounts ?? 0) - (accounts?.length ?? 0) > 0,
+      showSetupCompleteDialog: setupComplete,
     };
   } catch (error) {
     console.error('Failed to load accounts:', error);
@@ -64,53 +69,81 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 export const action = withSessionHandling(async ({ request }: ActionFunctionArgs) => {
   await requireUser(request);
   const formData = await request.formData();
-  const action = formData.get('_action') as string;
-  const accountId = formData.get('accountId') as string;
+  const formAction = formData.get('_action') as string; // e.g., 'delete', 'reconnect', or 'connect' from AccountSetup
 
-  if (!accountId) {
-    return new Response(JSON.stringify({ error: 'Account ID is required' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  // Check if it's an "add account" attempt (from AccountSetup's form)
+  const serverURL = formData.get('serverURL') as string | null;
+  const timezoneFormValue = formData.get('timezone') as string | null;
 
-  const accountsApi = await createAccountsApiWithAuth(request);
-
-  try {
-    if (action === 'delete') {
-      await accountsApi.accountsControllerRemove({ id: accountId });
-      return { success: 'Account deleted successfully' };
-    } else if (action === 'reconnect') {
-      const response = await accountsApi.accountsControllerConnect({
-        id: accountId,
-        body: {},
-      });
-
-      if (response.redirectUrl) {
-        return redirect(response.redirectUrl);
-      }
-
-      return new Response(JSON.stringify({ error: 'Failed to get reconnection URL' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+  if (formAction === 'connect' && serverURL && timezoneFormValue) {
+    // Logic for adding account
+    let timezone = timezoneFormValue;
+    if (timezone && timezone.includes(' (')) {
+      timezone = timezone.split(' (')[0];
     }
 
-    return new Response(JSON.stringify({ error: 'nvalid action' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    console.error(`Failed to ${action} account:`, error);
-    return new Response(JSON.stringify({ error: `Failed to ${action} account. Please try again.` }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    if (!serverURL || !timezone) {
+      return { error: 'Server URL and Timezone are required.' };
+    }
+
+    try {
+      const accountsApi = await createAccountsApiWithAuth(request);
+      const account = await accountsApi.accountsControllerCreate({
+        createAccountDto: { serverURL, timezone },
+      });
+      const connectionResponse = await accountsApi.accountsControllerConnect({
+        id: account.id,
+        body: {},
+      });
+      // withSessionHandling HOF will add cookie to this redirect
+      throw redirect(connectionResponse.redirectUrl);
+    } catch (error) {
+      if (error instanceof Response) {
+        // Re-throw redirects to be handled by withSessionHandling
+        throw error;
+      }
+      console.error('Error connecting account:', error);
+      return {
+        error: 'Failed to connect to Mastodon server. Please check the server URL and try again.',
+      };
+    }
+  } else {
+    // Existing logic for delete/reconnect based on accountId
+    const accountId = formData.get('accountId') as string;
+    if (!accountId) {
+      return { error: 'Account ID is required for this action' };
+    }
+
+    const accountsApi = await createAccountsApiWithAuth(request);
+    try {
+      if (formAction === 'delete') {
+        await accountsApi.accountsControllerRemove({ id: accountId });
+        return { success: 'Account deleted successfully' };
+      } else if (formAction === 'reconnect') {
+        const response = await accountsApi.accountsControllerConnect({
+          id: accountId,
+          body: {},
+        });
+        if (response.redirectUrl) {
+          // withSessionHandling HOF will add cookie to this redirect
+          throw redirect(response.redirectUrl);
+        }
+        return { error: 'Failed to get reconnection URL' };
+      }
+      return { error: 'Invalid action specified.' };
+    } catch (error) {
+      if (error instanceof Response) {
+        // Re-throw redirects to be handled by withSessionHandling
+        throw error;
+      }
+      console.error(`Failed to ${formAction} account:`, error);
+      return { error: `Failed to ${formAction} account. Please try again.` };
+    }
   }
 });
 
 export default function AccountsPage() {
-  const { accounts, user, canAddAccount } = useLoaderData<typeof loader>();
+  const { accounts, user, canAddAccount, showSetupCompleteDialog } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const theme = useTheme();
   const navigate = useNavigate();
@@ -119,6 +152,19 @@ export default function AccountsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [accountToDelete, setAccountToDelete] = React.useState<AccountResponseDto | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = React.useState('');
+  const [addAccountDialogOpen, setAddAccountDialogOpen] = React.useState(false);
+  const [showSetupComplete, setShowSetupComplete] = React.useState(showSetupCompleteDialog || false);
+
+  React.useEffect(() => {
+    // This effect handles showing the dialog if the loader flag is set,
+    // and ensures the URL is cleaned up if the dialog is closed by the user.
+    // It also prevents re-showing the dialog on subsequent renders unless the loader flag changes.
+    if (showSetupCompleteDialog) {
+      setShowSetupComplete(true);
+      // Optionally, remove the query param from URL without reload to prevent re-showing on refresh
+      // navigate('.', { replace: true }); // This might be too aggressive or cause issues with other state.
+    }
+  }, [showSetupCompleteDialog, navigate]);
 
   const handleEdit = (accountId: string) => {
     navigate(`/settings/accounts/${accountId}`);
@@ -265,8 +311,7 @@ export default function AccountsPage() {
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-start' }}>
           <Button
             variant="contained"
-            component={Link}
-            to="/accounts/connect"
+            onClick={() => setAddAccountDialogOpen(true)}
             sx={{
               transition: 'all 0.2s ease',
               '&:hover': {
@@ -291,6 +336,28 @@ export default function AccountsPage() {
       >
         {accounts.length} / {user.maxAccounts} accounts used
       </Typography>
+
+      {/* Add Account Dialog */}
+      {addAccountDialogOpen && (
+        <AccountSetup
+          currentStep={0}
+          initialServerURL={user.serverURLOnSignUp || ''}
+          initialTimezone={user.timezone || ''}
+          onClose={() => setAddAccountDialogOpen(false)}
+          error={actionData?.error} // Assuming actionData.error is for the add account form if it was last submitted
+        />
+      )}
+
+      {/* Account Setup Complete Dialog */}
+      {showSetupComplete && (
+        <AccountSetupComplete
+          onClose={() => {
+            setShowSetupComplete(false);
+            // Optionally, navigate to clean up the URL query parameter
+            navigate('/settings/accounts', { replace: true });
+          }}
+        />
+      )}
 
       {/* Delete Account Dialog */}
       <Dialog

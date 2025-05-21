@@ -61,8 +61,15 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       throw redirect('/logout'); // HOF will handle cookie for redirect
     }
 
-    // HOF will wrap this data in a Response and commit session
-    return { status: 'success', user };
+    // After successful connection and session refresh, user object is updated.
+    // Now decide where to redirect based on the number of accounts.
+    if (user.accounts && user.accounts.length > 1) {
+      // More than one account, redirect to the accounts page with a flag to show the completion dialog
+      throw redirect('/settings/accounts?setup_complete=true');
+    } else {
+      // First account, redirect to the original setup complete page
+      throw redirect('/accounts/setup-complete');
+    }
   } catch (error) {
     if (error instanceof Response) {
       // Re-throw redirects, HOF will handle cookie

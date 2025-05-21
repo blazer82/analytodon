@@ -14,12 +14,16 @@ import { Link } from '@remix-run/react';
 
 import { StepProgress } from '../AccountSetup';
 
-const AccountSetupComplete: React.FunctionComponent = () => {
+interface AccountSetupCompleteProps {
+  onClose?: () => void;
+}
+
+const AccountSetupComplete: React.FunctionComponent<AccountSetupCompleteProps> = ({ onClose }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
-    <Dialog fullScreen={fullScreen} open>
+    <Dialog fullScreen={fullScreen} open onClose={onClose}>
       <DialogTitle>Set Up Your Mastodon Account</DialogTitle>
       <DialogContent>
         <StepProgress currentStep={2}></StepProgress>
@@ -32,9 +36,15 @@ const AccountSetupComplete: React.FunctionComponent = () => {
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ mb: 1, mr: 2 }}>
-        <Button variant="contained" component={Link} to="/">
-          Go to Dashboard
-        </Button>
+        {onClose ? (
+          <Button variant="contained" onClick={onClose}>
+            Close
+          </Button>
+        ) : (
+          <Button variant="contained" component={Link} to="/">
+            Go to Dashboard
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
