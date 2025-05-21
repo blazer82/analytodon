@@ -97,7 +97,7 @@ export default function TopPostsPage() {
     (newTimeframe: Timeframe) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        fetcher.load(`/app/top-posts?index&timeframe=${newTimeframe}`);
+        fetcher.load(`/top-posts?index&timeframe=${newTimeframe}`);
       }
     },
     [fetcher, accountId],

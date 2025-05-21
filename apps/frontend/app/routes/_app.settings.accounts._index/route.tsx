@@ -121,7 +121,7 @@ export default function AccountsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = React.useState('');
 
   const handleEdit = (accountId: string) => {
-    navigate(`/app/settings/accounts/${accountId}`);
+    navigate(`/settings/accounts/${accountId}`);
   };
 
   const handleReconnect = (accountId: string) => {

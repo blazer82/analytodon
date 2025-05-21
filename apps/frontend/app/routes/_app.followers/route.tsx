@@ -116,7 +116,7 @@ export default function FollowersPage() {
     (newTimeframe: Timeframe) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        fetcher.load(`/app/followers?index&timeframe=${newTimeframe}`);
+        fetcher.load(`/followers?index&timeframe=${newTimeframe}`);
       }
     },
     [fetcher, accountId],

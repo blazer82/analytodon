@@ -63,13 +63,13 @@ export default function AppLayout() {
   const getPageTitle = () => {
     const path = location.pathname;
 
-    if (path === '/app') return 'Dashboard';
-    if (path === '/app/followers') return 'Followers';
-    if (path === '/app/replies') return 'Replies';
-    if (path === '/app/boosts') return 'Boosts';
-    if (path === '/app/favorites') return 'Favorites';
-    if (path === '/app/top-posts') return 'Top Posts';
-    if (path.includes('/app/settings')) return 'Settings';
+    if (path === '/') return 'Dashboard';
+    if (path === '/followers') return 'Followers';
+    if (path === '/replies') return 'Replies';
+    if (path === '/boosts') return 'Boosts';
+    if (path === '/favorites') return 'Favorites';
+    if (path === '/top-posts') return 'Top Posts';
+    if (path.includes('/settings')) return 'Settings';
 
     return 'Dashboard';
   };

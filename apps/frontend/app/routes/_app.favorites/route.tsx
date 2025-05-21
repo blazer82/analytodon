@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { BoostedTootDto, BoostsKpiDto, ChartDataPointDto, TotalSnapshotDto } from '@analytodon/rest-client';
+import type { ChartDataPointDto, FavoritedTootDto, FavoritesKpiDto, TotalSnapshotDto } from '@analytodon/rest-client';
 import DownloadIcon from '@mui/icons-material/Download';
 import { Box, Container, Fade, Grid, IconButton, Link, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
@@ -11,18 +11,18 @@ import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
-import { createBoostsApiWithAuth } from '~/services/api.server';
+import { createFavoritesApiWithAuth } from '~/services/api.server';
 import { getKPITrend } from '~/utils/getKPITrend';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'Boosts Analytics - Analytodon' }];
+  return [{ title: 'Favorites Analytics - Analytodon' }];
 };
 
 interface LoaderData {
-  weeklyKPI: BoostsKpiDto | null;
-  monthlyKPI: BoostsKpiDto | null;
-  yearlyKPI: BoostsKpiDto | null;
+  weeklyKPI: FavoritesKpiDto | null;
+  monthlyKPI: FavoritesKpiDto | null;
+  yearlyKPI: FavoritesKpiDto | null;
   total: TotalSnapshotDto | null;
   chart: ChartDataPointDto[];
   topToots: Toot[];
@@ -59,18 +59,18 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   const timeframeParam = (url.searchParams.get('timeframe') as Timeframe) || 'last30days';
 
   try {
-    const boostsApi = await createBoostsApiWithAuth(request);
+    const favoritesApi = await createFavoritesApiWithAuth(request);
 
     const [weeklyKPI, monthlyKPI, yearlyKPI, total, chartData, topTootsData] = await Promise.all([
-      boostsApi.boostsControllerGetWeeklyKpi({ accountId }).catch(() => null),
-      boostsApi.boostsControllerGetMonthlyKpi({ accountId }).catch(() => null),
-      boostsApi.boostsControllerGetYearlyKpi({ accountId }).catch(() => null),
-      boostsApi.boostsControllerGetTotalSnapshot({ accountId }).catch(() => null),
-      boostsApi.boostsControllerGetChartData({ accountId, timeframe: timeframeParam }).catch(() => []),
-      boostsApi.boostsControllerGetTopTootsByBoosts({ accountId, timeframe: timeframeParam }).catch(() => []),
+      favoritesApi.favoritesControllerGetWeeklyKpi({ accountId }).catch(() => null),
+      favoritesApi.favoritesControllerGetMonthlyKpi({ accountId }).catch(() => null),
+      favoritesApi.favoritesControllerGetYearlyKpi({ accountId }).catch(() => null),
+      favoritesApi.favoritesControllerGetTotalSnapshot({ accountId }).catch(() => null),
+      favoritesApi.favoritesControllerGetChartData({ accountId, timeframe: timeframeParam }).catch(() => []),
+      favoritesApi.favoritesControllerGetTopTootsByFavorites({ accountId, timeframe: timeframeParam }).catch(() => []),
     ]);
 
-    const topToots: Toot[] = (topTootsData || []).map((toot: BoostedTootDto) => ({
+    const topToots: Toot[] = (topTootsData || []).map((toot: FavoritedTootDto) => ({
       uri: toot.id,
       url: toot.url,
       content: toot.content,
@@ -94,7 +94,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     if (error instanceof Response) {
       throw error;
     }
-    console.error('Failed to load boosts data:', error);
+    console.error('Failed to load favorites data:', error);
     return {
       weeklyKPI: null,
       monthlyKPI: null,
@@ -108,7 +108,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   }
 });
 
-export default function BoostsPage() {
+export default function FavoritesPage() {
   const {
     weeklyKPI,
     monthlyKPI,
@@ -133,7 +133,7 @@ export default function BoostsPage() {
     (newTimeframe: Timeframe) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        fetcher.load(`/app/boosts?index&timeframe=${newTimeframe}`);
+        fetcher.load(`/favorites?index&timeframe=${newTimeframe}`);
       }
     },
     [fetcher, accountId],
@@ -141,7 +141,7 @@ export default function BoostsPage() {
 
   const handleCSVDownload = React.useCallback(() => {
     if (accountId) {
-      window.location.href = `/boosts/csv?accountId=${accountId}&timeframe=${currentTimeframe}`;
+      window.location.href = `/favorites/csv?accountId=${accountId}&timeframe=${currentTimeframe}`;
     }
   }, [accountId, currentTimeframe]);
 
@@ -152,7 +152,7 @@ export default function BoostsPage() {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Typography variant="h5" align="center">
-          Please select an account to view boosts analytics.
+          Please select an account to view favorites analytics.
         </Typography>
       </Container>
     );
@@ -167,7 +167,7 @@ export default function BoostsPage() {
             {weeklyKPI ? (
               <TrendBox
                 title={weeklyKPI.isLastPeriod ? 'Last Week' : 'This Week'}
-                subtitle="boosted posts"
+                subtitle="favorites"
                 amount={weeklyKPI.currentPeriod ?? 0}
                 trend={getKPITrend(weeklyKPI)}
               />
@@ -181,7 +181,7 @@ export default function BoostsPage() {
             {monthlyKPI ? (
               <TrendBox
                 title={monthlyKPI.isLastPeriod ? 'Last Month' : 'This Month'}
-                subtitle="boosted posts"
+                subtitle="favorites"
                 amount={monthlyKPI.currentPeriod ?? 0}
                 trend={getKPITrend(monthlyKPI)}
               />
@@ -195,7 +195,7 @@ export default function BoostsPage() {
             {yearlyKPI ? (
               <TrendBox
                 title={yearlyKPI.isLastPeriod ? 'Last Year' : 'This Year'}
-                subtitle="boosted posts"
+                subtitle="favorites"
                 amount={yearlyKPI.currentPeriod ?? 0}
                 trend={getKPITrend(yearlyKPI)}
               />
@@ -207,7 +207,7 @@ export default function BoostsPage() {
         <Grid size={{ xs: 12, md: 4, lg: 3 }}>
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {total ? (
-              <TotalBox title="Total Boosts" amount={total.amount} date={total.day} />
+              <TotalBox title="Total Favorites" amount={total.amount} date={total.day} />
             ) : (
               <Typography sx={{ textAlign: 'center', pt: 4 }}>No total data.</Typography>
             )}
@@ -230,7 +230,7 @@ export default function BoostsPage() {
         </Grid>
         <Grid size={{ xs: 12 }}>
           <ChartPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 510, position: 'relative' }}>
-            {hasChartData && chartData && <Chart data={chartData} type="bar" dataLabel="Boosts" />}
+            {hasChartData && chartData && <Chart data={chartData} type="bar" dataLabel="Favorites" />}
             <Fade in={isLoadingData} timeout={300}>
               <Box
                 sx={(theme) => ({
@@ -315,7 +315,7 @@ export default function BoostsPage() {
         <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
           <DataTablePaper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             {hasTopTootsData && topTootsData && (
-              <TopToots data={topTootsData} title="Top Posts by Boosts" showReplies={false} showFavorites={false} />
+              <TopToots data={topTootsData} title="Top Posts by Favorites" showBoosts={false} showReplies={false} />
             )}
             {!hasTopTootsData && !isLoadingData && (
               <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>

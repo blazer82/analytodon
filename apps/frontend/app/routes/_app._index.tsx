@@ -170,7 +170,7 @@ export default function Dashboard() {
                 amount={total.amount}
                 date={total.day}
                 linkText="View follower stats"
-                link="/app/followers"
+                link="/followers"
               />
             )}
             {!total && (
@@ -192,7 +192,7 @@ export default function Dashboard() {
         <Grid size={{ xs: 12 }}>
           <DataTablePaper>
             {top && top.length > 0 ? (
-              <TopToots data={top} title="Top Posts Last 30 Days" linkText="See more top posts" link="/app/top-posts" />
+              <TopToots data={top} title="Top Posts Last 30 Days" linkText="See more top posts" link="/top-posts" />
             ) : (
               <Typography
                 sx={{

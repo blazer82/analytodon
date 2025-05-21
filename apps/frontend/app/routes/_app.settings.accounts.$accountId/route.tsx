@@ -29,7 +29,7 @@ export const loader = withSessionHandling(async ({ request, params }: LoaderFunc
   const { accountId } = params;
 
   if (!accountId) {
-    throw redirect('/app/settings/accounts');
+    throw redirect('/settings/accounts');
   }
 
   try {
@@ -38,7 +38,7 @@ export const loader = withSessionHandling(async ({ request, params }: LoaderFunc
     return { account };
   } catch (error) {
     console.error('Failed to load account:', error);
-    throw redirect('/app/settings/accounts');
+    throw redirect('/settings/accounts');
   }
 });
 
@@ -185,7 +185,7 @@ export default function EditAccountPage() {
             <Button
               variant="outlined"
               component={RemixLink}
-              to="/app/settings/accounts"
+              to="/settings/accounts"
               sx={{
                 mr: 2,
                 transition: 'all 0.2s ease',
