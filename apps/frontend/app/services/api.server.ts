@@ -1,6 +1,7 @@
 import {
   AccountsApi,
   AuthenticationApi,
+  BoostsApi,
   Configuration,
   FollowersApi,
   TootsApi,
@@ -60,4 +61,12 @@ export async function createFollowersApiWithAuth(request: Request): Promise<Foll
 export async function createTootsApiWithAuth(request: Request): Promise<TootsApi> {
   const { config } = await createApiClientWithAuth(request);
   return new TootsApi(config);
+}
+
+/**
+ * Creates an authenticated instance of the Boosts API client with token refresh
+ */
+export async function createBoostsApiWithAuth(request: Request): Promise<BoostsApi> {
+  const { config } = await createApiClientWithAuth(request);
+  return new BoostsApi(config);
 }
