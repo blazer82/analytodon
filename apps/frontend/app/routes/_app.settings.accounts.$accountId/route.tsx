@@ -1,20 +1,9 @@
 import * as React from 'react';
 
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  FormGroup,
-  Link,
-  Paper,
-  Snackbar,
-  TextField,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import { Alert, Box, Container, FormGroup, Link, Paper, Snackbar, Typography } from '@mui/material';
 import { ActionFunctionArgs, json, LoaderFunctionArgs, MetaFunction, redirect } from '@remix-run/node';
 import { Form, Link as RemixLink, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
+import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import Title from '~/components/Title';
 import { createAccountsApiWithAuth } from '~/services/api.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
@@ -70,7 +59,6 @@ export const action = withSessionHandling(async ({ request, params }: ActionFunc
 });
 
 export default function EditAccountPage() {
-  const theme = useTheme();
   const { account } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -113,104 +101,80 @@ export default function EditAccountPage() {
         }}
       >
         <Form method="post">
-          <FormGroup sx={{ mb: 4 }}>
-            <TextField
+          <FormGroup sx={{ mb: 3 }}>
+            <StyledTextField
               label="Name"
               name="name"
               defaultValue={account.name}
               InputLabelProps={{ shrink: true }}
               fullWidth
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: (theme) => theme.palette.primary.main,
-                    },
-                  },
-                  '&.Mui-focused': {
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderWidth: '2px',
-                    },
-                  },
-                },
-              }}
             />
           </FormGroup>
-          <FormGroup sx={{ mb: 4 }}>
-            <TextField
+          <FormGroup sx={{ mb: 3 }}>
+            <StyledTextField
               label="Username"
               value={account.username}
               disabled
               InputLabelProps={{ shrink: Boolean(account.username) }}
+              fullWidth
             />
           </FormGroup>
-          <FormGroup sx={{ mb: 4 }}>
-            <TextField
+          <FormGroup sx={{ mb: 3 }}>
+            <StyledTextField
               label="Server URL"
               value={stripSchema(account.serverURL)}
               disabled
               InputLabelProps={{ shrink: true }}
+              fullWidth
             />
           </FormGroup>
-          <FormGroup sx={{ mb: 4 }}>
-            <TextField
+          <FormGroup sx={{ mb: 3 }}>
+            <StyledTextField
               label="Account URL"
               value={account.accountURL}
               disabled
               InputLabelProps={{ shrink: Boolean(account.accountURL) }}
+              fullWidth
             />
           </FormGroup>
-          <FormGroup sx={{ mb: 4 }}>
-            <TextField
+          <FormGroup sx={{ mb: 3 }}>
+            <StyledTextField
               label="Avatar URL"
               value={account.avatarURL}
               disabled
               InputLabelProps={{ shrink: Boolean(account.avatarURL) }}
+              fullWidth
             />
           </FormGroup>
-          <FormGroup sx={{ mb: 4 }}>
-            <TextField label="Timezone" value={account.timezone} disabled InputLabelProps={{ shrink: true }} />
+          <FormGroup sx={{ mb: 3 }}>
+            <StyledTextField
+              label="Timezone"
+              value={account.timezone}
+              disabled
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
           </FormGroup>
           {account.accountName && (
-            <Typography component="p">
+            <Typography component="p" sx={{ mb: 3 }}>
               Connected to{' '}
               <Link href={account.accountURL || ''} target="_blank" rel="noopener noreferrer">
                 {account.accountName}
               </Link>
             </Typography>
           )}
-          {!account.accountName && <Typography component="p">Not connected to any account</Typography>}
+          {!account.accountName && (
+            <Typography component="p" sx={{ mb: 3 }}>
+              Not connected to any account
+            </Typography>
+          )}
           <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'right', mt: 3 }}>
-            <Button
-              variant="outlined"
-              component={RemixLink}
-              to="/settings/accounts"
-              sx={{
-                mr: 2,
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: theme.shadows[4],
-                },
-              }}
-            >
+            <StyledButton variant="outlined" component={RemixLink} to="/settings/accounts" sx={{ mr: 2 }}>
               Back
-            </Button>
-            <Button
-              variant="contained"
-              type="submit"
-              disabled={isSubmitting}
-              sx={{
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: theme.shadows[4],
-                },
-              }}
-            >
+            </StyledButton>
+            <StyledButton variant="contained" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Save'}
-            </Button>
+            </StyledButton>
           </Box>
         </Form>
       </Paper>

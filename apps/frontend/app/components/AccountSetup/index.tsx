@@ -3,7 +3,7 @@ import * as React from 'react';
 import {
   Alert,
   Autocomplete,
-  Button,
+  // Button, // Replaced by StyledButton
   Dialog,
   DialogActions,
   DialogContent,
@@ -13,11 +13,12 @@ import {
   Step,
   StepLabel,
   Stepper,
-  TextField,
+  // TextField, // Replaced by StyledTextField
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import { Form } from '@remix-run/react';
+import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import timezones from '~/utils/timezones.json';
 
 export interface AccountSetupFormData {
@@ -89,7 +90,7 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
         <DialogContentText>In order to use Analytodon, you need to connect your Mastodon account.</DialogContentText>
         <Form method="post">
           <FormGroup sx={{ mt: 4 }}>
-            <TextField
+            <StyledTextField
               margin="normal"
               required
               fullWidth
@@ -113,7 +114,7 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
                 setValues({ ...values, timezone: timezoneName });
               }}
               renderInput={(params) => (
-                <TextField
+                <StyledTextField
                   {...params}
                   margin="normal"
                   required
@@ -129,13 +130,13 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
           {error && <Alert severity="error">{error}</Alert>}
           <DialogActions sx={{ mb: 1, mr: 2, mt: 2, pl: 0 }}>
             {onClose && (
-              <Button variant="outlined" onClick={() => onClose()}>
+              <StyledButton variant="outlined" onClick={() => onClose()}>
                 Cancel
-              </Button>
+              </StyledButton>
             )}
-            <Button variant="contained" type="submit" name="_action" value="connect">
+            <StyledButton variant="contained" type="submit" name="_action" value="connect">
               Connect Account
-            </Button>
+            </StyledButton>
           </DialogActions>
         </Form>
       </DialogContent>
@@ -164,9 +165,9 @@ export const StepTwo: React.FunctionComponent<StepTwoProps> = ({ currentStep, ur
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ mb: 1, mr: 2 }}>
-        <Button variant="contained" component="a" href={url}>
+        <StyledButton variant="contained" component="a" href={url}>
           Authorize Analytodon
-        </Button>
+        </StyledButton>
       </DialogActions>
     </Dialog>
   );

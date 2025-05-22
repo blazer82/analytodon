@@ -6,6 +6,7 @@ import { Alert, Box, IconButton, InputAdornment, Link as MuiLink, Typography, us
 import { Form, Link } from '@remix-run/react';
 import Footer from '~/components/Footer';
 import Logo from '~/components/Logo';
+import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 
 import {
   FormCard,
@@ -15,8 +16,6 @@ import {
   HeroSection,
   LinksContainer,
   LoginContainer,
-  StyledTextField,
-  SubmitButton,
 } from './styles';
 
 const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
@@ -24,8 +23,6 @@ const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [emailFocused, setEmailFocused] = React.useState(false);
-  const [passwordFocused, setPasswordFocused] = React.useState(false);
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -81,12 +78,7 @@ const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onFocus={() => setEmailFocused(true)}
-              onBlur={() => setEmailFocused(false)}
-              sx={{
-                transform: emailFocused ? 'translateY(-4px)' : 'none',
-                transition: 'transform 0.2s ease-in-out',
-              }}
+              sx={{ mb: 3 }}
             />
 
             <StyledTextField
@@ -99,12 +91,7 @@ const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onFocus={() => setPasswordFocused(true)}
-              onBlur={() => setPasswordFocused(false)}
-              sx={{
-                transform: passwordFocused ? 'translateY(-4px)' : 'none',
-                transition: 'transform 0.2s ease-in-out',
-              }}
+              sx={{ mb: 3 }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -127,9 +114,9 @@ const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
               </Alert>
             )}
 
-            <SubmitButton type="submit" fullWidth variant="contained" size="large">
+            <StyledButton type="submit" fullWidth variant="contained" size="large" sx={{ mt: 2, mb: 3 }}>
               Sign In
-            </SubmitButton>
+            </StyledButton>
 
             <LinksContainer>
               <Typography variant="body2" align="center">

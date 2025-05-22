@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import {
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -11,6 +10,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { Link } from '@remix-run/react';
+import { StyledButton } from '~/components/StyledFormElements';
 
 import { StepProgress } from '../AccountSetup';
 
@@ -37,13 +37,13 @@ const AccountSetupComplete: React.FunctionComponent<AccountSetupCompleteProps> =
       </DialogContent>
       <DialogActions sx={{ mb: 1, mr: 2 }}>
         {onClose ? (
-          <Button variant="contained" onClick={onClose}>
+          <StyledButton variant="contained" onClick={onClose}>
             Close
-          </Button>
+          </StyledButton>
         ) : (
-          <Button variant="contained" component={Link} to="/">
+          <StyledButton variant="contained" component={Link} to="/">
             Go to Dashboard
-          </Button>
+          </StyledButton>
         )}
       </DialogActions>
     </Dialog>

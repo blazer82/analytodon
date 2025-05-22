@@ -23,10 +23,9 @@ import {
   HeroSection,
   LinksContainer,
   LoginContainer,
-  StyledTextField,
-  SubmitButton,
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
+import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
 import { createUserSession, getUser } from '~/utils/session.server';
 import timezones from '~/utils/timezones.json';
@@ -194,6 +193,7 @@ export default function Register() {
               autoComplete="email"
               value={values.email}
               onChange={(e) => setValues({ ...values, email: e.target.value })}
+              sx={{ mb: 3 }}
             />
             <StyledTextField
               required
@@ -204,6 +204,7 @@ export default function Register() {
               autoComplete="new-password"
               value={values.password}
               onChange={(e) => setValues({ ...values, password: e.target.value })}
+              sx={{ mb: 3 }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -228,6 +229,7 @@ export default function Register() {
               helperText="The URL of the Mastodon instance your account is on"
               value={values.serverURL}
               onChange={(e) => setValues({ ...values, serverURL: e.target.value })}
+              sx={{ mb: 3 }}
             />
             <Autocomplete
               disablePortal
@@ -243,6 +245,7 @@ export default function Register() {
                   name="timezone"
                   label="Your Timezone"
                   helperText="The timezone you want your analytics reports to be in"
+                  sx={{ mb: 3 }}
                 />
               )}
             />
@@ -253,9 +256,9 @@ export default function Register() {
               </Alert>
             )}
 
-            <SubmitButton type="submit" fullWidth variant="contained" size="large">
+            <StyledButton type="submit" fullWidth variant="contained" size="large" sx={{ mt: 2, mb: 3 }}>
               Create Account
-            </SubmitButton>
+            </StyledButton>
 
             <LinksContainer>
               <Typography variant="body2" align="center">

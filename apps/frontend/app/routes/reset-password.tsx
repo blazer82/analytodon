@@ -14,10 +14,9 @@ import {
   HeroSection,
   LinksContainer,
   LoginContainer,
-  StyledTextField,
-  SubmitButton,
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
+import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
 
 export const meta: MetaFunction = () => {
@@ -206,9 +205,9 @@ export default function ResetPassword() {
               </Alert>
               <Box sx={{ textAlign: 'center', mt: 2 }}>
                 <Link to="/login" style={{ textDecoration: 'none', width: '100%', display: 'block' }}>
-                  <SubmitButton fullWidth variant="contained" size="large">
+                  <StyledButton fullWidth variant="contained" size="large" sx={{ mt: 2, mb: 3 }}>
                     Go to Login
-                  </SubmitButton>
+                  </StyledButton>
                 </Link>
               </Box>
             </>
@@ -226,6 +225,7 @@ export default function ResetPassword() {
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     placeholder="Enter your new password"
+                    sx={{ mb: 3 }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -250,6 +250,7 @@ export default function ResetPassword() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     placeholder="Confirm your new password"
+                    sx={{ mb: 3 }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -274,6 +275,7 @@ export default function ResetPassword() {
                   name="email"
                   autoComplete="email"
                   placeholder="Enter the email you used to register"
+                  sx={{ mb: 3 }}
                 />
               )}
 
@@ -289,9 +291,9 @@ export default function ResetPassword() {
                 </Alert>
               )}
 
-              <SubmitButton type="submit" fullWidth variant="contained" size="large">
+              <StyledButton type="submit" fullWidth variant="contained" size="large" sx={{ mt: 2, mb: 3 }}>
                 {isResetForm ? 'Reset Password' : 'Send Reset Link'}
-              </SubmitButton>
+              </StyledButton>
 
               <LinksContainer>
                 <Typography variant="body2" align="center">

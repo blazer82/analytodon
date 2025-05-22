@@ -1,5 +1,5 @@
 import { keyframes } from '@emotion/react';
-import { Box, Button, styled, TextField } from '@mui/material';
+import { Box, styled } from '@mui/material';
 
 // Animations
 export const fadeIn = keyframes`
@@ -10,18 +10,6 @@ export const fadeIn = keyframes`
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-`;
-
-export const pulse = keyframes`
-  0% {
-    box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(25, 118, 210, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(25, 118, 210, 0);
   }
 `;
 
@@ -75,44 +63,6 @@ export const FormCard = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'light' ? '#ffffff' : theme.palette.background.paper,
   boxShadow: theme.shadows[3],
   animation: `${fadeIn} 0.6s ease-out`,
-}));
-
-export const StyledTextField = styled(TextField)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
-  '& .MuiOutlinedInput-root': {
-    transition: 'all 0.2s ease-in-out',
-    '&:hover': {
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.main,
-      },
-    },
-    '&.Mui-focused': {
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderWidth: '2px',
-      },
-    },
-  },
-  '& .MuiInputLabel-root': {
-    transition: 'all 0.2s ease-in-out',
-  },
-}));
-
-export const SubmitButton = styled(Button)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(3),
-  padding: theme.spacing(1.2),
-  transition: 'all 0.2s ease-in-out',
-  position: 'relative',
-  overflow: 'hidden',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
-  },
-  '&:active': {
-    transform: 'translateY(0)',
-    boxShadow: theme.shadows[2],
-    animation: `${pulse} 0.8s`,
-  },
 }));
 
 export const LinksContainer = styled(Box)(({ theme }) => ({

@@ -22,7 +22,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -31,6 +30,7 @@ import { redirect, useActionData, useLoaderData, useNavigate, useSubmit } from '
 import AccountSetup from '~/components/AccountSetup';
 import AccountSetupComplete from '~/components/AccountSetupComplete';
 import { DataTablePaper } from '~/components/Layout/styles';
+import { StyledTextField } from '~/components/StyledFormElements';
 import Title from '~/components/Title';
 import { createAccountsApiWithAuth } from '~/services/api.server';
 import { formatDate } from '~/utils/formatters';
@@ -381,7 +381,7 @@ export default function AccountsPage() {
             To continue type <strong>delete</strong> into the field below:
           </DialogContentText>
           <FormGroup>
-            <TextField
+            <StyledTextField
               margin="normal"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}

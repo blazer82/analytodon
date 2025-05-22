@@ -1,15 +1,6 @@
 import * as React from 'react';
 
-import {
-  Alert,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  useTheme,
-} from '@mui/material';
+import { Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useTheme } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { redirect } from '@remix-run/node';
 import { Link as RemixLink, useLoaderData, useRouteLoaderData } from '@remix-run/react';
@@ -22,6 +13,7 @@ import {
   LoginContainer,
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
+import { StyledButton } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
 import { refreshAccessToken, requireUser, withSessionHandling } from '~/utils/session.server'; // Import withSessionHandling
 
@@ -161,11 +153,13 @@ export default function VerifyEmailPage() {
               )}
             </DialogContent>
             <DialogActions sx={{ display: 'flex', justifyContent: 'space-between', px: 2, pb: 2 }}>
-              <Button href={`mailto:${supportEmail}?subject=Support`}>Contact Support</Button>
+              <StyledButton variant="text" href={`mailto:${supportEmail}?subject=Support`}>
+                Contact Support
+              </StyledButton>
               {verificationStatus?.success && (
-                <Button component={RemixLink} to="/" variant="contained" color="primary">
+                <StyledButton component={RemixLink} to="/" variant="contained" color="primary">
                   Go to Analytodon
-                </Button>
+                </StyledButton>
               )}
             </DialogActions>
           </Dialog>
