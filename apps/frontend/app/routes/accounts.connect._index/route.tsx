@@ -13,7 +13,7 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAccountsApiWithAuth } from '~/services/api.server';
-import { requireUser } from '~/utils/session.server';
+import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Connect Your Mastodon Account' }];
@@ -40,7 +40,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   };
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export const action = withSessionHandling(async ({ request }: ActionFunctionArgs) => {
   await requireUser(request);
 
   const formData = await request.formData();
@@ -89,7 +89,7 @@ export async function action({ request }: ActionFunctionArgs) {
     status: 400,
     headers: { 'Content-Type': 'application/json' },
   });
-}
+});
 
 export default function ConnectAccountPage() {
   const { user, currentStep, authUrl, error } = useLoaderData<typeof loader>();

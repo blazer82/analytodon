@@ -1,10 +1,10 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { createFollowersApiWithAuth } from '~/services/api.server';
-import { requireUser, sessionStorage } from '~/utils/session.server';
+import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
-  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  const session = request.__apiClientSession!; // Session is guaranteed by withSessionHandling
   const activeAccountId = session.get('activeAccountId') as string | undefined;
 
   const currentAccount = activeAccountId
@@ -46,4 +46,4 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.error('Failed to export CSV:', error);
     return new Response('Failed to export CSV data.', { status: 500 });
   }
-}
+});

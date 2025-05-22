@@ -18,6 +18,7 @@ export const meta: MetaFunction = () => {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireUser(request);
+  return null; // No data needed for this page
 }
 
 export default function AccountsSetupCompletePage() {
