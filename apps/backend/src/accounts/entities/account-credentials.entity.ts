@@ -16,4 +16,11 @@ export class AccountCredentialsEntity extends BaseEntity {
 
   @Property({ nullable: true })
   connectionToken?: string;
+
+  // Legacy properties for backward compatibility with the old, flawed OAuth implementation
+  @Property({ nullable: true, fieldName: 'clientID' })
+  legacyClientID?: string;
+
+  @Property({ nullable: true, fieldName: 'clientSecret' })
+  legacyClientSecret?: string;
 }

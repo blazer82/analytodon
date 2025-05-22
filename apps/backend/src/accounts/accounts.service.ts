@@ -354,6 +354,9 @@ export class AccountsService {
       }
       accountCredentials.accessToken = encryptedAccessToken; // Store encrypted access token
       accountCredentials.connectionToken = undefined; // Clear the connection token
+      // Clear legacy fields as they are no longer needed after a successful new OAuth connection
+      accountCredentials.legacyClientID = undefined;
+      accountCredentials.legacyClientSecret = undefined;
 
       // Use the original, unencrypted access token for the Megalodon client
       mastodonClient = generator('mastodon', account.serverURL, tokenData.access_token);

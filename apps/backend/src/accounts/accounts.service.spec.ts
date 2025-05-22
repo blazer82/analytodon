@@ -587,6 +587,21 @@ describe('AccountsService', () => {
       expect(result).toEqual({ accountId: mockAccountEntity.id, isReconnect: false }); // Assuming setupComplete was false initially
     });
 
+    it('should unset legacy client ID and secret after successful callback', async () => {
+      // Ensure legacy fields are present before the call
+      populatedAccountCredentials.legacyClientID = 'oldLegacyId';
+      populatedAccountCredentials.legacyClientSecret = 'oldLegacySecret';
+
+      await service.handleConnectionCallback(callbackQueryDto, mockOwnerHint);
+
+      expect(populatedAccountCredentials.legacyClientID).toBeUndefined();
+      expect(populatedAccountCredentials.legacyClientSecret).toBeUndefined();
+      expect(entityManager.persistAndFlush).toHaveBeenCalledWith([
+        populatedAccountCredentials.account,
+        populatedAccountCredentials,
+      ]);
+    });
+
     it('should throw NotFoundException if connection token is invalid', async () => {
       accountCredentialsRepository.findOne.mockResolvedValue(null);
       await expect(service.handleConnectionCallback(callbackQueryDto, mockOwnerHint)).rejects.toThrow(
