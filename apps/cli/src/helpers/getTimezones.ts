@@ -17,7 +17,7 @@ export const getTimezones = (hoursPassedInDay: number[]) => {
           if (hours === hour) {
             matches.push(name);
           }
-        } catch (error: any) {
+        } catch (_error: unknown) {
           logger.warn(`getTimezones: Timezone not supported: ${name}`);
         }
       }
