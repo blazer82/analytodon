@@ -2,8 +2,12 @@ import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGu
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
+import { AccountEntity } from '../accounts/entities/account.entity';
+import { CheckAccount } from '../auth/decorators/check-account.decorator';
+import { GetAccount } from '../auth/decorators/get-account.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto'; // Reusing from boosts
@@ -17,7 +21,8 @@ import { FavoritesService } from './favorites.service';
 
 @ApiTags('Favorites')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, AccountOwnerGuard)
+@CheckAccount({ requireSetupComplete: true }) // Apply to all routes in this controller
 @Controller('accounts/:accountId/favorites')
 export class FavoritesController {
   private readonly logger = new Logger(FavoritesController.name);
@@ -28,9 +33,13 @@ export class FavoritesController {
   @ApiOperation({ summary: "Get weekly Key Performance Indicators (KPIs) for an account's favorites" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Weekly favorites KPI data.', type: FavoritesKpiDto })
-  async getWeeklyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FavoritesKpiDto> {
-    this.logger.log(`Getting weekly favorites KPI for account ${accountId}, user ${user.id}`);
-    const kpiData = await this.favoritesService.getWeeklyKpi(accountId, user);
+  async getWeeklyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<FavoritesKpiDto> {
+    this.logger.log(`Getting weekly favorites KPI for account ${account.id}, user ${user.id}`);
+    const kpiData = await this.favoritesService.getWeeklyKpi(account);
     return { ...kpiData } as FavoritesKpiDto;
   }
 
@@ -39,9 +48,13 @@ export class FavoritesController {
   @ApiOperation({ summary: "Get monthly Key Performance Indicators (KPIs) for an account's favorites" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Monthly favorites KPI data.', type: FavoritesKpiDto })
-  async getMonthlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FavoritesKpiDto> {
-    this.logger.log(`Getting monthly favorites KPI for account ${accountId}, user ${user.id}`);
-    const kpiData = await this.favoritesService.getMonthlyKpi(accountId, user);
+  async getMonthlyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<FavoritesKpiDto> {
+    this.logger.log(`Getting monthly favorites KPI for account ${account.id}, user ${user.id}`);
+    const kpiData = await this.favoritesService.getMonthlyKpi(account);
     return { ...kpiData } as FavoritesKpiDto;
   }
 
@@ -50,9 +63,13 @@ export class FavoritesController {
   @ApiOperation({ summary: "Get yearly Key Performance Indicators (KPIs) for an account's favorites" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Yearly favorites KPI data.', type: FavoritesKpiDto })
-  async getYearlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FavoritesKpiDto> {
-    this.logger.log(`Getting yearly favorites KPI for account ${accountId}, user ${user.id}`);
-    const kpiData = await this.favoritesService.getYearlyKpi(accountId, user);
+  async getYearlyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<FavoritesKpiDto> {
+    this.logger.log(`Getting yearly favorites KPI for account ${account.id}, user ${user.id}`);
+    const kpiData = await this.favoritesService.getYearlyKpi(account);
     return { ...kpiData } as FavoritesKpiDto;
   }
 
@@ -66,11 +83,12 @@ export class FavoritesController {
     type: TotalSnapshotDto,
   })
   async getTotalSnapshot(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @GetUser() user: UserEntity,
   ): Promise<TotalSnapshotDto | null> {
-    this.logger.log(`Getting total favorites snapshot for account ${accountId}, user ${user.id}`);
-    const snapshotData = await this.favoritesService.getTotalSnapshot(accountId, user);
+    this.logger.log(`Getting total favorites snapshot for account ${account.id}, user ${user.id}`);
+    const snapshotData = await this.favoritesService.getTotalSnapshot(account);
     if (!snapshotData) {
       return null;
     }
@@ -84,14 +102,15 @@ export class FavoritesController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Favorites chart data.', type: [ChartDataPointDto] })
   async getChartData(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<ChartDataPointDto[]> {
     this.logger.log(
-      `Getting favorites chart data for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+      `Getting favorites chart data for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const chartInternalData = await this.favoritesService.getChartData(accountId, query.timeframe, user);
+    const chartInternalData = await this.favoritesService.getChartData(account, query.timeframe);
     return chartInternalData.map((point) => ({ ...point }) as ChartDataPointDto);
   }
 
@@ -102,14 +121,15 @@ export class FavoritesController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'List of top toots by favorites.', type: [FavoritedTootDto] })
   async getTopTootsByFavorites(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<FavoritedTootDto[]> {
     this.logger.log(
-      `Getting top toots by favorites for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+      `Getting top toots by favorites for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const rankedEntities = await this.favoritesService.getTopTootsByFavorites(accountId, query.timeframe, user);
+    const rankedEntities = await this.favoritesService.getTopTootsByFavorites(account, query.timeframe);
     return rankedEntities.map(
       (toot) =>
         ({
@@ -133,12 +153,13 @@ export class FavoritesController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'CSV file of favorites data.' })
   async exportCsv(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
     @Res() res: Response,
   ): Promise<void> {
-    this.logger.log(`Exporting favorites CSV for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`);
-    await this.favoritesService.exportCsv(accountId, query.timeframe, user, res);
+    this.logger.log(`Exporting favorites CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
+    await this.favoritesService.exportCsv(account, query.timeframe, res);
   }
 }

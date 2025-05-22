@@ -23,7 +23,7 @@ export const loader = withSessionHandling(async ({ request, params }: LoaderFunc
 
   try {
     const accountsApi = await createAccountsApiWithAuth(request);
-    const account = await accountsApi.accountsControllerFindOne({ id: accountId });
+    const account = await accountsApi.accountsControllerFindOne({ accountId });
     return { account };
   } catch (error) {
     console.error('Failed to load account:', error);
@@ -45,7 +45,7 @@ export const action = withSessionHandling(async ({ request, params }: ActionFunc
   try {
     const accountsApi = await createAccountsApiWithAuth(request);
     await accountsApi.accountsControllerUpdate({
-      id: accountId,
+      accountId,
       updateAccountDto: {
         name,
       },

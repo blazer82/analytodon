@@ -2,8 +2,12 @@ import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGu
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
+import { AccountEntity } from '../accounts/entities/account.entity';
+import { CheckAccount } from '../auth/decorators/check-account.decorator';
+import { GetAccount } from '../auth/decorators/get-account.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto'; // Reusing from boosts
@@ -17,7 +21,8 @@ import { RepliesService } from './replies.service';
 
 @ApiTags('Replies')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, AccountOwnerGuard)
+@CheckAccount({ requireSetupComplete: true }) // Apply to all routes in this controller
 @Controller('accounts/:accountId/replies')
 export class RepliesController {
   private readonly logger = new Logger(RepliesController.name);
@@ -28,9 +33,13 @@ export class RepliesController {
   @ApiOperation({ summary: "Get weekly Key Performance Indicators (KPIs) for an account's replies" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Weekly replies KPI data.', type: RepliesKpiDto })
-  async getWeeklyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<RepliesKpiDto> {
-    this.logger.log(`Getting weekly replies KPI for account ${accountId}, user ${user.id}`);
-    return this.repliesService.getWeeklyKpi(accountId, user);
+  async getWeeklyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<RepliesKpiDto> {
+    this.logger.log(`Getting weekly replies KPI for account ${account.id}, user ${user.id}`);
+    return this.repliesService.getWeeklyKpi(account);
   }
 
   @Get('kpi/monthly')
@@ -38,9 +47,13 @@ export class RepliesController {
   @ApiOperation({ summary: "Get monthly Key Performance Indicators (KPIs) for an account's replies" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Monthly replies KPI data.', type: RepliesKpiDto })
-  async getMonthlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<RepliesKpiDto> {
-    this.logger.log(`Getting monthly replies KPI for account ${accountId}, user ${user.id}`);
-    return this.repliesService.getMonthlyKpi(accountId, user);
+  async getMonthlyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<RepliesKpiDto> {
+    this.logger.log(`Getting monthly replies KPI for account ${account.id}, user ${user.id}`);
+    return this.repliesService.getMonthlyKpi(account);
   }
 
   @Get('kpi/yearly')
@@ -48,9 +61,13 @@ export class RepliesController {
   @ApiOperation({ summary: "Get yearly Key Performance Indicators (KPIs) for an account's replies" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Yearly replies KPI data.', type: RepliesKpiDto })
-  async getYearlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<RepliesKpiDto> {
-    this.logger.log(`Getting yearly replies KPI for account ${accountId}, user ${user.id}`);
-    return this.repliesService.getYearlyKpi(accountId, user);
+  async getYearlyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<RepliesKpiDto> {
+    this.logger.log(`Getting yearly replies KPI for account ${account.id}, user ${user.id}`);
+    return this.repliesService.getYearlyKpi(account);
   }
 
   @Get('kpi/total')
@@ -63,11 +80,12 @@ export class RepliesController {
     type: TotalSnapshotDto,
   })
   async getTotalSnapshot(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @GetUser() user: UserEntity,
   ): Promise<TotalSnapshotDto | null> {
-    this.logger.log(`Getting total replies snapshot for account ${accountId}, user ${user.id}`);
-    return this.repliesService.getTotalSnapshot(accountId, user);
+    this.logger.log(`Getting total replies snapshot for account ${account.id}, user ${user.id}`);
+    return this.repliesService.getTotalSnapshot(account);
   }
 
   @Get('chart')
@@ -77,14 +95,15 @@ export class RepliesController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Replies chart data.', type: [ChartDataPointDto] })
   async getChartData(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<ChartDataPointDto[]> {
     this.logger.log(
-      `Getting replies chart data for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+      `Getting replies chart data for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    return this.repliesService.getChartData(accountId, query.timeframe, user);
+    return this.repliesService.getChartData(account, query.timeframe);
   }
 
   @Get('top-toots')
@@ -94,14 +113,15 @@ export class RepliesController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'List of top toots by replies.', type: [RepliedTootDto] })
   async getTopTootsByReplies(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<RepliedTootDto[]> {
     this.logger.log(
-      `Getting top toots by replies for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+      `Getting top toots by replies for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const rankedEntities = await this.repliesService.getTopTootsByReplies(accountId, query.timeframe, user);
+    const rankedEntities = await this.repliesService.getTopTootsByReplies(account, query.timeframe);
     return rankedEntities.map(
       (toot) =>
         ({
@@ -125,12 +145,13 @@ export class RepliesController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'CSV file of replies data.' })
   async exportCsv(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
     @Res() res: Response,
   ): Promise<void> {
-    this.logger.log(`Exporting replies CSV for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`);
-    await this.repliesService.exportCsv(accountId, query.timeframe, user, res);
+    this.logger.log(`Exporting replies CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
+    await this.repliesService.exportCsv(account, query.timeframe, res);
   }
 }

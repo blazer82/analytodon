@@ -91,7 +91,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
         createAccountDto: { serverURL, timezone },
       });
       const connectionResponse = await accountsApi.accountsControllerConnect({
-        id: account.id,
+        accountId: account.id,
         body: {},
       });
       // withSessionHandling HOF will add cookie to this redirect
@@ -116,11 +116,11 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
     const accountsApi = await createAccountsApiWithAuth(request);
     try {
       if (formAction === 'delete') {
-        await accountsApi.accountsControllerRemove({ id: accountId });
+        await accountsApi.accountsControllerRemove({ accountId });
         return { success: 'Account deleted successfully' };
       } else if (formAction === 'reconnect') {
         const response = await accountsApi.accountsControllerConnect({
-          id: accountId,
+          accountId,
           body: {},
         });
         if (response.redirectUrl) {

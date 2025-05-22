@@ -1,6 +1,6 @@
 import { EntityManager, EntityRepository, Loaded, Rel } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ObjectId } from 'bson';
 import { stringify } from 'csv-stringify';
@@ -102,18 +102,6 @@ describe('BoostsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('getAccountOrFail (private method tested via public methods)', () => {
-    it('should throw NotFoundException if account not found', async () => {
-      mockAccountsService.findByIdOrFail.mockRejectedValue(new NotFoundException(`Account not found`));
-      await expect(service.getWeeklyKpi(mockAccountId, mockUser)).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw NotFoundException if account setup not complete', async () => {
-      mockAccountsService.findByIdOrFail.mockRejectedValue(new NotFoundException(`Account setup is not complete`));
-      await expect(service.getWeeklyKpi(mockAccountId, mockUser)).rejects.toThrow(NotFoundException);
-    });
-  });
-
   describe('KPI methods (getWeeklyKpi, getMonthlyKpi, getYearlyKpi)', () => {
     const kpiMethods: Array<'getWeeklyKpi' | 'getMonthlyKpi' | 'getYearlyKpi'> = [
       'getWeeklyKpi',
@@ -124,16 +112,14 @@ describe('BoostsService', () => {
     kpiMethods.forEach((methodName) => {
       describe(methodName, () => {
         it('should return KPI data successfully', async () => {
-          mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
           mockedGetPeriodKPI.mockResolvedValue({ currentPeriod: 10, previousPeriod: 5 });
           mockedGetKPITrend.mockReturnValue(1); // Example trend
 
-          const result = await service[methodName](mockAccountId, mockUser);
+          const result = await service[methodName](mockAccount);
 
-          expect(mockAccountsService.findByIdOrFail).toHaveBeenCalledWith(mockAccountId, mockUser, true);
           expect(mockedGetPeriodKPI).toHaveBeenCalledWith(
             mockDailyTootStatsRepository,
-            mockAccountId,
+            mockAccount.id,
             mockAccount.timezone,
             expect.any(Function), // getDaysToWeek/Month/YearBeginning
             'boostsCount',
@@ -147,31 +133,28 @@ describe('BoostsService', () => {
 
   describe('getTotalSnapshot', () => {
     it('should return total snapshot if data exists', async () => {
-      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       const mockStatEntry = { boostsCount: 100, day: new Date() } as DailyTootStatsEntity;
       mockDailyTootStatsRepository.findOne.mockResolvedValue(mockStatEntry);
 
-      const result = await service.getTotalSnapshot(mockAccountId, mockUser);
+      const result = await service.getTotalSnapshot(mockAccount);
 
       expect(mockDailyTootStatsRepository.findOne).toHaveBeenCalledWith(
-        { account: mockAccountId },
+        { account: mockAccount.id },
         { orderBy: { day: 'DESC' } },
       );
       expect(result).toEqual({ amount: mockStatEntry.boostsCount, day: mockStatEntry.day });
     });
 
     it('should return null if no data exists', async () => {
-      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       mockDailyTootStatsRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.getTotalSnapshot(mockAccountId, mockUser);
+      const result = await service.getTotalSnapshot(mockAccount);
       expect(result).toBeNull();
     });
   });
 
   describe('getChartData', () => {
     it('should return chart data correctly', async () => {
-      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       const dateFrom = new Date('2023-01-10T00:00:00.000Z');
       const dateTo = new Date('2023-01-12T00:00:00.000Z');
       mockedResolveTimeframe.mockReturnValue({ dateFrom, dateTo });
@@ -184,13 +167,13 @@ describe('BoostsService', () => {
       ] as DailyTootStatsEntity[];
       mockDailyTootStatsRepository.find.mockResolvedValue(mockStats);
 
-      const result = await service.getChartData(mockAccountId, 'last30days', mockUser);
+      const result = await service.getChartData(mockAccount, 'last30days');
 
       const oneDayEarlier = new Date(dateFrom);
       oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
 
       expect(mockDailyTootStatsRepository.find).toHaveBeenCalledWith(
-        { account: mockAccountId, day: { $gte: oneDayEarlier, $lte: dateTo } },
+        { account: mockAccount.id, day: { $gte: oneDayEarlier, $lte: dateTo } },
         { orderBy: { day: 'ASC' } },
       );
       expect(result).toEqual([
@@ -202,21 +185,19 @@ describe('BoostsService', () => {
     });
 
     it('should return empty array if no stats found', async () => {
-      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       mockDailyTootStatsRepository.find.mockResolvedValue([]);
-      const result = await service.getChartData(mockAccountId, 'last7days', mockUser);
+      const result = await service.getChartData(mockAccount, 'last7days');
       expect(result).toEqual([]);
     });
   });
 
   describe('getTopTootsByBoosts', () => {
     it('should return top toots mapped to BoostedTootDto', async () => {
-      mockAccountsService.findByIdOrFail.mockResolvedValue(mockAccount);
       const mockRankedTootEntities: (TootEntity & { rank: number })[] = [
         {
           _id: new ObjectId(),
           uri: 'uri1',
-          account: new ObjectId(mockAccountId) as unknown as Rel<AccountEntity>, // Simplified for test
+          account: new ObjectId(mockAccount.id) as unknown as Rel<AccountEntity>, // Simplified for test
           content: 'Toot 1',
           favouritesCount: 5,
           fetchedAt: new Date(),
@@ -231,10 +212,10 @@ describe('BoostsService', () => {
       ];
       mockTootsService.getTopToots.mockResolvedValue(mockRankedTootEntities);
 
-      const result = await service.getTopTootsByBoosts(mockAccountId, 'last7days', mockUser);
+      const result = await service.getTopTootsByBoosts(mockAccount, 'last7days');
 
       expect(mockTootsService.getTopToots).toHaveBeenCalledWith({
-        accountId: mockAccountId,
+        accountId: mockAccount.id,
         ranking: TootRankingEnum.BOOSTS,
         dateFrom: expect.any(Date),
         dateTo: expect.any(Date),
@@ -267,7 +248,6 @@ describe('BoostsService', () => {
     });
 
     it('should export chart data to CSV', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
       const chartData = [
         { time: '2023-01-01', value: 10 },
         { time: '2023-01-02', value: 15 },
@@ -275,13 +255,13 @@ describe('BoostsService', () => {
       // Mock getChartData directly on the service instance for this test
       jest.spyOn(service, 'getChartData').mockResolvedValue(chartData);
 
-      await service.exportCsv(mockAccountId, 'last7days', mockUser, mockRes);
+      await service.exportCsv(mockAccount, 'last7days', mockRes);
 
-      expect(service.getChartData).toHaveBeenCalledWith(mockAccountId, 'last7days', mockUser);
+      expect(service.getChartData).toHaveBeenCalledWith(mockAccount, 'last7days');
       expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         'Content-Disposition',
-        `attachment; filename=boosts-${mockAccountId}-last7days.csv`,
+        `attachment; filename=boosts-${mockAccount.id}-last7days.csv`,
       );
       expect(stringify).toHaveBeenCalledWith({ header: true, delimiter: ';' });
       expect(mockStringifier.pipe).toHaveBeenCalledWith(mockRes);
@@ -291,7 +271,6 @@ describe('BoostsService', () => {
     });
 
     it('should handle error during CSV stringification', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
       jest.spyOn(service, 'getChartData').mockResolvedValue([]); // No data, but still tests error handling
 
       const testError = new Error('CSV error');
@@ -304,7 +283,7 @@ describe('BoostsService', () => {
       mockRes.headersSent = false; // Simulate headers not sent yet
 
       // We don't expect exportCsv to throw, but to handle the error (e.g., log, send 500)
-      await service.exportCsv(mockAccountId, 'last7days', mockUser, mockRes);
+      await service.exportCsv(mockAccount, 'last7days', mockRes);
 
       // Check that logger was called (assuming logger is spied on or service method logs)
       // For now, check that res.status().send() was called
@@ -313,7 +292,6 @@ describe('BoostsService', () => {
     });
 
     it('should not send error response if headers already sent', async () => {
-      mockAccountsService.findById.mockResolvedValue(mockAccount);
       jest.spyOn(service, 'getChartData').mockResolvedValue([]);
       const testError = new Error('CSV error');
       mockStringifier.on.mockImplementation((event, callback) => {
@@ -323,7 +301,7 @@ describe('BoostsService', () => {
       });
       mockRes.headersSent = true; // Simulate headers already sent
 
-      await service.exportCsv(mockAccountId, 'last7days', mockUser, mockRes);
+      await service.exportCsv(mockAccount, 'last7days', mockRes);
 
       expect(mockRes.status).not.toHaveBeenCalled();
       expect(mockRes.send).not.toHaveBeenCalled();

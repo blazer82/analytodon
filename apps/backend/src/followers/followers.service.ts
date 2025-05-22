@@ -17,7 +17,6 @@ import {
   getPeriodKPI,
   resolveTimeframe,
 } from '../shared/utils/timeframe.helper';
-import { UserEntity } from '../users/entities/user.entity';
 import { FollowersKpiDto } from './dto/followers-kpi.dto';
 import { DailyAccountStatsEntity } from './entities/daily-account-stats.entity';
 
@@ -33,25 +32,11 @@ export class FollowersService {
   ) {}
 
   /**
-   * Retrieves an account by ID for a given user or throws a NotFoundException.
-   * Also checks if the account setup is complete.
-   * @param accountId - The ID of the account to retrieve.
-   * @param user - The user who owns the account.
-   * @returns A promise that resolves to the loaded account entity.
-   * @throws NotFoundException if the account is not found, not owned by the user, or setup is not complete.
-   */
-  private async getAccountOrFail(accountId: string, user: UserEntity): Promise<Loaded<AccountEntity>> {
-    return this.accountsService.findByIdOrFail(accountId, user, true);
-  }
-
-  /**
    * Retrieves weekly Key Performance Indicators (KPIs) for followers for a specific account.
-   * @param accountId - The ID of the account.
-   * @param user - The user requesting the KPIs.
+   * @param account - The loaded account entity.
    * @returns A promise that resolves to the followers KPI DTO.
    */
-  async getWeeklyKpi(accountId: string, user: UserEntity): Promise<FollowersKpiDto> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getWeeklyKpi(account: Loaded<AccountEntity>): Promise<FollowersKpiDto> {
     const kpiData = await getPeriodKPI(
       this.dailyAccountStatsRepository,
       account.id,
@@ -68,12 +53,10 @@ export class FollowersService {
 
   /**
    * Retrieves monthly Key Performance Indicators (KPIs) for followers for a specific account.
-   * @param accountId - The ID of the account.
-   * @param user - The user requesting the KPIs.
+   * @param account - The loaded account entity.
    * @returns A promise that resolves to the followers KPI DTO.
    */
-  async getMonthlyKpi(accountId: string, user: UserEntity): Promise<FollowersKpiDto> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getMonthlyKpi(account: Loaded<AccountEntity>): Promise<FollowersKpiDto> {
     const kpiData = await getPeriodKPI(
       this.dailyAccountStatsRepository,
       account.id,
@@ -90,12 +73,10 @@ export class FollowersService {
 
   /**
    * Retrieves yearly Key Performance Indicators (KPIs) for followers for a specific account.
-   * @param accountId - The ID of the account.
-   * @param user - The user requesting the KPIs.
+   * @param account - The loaded account entity.
    * @returns A promise that resolves to the followers KPI DTO.
    */
-  async getYearlyKpi(accountId: string, user: UserEntity): Promise<FollowersKpiDto> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getYearlyKpi(account: Loaded<AccountEntity>): Promise<FollowersKpiDto> {
     const kpiData = await getPeriodKPI(
       this.dailyAccountStatsRepository,
       account.id,
@@ -113,12 +94,10 @@ export class FollowersService {
   /**
    * Retrieves the total snapshot of followers for a specific account.
    * This typically represents the cumulative total and the date of the last data point.
-   * @param accountId - The ID of the account.
-   * @param user - The user requesting the snapshot.
+   * @param account - The loaded account entity.
    * @returns A promise that resolves to the total snapshot DTO, or null if no data exists.
    */
-  async getTotalSnapshot(accountId: string, user: UserEntity): Promise<TotalSnapshotDto | null> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getTotalSnapshot(account: Loaded<AccountEntity>): Promise<TotalSnapshotDto | null> {
     const entry = await this.dailyAccountStatsRepository.findOne({ account: account.id }, { orderBy: { day: 'DESC' } });
     if (entry) {
       return {
@@ -131,13 +110,12 @@ export class FollowersService {
 
   /**
    * Retrieves chart data for followers over a specified timeframe for a specific account.
-   * @param accountId - The ID of the account.
+   * @param account - The loaded account entity.
    * @param timeframe - The timeframe for the chart data (e.g., 'last7days', 'last30days').
    * @param user - The user requesting the chart data.
    * @returns A promise that resolves to an array of chart data points.
    */
-  async getChartData(accountId: string, timeframe: string, user: UserEntity): Promise<ChartDataPointDto[]> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getChartData(account: Loaded<AccountEntity>, timeframe: string): Promise<ChartDataPointDto[]> {
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
 
     // Fetch data directly for the specified timeframe
@@ -156,17 +134,16 @@ export class FollowersService {
 
   /**
    * Exports followers data as a CSV file for a specific account and timeframe.
-   * @param accountId - The ID of the account.
+   * @param account - The loaded account entity.
    * @param timeframe - The timeframe for the data to export.
-   * @param user - The user requesting the export.
    * @param res - The Express response object to stream the CSV to.
    * @returns A promise that resolves when the CSV has been streamed.
    */
-  async exportCsv(accountId: string, timeframe: string, user: UserEntity, res: Response): Promise<void> {
-    const chartData = await this.getChartData(accountId, timeframe, user);
+  async exportCsv(account: Loaded<AccountEntity>, timeframe: string, res: Response): Promise<void> {
+    const chartData = await this.getChartData(account, timeframe);
 
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=followers-${accountId}-${timeframe}.csv`);
+    res.setHeader('Content-Disposition', `attachment; filename=followers-${account.id}-${timeframe}.csv`);
 
     const stringifier = stringify({ header: true, delimiter: ';' });
     stringifier.pipe(res);

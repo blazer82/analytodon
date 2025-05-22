@@ -2,8 +2,12 @@ import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGu
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
+import { AccountEntity } from '../accounts/entities/account.entity';
+import { CheckAccount } from '../auth/decorators/check-account.decorator';
+import { GetAccount } from '../auth/decorators/get-account.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto';
@@ -16,7 +20,8 @@ import { FollowersService } from './followers.service';
 
 @ApiTags('Followers')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, AccountOwnerGuard)
+@CheckAccount({ requireSetupComplete: true }) // Apply to all routes in this controller
 @Controller('accounts/:accountId/followers')
 export class FollowersController {
   private readonly logger = new Logger(FollowersController.name);
@@ -27,9 +32,13 @@ export class FollowersController {
   @ApiOperation({ summary: "Get weekly Key Performance Indicators (KPIs) for an account's followers" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Weekly followers KPI data.', type: FollowersKpiDto })
-  async getWeeklyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FollowersKpiDto> {
-    this.logger.log(`Getting weekly followers KPI for account ${accountId}, user ${user.id}`);
-    return this.followersService.getWeeklyKpi(accountId, user);
+  async getWeeklyKpi(
+    @Param('accountId') accountIdParam: string, // Renamed to avoid conflict if needed, or use GetAccount's result
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<FollowersKpiDto> {
+    this.logger.log(`Getting weekly followers KPI for account ${account.id}, user ${user.id}`);
+    return this.followersService.getWeeklyKpi(account);
   }
 
   @Get('kpi/monthly')
@@ -37,9 +46,13 @@ export class FollowersController {
   @ApiOperation({ summary: "Get monthly Key Performance Indicators (KPIs) for an account's followers" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Monthly followers KPI data.', type: FollowersKpiDto })
-  async getMonthlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FollowersKpiDto> {
-    this.logger.log(`Getting monthly followers KPI for account ${accountId}, user ${user.id}`);
-    return this.followersService.getMonthlyKpi(accountId, user);
+  async getMonthlyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<FollowersKpiDto> {
+    this.logger.log(`Getting monthly followers KPI for account ${account.id}, user ${user.id}`);
+    return this.followersService.getMonthlyKpi(account);
   }
 
   @Get('kpi/yearly')
@@ -47,9 +60,13 @@ export class FollowersController {
   @ApiOperation({ summary: "Get yearly Key Performance Indicators (KPIs) for an account's followers" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Yearly followers KPI data.', type: FollowersKpiDto })
-  async getYearlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<FollowersKpiDto> {
-    this.logger.log(`Getting yearly followers KPI for account ${accountId}, user ${user.id}`);
-    return this.followersService.getYearlyKpi(accountId, user);
+  async getYearlyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<FollowersKpiDto> {
+    this.logger.log(`Getting yearly followers KPI for account ${account.id}, user ${user.id}`);
+    return this.followersService.getYearlyKpi(account);
   }
 
   @Get('kpi/total')
@@ -62,11 +79,12 @@ export class FollowersController {
     type: TotalSnapshotDto,
   })
   async getTotalSnapshot(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @GetUser() user: UserEntity,
   ): Promise<TotalSnapshotDto | null> {
-    this.logger.log(`Getting total followers snapshot for account ${accountId}, user ${user.id}`);
-    return this.followersService.getTotalSnapshot(accountId, user);
+    this.logger.log(`Getting total followers snapshot for account ${account.id}, user ${user.id}`);
+    return this.followersService.getTotalSnapshot(account);
   }
 
   @Get('chart')
@@ -76,14 +94,15 @@ export class FollowersController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Followers chart data.', type: [ChartDataPointDto] })
   async getChartData(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<ChartDataPointDto[]> {
     this.logger.log(
-      `Getting followers chart data for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+      `Getting followers chart data for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    return this.followersService.getChartData(accountId, query.timeframe, user);
+    return this.followersService.getChartData(account, query.timeframe);
   }
 
   @Get('csv')
@@ -94,12 +113,13 @@ export class FollowersController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'CSV file of followers data.' })
   async exportCsv(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
     @Res() res: Response,
   ): Promise<void> {
-    this.logger.log(`Exporting followers CSV for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`);
-    await this.followersService.exportCsv(accountId, query.timeframe, user, res);
+    this.logger.log(`Exporting followers CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
+    await this.followersService.exportCsv(account, query.timeframe, res);
   }
 }

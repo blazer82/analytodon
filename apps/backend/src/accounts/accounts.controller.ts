@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -17,8 +16,11 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { CheckAccount } from '../auth/decorators/check-account.decorator';
+import { GetAccount } from '../auth/decorators/get-account.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '../shared/enums/user-role.enum';
@@ -30,6 +32,7 @@ import { ConnectAccountResponseDto } from './dto/connect-account-response.dto';
 import { ConnectAccountBodyDto } from './dto/connect-account.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { AccountEntity } from './entities/account.entity';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()
@@ -73,25 +76,29 @@ export class AccountsController {
     return accounts.map((account) => new AccountResponseDto(account));
   }
 
-  @Get(':id')
+  // Note: Parameter name changed from 'id' to 'accountId' to match AccountOwnerGuard expectation
+  @Get(':accountId')
+  @UseGuards(AccountOwnerGuard) // Apply guard specifically here
   @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: 'Get a specific Mastodon account configuration by ID' })
-  @ApiParam({ name: 'id', description: 'Account ID (MongoDB ObjectId)', type: String })
+  @ApiParam({ name: 'accountId', description: 'Account ID (MongoDB ObjectId)', type: String })
   @ApiResponse({ status: HttpStatus.OK, description: 'Account configuration retrieved.', type: AccountResponseDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Account not found or not owned by user.' })
-  async findOne(@Param('id') id: string, @GetUser() user: UserEntity): Promise<AccountResponseDto> {
-    this.logger.log(`User ${user.id} fetching account by ID: ${id}`);
-    const account = await this.accountsService.findById(id, user);
-    if (!account) {
-      throw new NotFoundException(`Account with ID ${id} not found or not owned by user.`);
-    }
+  async findOne(
+    @Param('accountId') accountIdParam: string, // Keep for logging if needed
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<AccountResponseDto> {
+    this.logger.log(`User ${user.id} fetching account by ID: ${account.id}`);
+    // Account is already fetched and validated by AccountOwnerGuard
     return new AccountResponseDto(account);
   }
 
-  @Patch(':id')
+  @Patch(':accountId')
+  @UseGuards(AccountOwnerGuard) // Apply guard
   @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: 'Update a Mastodon account configuration' })
-  @ApiParam({ name: 'id', description: 'Account ID', type: String })
+  @ApiParam({ name: 'accountId', description: 'Account ID', type: String })
   @ApiBody({ type: UpdateAccountDto })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -101,31 +108,40 @@ export class AccountsController {
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Account not found or not owned by user.' })
   async update(
-    @Param('id') id: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() accountEntity: AccountEntity, // Use the account from the guard
     @Body() updateAccountDto: UpdateAccountDto,
     @GetUser() user: UserEntity,
   ): Promise<AccountResponseDto> {
-    this.logger.log(`User ${user.id} updating account by ID: ${id}`);
-    const account = await this.accountsService.update(id, updateAccountDto, user);
-    return new AccountResponseDto(account);
+    this.logger.log(`User ${user.id} updating account by ID: ${accountEntity.id}`);
+    // Pass accountEntity.id to service, or modify service to accept AccountEntity
+    const updatedAccount = await this.accountsService.update(accountEntity.id, updateAccountDto, user);
+    return new AccountResponseDto(updatedAccount);
   }
 
-  @Delete(':id')
+  @Delete(':accountId')
+  @UseGuards(AccountOwnerGuard) // Apply guard
   @Roles(UserRole.AccountOwner)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a Mastodon account configuration' })
-  @ApiParam({ name: 'id', description: 'Account ID', type: String })
+  @ApiParam({ name: 'accountId', description: 'Account ID', type: String })
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Account configuration successfully deleted.' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Account not found or not owned by user.' })
-  async remove(@Param('id') id: string, @GetUser() user: UserEntity): Promise<void> {
-    this.logger.log(`User ${user.id} deleting account by ID: ${id}`);
-    await this.accountsService.remove(id, user);
+  async remove(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity, // Use the account from the guard
+    @GetUser() user: UserEntity,
+  ): Promise<void> {
+    this.logger.log(`User ${user.id} deleting account by ID: ${account.id}`);
+    await this.accountsService.remove(account.id, user);
   }
 
-  @Post(':id/connect')
+  @Post(':accountId/connect')
+  @UseGuards(AccountOwnerGuard) // Apply guard
+  @CheckAccount({ requireSetupComplete: false }) // Allow connection initiation even if setup is not complete
   @Roles(UserRole.AccountOwner)
   @ApiOperation({ summary: 'Initiate Mastodon OAuth connection for an account' })
-  @ApiParam({ name: 'id', description: 'Account ID to connect', type: String })
+  @ApiParam({ name: 'accountId', description: 'Account ID to connect', type: String })
   @ApiBody({ type: ConnectAccountBodyDto, required: false }) // Body might be empty
   @ApiResponse({
     status: HttpStatus.OK,
@@ -134,12 +150,13 @@ export class AccountsController {
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Account not found or not owned by user.' })
   async connect(
-    @Param('id') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity, // Use the account from the guard
     @GetUser() user: UserEntity,
     // @Body() _connectAccountDto: ConnectAccountBodyDto, // DTO might be empty or have optional redirect post-callback
   ): Promise<ConnectAccountResponseDto> {
-    this.logger.log(`User ${user.id} initiating connection for account ID: ${accountId}`);
-    const { redirectUrl } = await this.accountsService.initiateConnection(accountId, user);
+    this.logger.log(`User ${user.id} initiating connection for account ID: ${account.id}`);
+    const { redirectUrl } = await this.accountsService.initiateConnection(account.id, user);
     return new ConnectAccountResponseDto(redirectUrl);
   }
 

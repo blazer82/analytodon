@@ -18,7 +18,6 @@ import {
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { DailyTootStatsEntity } from '../toots/entities/daily-toot-stats.entity';
 import { RankedTootEntity, TootsService } from '../toots/toots.service';
-import { UserEntity } from '../users/entities/user.entity';
 
 // Define internal data structures or use plain objects directly
 export interface InternalKpiData {
@@ -52,25 +51,11 @@ export class BoostsService {
   ) {}
 
   /**
-   * Retrieves an account by ID for a given user or throws a NotFoundException.
-   * Also checks if the account setup is complete.
-   * @param accountId - The ID of the account to retrieve.
-   * @param user - The user who owns the account.
-   * @returns A promise that resolves to the loaded account entity.
-   * @throws NotFoundException if the account is not found, not owned by the user, or setup is not complete.
-   */
-  private async getAccountOrFail(accountId: string, user: UserEntity): Promise<Loaded<AccountEntity>> {
-    return this.accountsService.findByIdOrFail(accountId, user, true);
-  }
-
-  /**
    * Retrieves weekly Key Performance Indicators (KPIs) for boosts for a specific account.
-   * @param accountId - The ID of the account.
-   * @param user - The user requesting the KPIs.
+   * @param account - The loaded account entity.
    * @returns A promise that resolves to internal KPI data.
    */
-  async getWeeklyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getWeeklyKpi(account: Loaded<AccountEntity>): Promise<InternalKpiData> {
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
       account.id,
@@ -87,12 +72,10 @@ export class BoostsService {
 
   /**
    * Retrieves monthly Key Performance Indicators (KPIs) for boosts for a specific account.
-   * @param accountId - The ID of the account.
-   * @param user - The user requesting the KPIs.
+   * @param account - The loaded account entity.
    * @returns A promise that resolves to internal KPI data.
    */
-  async getMonthlyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getMonthlyKpi(account: Loaded<AccountEntity>): Promise<InternalKpiData> {
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
       account.id,
@@ -109,12 +92,10 @@ export class BoostsService {
 
   /**
    * Retrieves yearly Key Performance Indicators (KPIs) for boosts for a specific account.
-   * @param accountId - The ID of the account.
-   * @param user - The user requesting the KPIs.
+   * @param account - The loaded account entity.
    * @returns A promise that resolves to internal KPI data.
    */
-  async getYearlyKpi(accountId: string, user: UserEntity): Promise<InternalKpiData> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getYearlyKpi(account: Loaded<AccountEntity>): Promise<InternalKpiData> {
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
       account.id,
@@ -132,12 +113,10 @@ export class BoostsService {
   /**
    * Retrieves the total snapshot of boosts for a specific account.
    * This typically represents the cumulative total and the date of the last data point.
-   * @param accountId - The ID of the account.
-   * @param user - The user requesting the snapshot.
+   * @param account - The loaded account entity.
    * @returns A promise that resolves to internal total snapshot data, or null if no data exists.
    */
-  async getTotalSnapshot(accountId: string, user: UserEntity): Promise<InternalTotalSnapshotData | null> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getTotalSnapshot(account: Loaded<AccountEntity>): Promise<InternalTotalSnapshotData | null> {
     const entry = await this.dailyTootStatsRepository.findOne({ account: account.id }, { orderBy: { day: 'DESC' } });
     if (entry) {
       return {
@@ -150,13 +129,11 @@ export class BoostsService {
 
   /**
    * Retrieves chart data for boosts over a specified timeframe for a specific account.
-   * @param accountId - The ID of the account.
+   * @param account - The loaded account entity.
    * @param timeframe - The timeframe for the chart data (e.g., 'last7days', 'last30days').
-   * @param user - The user requesting the chart data.
    * @returns A promise that resolves to an array of internal chart data points.
    */
-  async getChartData(accountId: string, timeframe: string, user: UserEntity): Promise<InternalChartDataPoint[]> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getChartData(account: Loaded<AccountEntity>, timeframe: string): Promise<InternalChartDataPoint[]> {
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
     const oneDayEarlier = new Date(dateFrom);
     oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
@@ -176,13 +153,11 @@ export class BoostsService {
 
   /**
    * Retrieves the top toots ranked by boosts for a specific account within a given timeframe.
-   * @param accountId - The ID of the account.
+   * @param account - The loaded account entity.
    * @param timeframe - The timeframe for ranking (e.g., 'last7days', 'last30days').
-   * @param user - The user requesting the top toots.
    * @returns A promise that resolves to an array of TootEntity augmented with rank.
    */
-  async getTopTootsByBoosts(accountId: string, timeframe: string, user: UserEntity): Promise<RankedTootEntity[]> {
-    const account = await this.getAccountOrFail(accountId, user);
+  async getTopTootsByBoosts(account: Loaded<AccountEntity>, timeframe: string): Promise<RankedTootEntity[]> {
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
     const toots = await this.tootsService.getTopToots({
       accountId: account.id,
@@ -196,17 +171,16 @@ export class BoostsService {
 
   /**
    * Exports boosts data as a CSV file for a specific account and timeframe.
-   * @param accountId - The ID of the account.
+   * @param account - The loaded account entity.
    * @param timeframe - The timeframe for the data to export.
-   * @param user - The user requesting the export.
    * @param res - The Express response object to stream the CSV to.
    * @returns A promise that resolves when the CSV has been streamed.
    */
-  async exportCsv(accountId: string, timeframe: string, user: UserEntity, res: Response): Promise<void> {
-    const chartData = await this.getChartData(accountId, timeframe, user); // Re-use getChartData
+  async exportCsv(account: Loaded<AccountEntity>, timeframe: string, res: Response): Promise<void> {
+    const chartData = await this.getChartData(account, timeframe); // Re-use getChartData
 
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=boosts-${accountId}-${timeframe}.csv`);
+    res.setHeader('Content-Disposition', `attachment; filename=boosts-${account.id}-${timeframe}.csv`);
 
     const stringifier = stringify({ header: true, delimiter: ';' });
     stringifier.pipe(res);

@@ -32,7 +32,7 @@ import {
 } from '../models/index';
 
 export interface AccountsControllerConnectRequest {
-    id: string;
+    accountId: string;
     body?: object;
 }
 
@@ -46,15 +46,15 @@ export interface AccountsControllerCreateRequest {
 }
 
 export interface AccountsControllerFindOneRequest {
-    id: string;
+    accountId: string;
 }
 
 export interface AccountsControllerRemoveRequest {
-    id: string;
+    accountId: string;
 }
 
 export interface AccountsControllerUpdateRequest {
-    id: string;
+    accountId: string;
     updateAccountDto: UpdateAccountDto;
 }
 
@@ -67,10 +67,10 @@ export class AccountsApi extends runtime.BaseAPI {
      * Initiate Mastodon OAuth connection for an account
      */
     async accountsControllerConnectRaw(requestParameters: AccountsControllerConnectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConnectAccountResponseDto>> {
-        if (requestParameters['id'] == null) {
+        if (requestParameters['accountId'] == null) {
             throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling accountsControllerConnect().'
+                'accountId',
+                'Required parameter "accountId" was null or undefined when calling accountsControllerConnect().'
             );
         }
 
@@ -89,7 +89,7 @@ export class AccountsApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/accounts/{id}/connect`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: `/accounts/{accountId}/connect`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -244,10 +244,10 @@ export class AccountsApi extends runtime.BaseAPI {
      * Get a specific Mastodon account configuration by ID
      */
     async accountsControllerFindOneRaw(requestParameters: AccountsControllerFindOneRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountResponseDto>> {
-        if (requestParameters['id'] == null) {
+        if (requestParameters['accountId'] == null) {
             throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling accountsControllerFindOne().'
+                'accountId',
+                'Required parameter "accountId" was null or undefined when calling accountsControllerFindOne().'
             );
         }
 
@@ -264,7 +264,7 @@ export class AccountsApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/accounts/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: `/accounts/{accountId}`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -285,10 +285,10 @@ export class AccountsApi extends runtime.BaseAPI {
      * Delete a Mastodon account configuration
      */
     async accountsControllerRemoveRaw(requestParameters: AccountsControllerRemoveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
+        if (requestParameters['accountId'] == null) {
             throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling accountsControllerRemove().'
+                'accountId',
+                'Required parameter "accountId" was null or undefined when calling accountsControllerRemove().'
             );
         }
 
@@ -305,7 +305,7 @@ export class AccountsApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/accounts/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: `/accounts/{accountId}`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -325,10 +325,10 @@ export class AccountsApi extends runtime.BaseAPI {
      * Update a Mastodon account configuration
      */
     async accountsControllerUpdateRaw(requestParameters: AccountsControllerUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountResponseDto>> {
-        if (requestParameters['id'] == null) {
+        if (requestParameters['accountId'] == null) {
             throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling accountsControllerUpdate().'
+                'accountId',
+                'Required parameter "accountId" was null or undefined when calling accountsControllerUpdate().'
             );
         }
 
@@ -354,7 +354,7 @@ export class AccountsApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/accounts/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            path: `/accounts/{accountId}`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,

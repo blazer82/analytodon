@@ -2,8 +2,12 @@ import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGu
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
+import { AccountEntity } from '../accounts/entities/account.entity';
+import { CheckAccount } from '../auth/decorators/check-account.decorator';
+import { GetAccount } from '../auth/decorators/get-account.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '../shared/enums/user-role.enum';
@@ -17,7 +21,8 @@ import { TotalSnapshotDto } from './dto/total-snapshot.dto';
 
 @ApiTags('Boosts')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard) // Apply to all routes in this controller
+@UseGuards(JwtAuthGuard, RolesGuard, AccountOwnerGuard)
+@CheckAccount({ requireSetupComplete: true }) // Apply to all routes in this controller
 @Controller('accounts/:accountId/boosts')
 export class BoostsController {
   private readonly logger = new Logger(BoostsController.name);
@@ -28,9 +33,13 @@ export class BoostsController {
   @ApiOperation({ summary: "Get weekly Key Performance Indicators (KPIs) for an account's boosts" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Weekly boosts KPI data.', type: BoostsKpiDto })
-  async getWeeklyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
-    this.logger.log(`Getting weekly boosts KPI for account ${accountId}, user ${user.id}`);
-    const kpiData = await this.boostsService.getWeeklyKpi(accountId, user);
+  async getWeeklyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<BoostsKpiDto> {
+    this.logger.log(`Getting weekly boosts KPI for account ${account.id}, user ${user.id}`);
+    const kpiData = await this.boostsService.getWeeklyKpi(account);
     return { ...kpiData } as BoostsKpiDto;
   }
 
@@ -39,9 +48,13 @@ export class BoostsController {
   @ApiOperation({ summary: "Get monthly Key Performance Indicators (KPIs) for an account's boosts" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Monthly boosts KPI data.', type: BoostsKpiDto })
-  async getMonthlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
-    this.logger.log(`Getting monthly boosts KPI for account ${accountId}, user ${user.id}`);
-    const kpiData = await this.boostsService.getMonthlyKpi(accountId, user);
+  async getMonthlyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<BoostsKpiDto> {
+    this.logger.log(`Getting monthly boosts KPI for account ${account.id}, user ${user.id}`);
+    const kpiData = await this.boostsService.getMonthlyKpi(account);
     return { ...kpiData } as BoostsKpiDto;
   }
 
@@ -50,9 +63,13 @@ export class BoostsController {
   @ApiOperation({ summary: "Get yearly Key Performance Indicators (KPIs) for an account's boosts" })
   @ApiParam({ name: 'accountId', description: 'The ID of the account' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Yearly boosts KPI data.', type: BoostsKpiDto })
-  async getYearlyKpi(@Param('accountId') accountId: string, @GetUser() user: UserEntity): Promise<BoostsKpiDto> {
-    this.logger.log(`Getting yearly boosts KPI for account ${accountId}, user ${user.id}`);
-    const kpiData = await this.boostsService.getYearlyKpi(accountId, user);
+  async getYearlyKpi(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @GetUser() user: UserEntity,
+  ): Promise<BoostsKpiDto> {
+    this.logger.log(`Getting yearly boosts KPI for account ${account.id}, user ${user.id}`);
+    const kpiData = await this.boostsService.getYearlyKpi(account);
     return { ...kpiData } as BoostsKpiDto;
   }
 
@@ -66,11 +83,12 @@ export class BoostsController {
     type: TotalSnapshotDto,
   })
   async getTotalSnapshot(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @GetUser() user: UserEntity,
   ): Promise<TotalSnapshotDto | null> {
-    this.logger.log(`Getting total boosts snapshot for account ${accountId}, user ${user.id}`);
-    const snapshotData = await this.boostsService.getTotalSnapshot(accountId, user);
+    this.logger.log(`Getting total boosts snapshot for account ${account.id}, user ${user.id}`);
+    const snapshotData = await this.boostsService.getTotalSnapshot(account);
     if (!snapshotData) {
       return null;
     }
@@ -84,14 +102,15 @@ export class BoostsController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Boosts chart data.', type: [ChartDataPointDto] })
   async getChartData(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<ChartDataPointDto[]> {
     this.logger.log(
-      `Getting boosts chart data for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+      `Getting boosts chart data for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const chartInternalData = await this.boostsService.getChartData(accountId, query.timeframe, user);
+    const chartInternalData = await this.boostsService.getChartData(account, query.timeframe);
     return chartInternalData.map((point) => ({ ...point }) as ChartDataPointDto);
   }
 
@@ -102,14 +121,15 @@ export class BoostsController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'List of top toots by boosts.', type: [BoostedTootDto] })
   async getTopTootsByBoosts(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
   ): Promise<BoostedTootDto[]> {
     this.logger.log(
-      `Getting top toots by boosts for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`,
+      `Getting top toots by boosts for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const rankedEntities = await this.boostsService.getTopTootsByBoosts(accountId, query.timeframe, user);
+    const rankedEntities = await this.boostsService.getTopTootsByBoosts(account, query.timeframe);
     return rankedEntities.map(
       (toot) =>
         ({
@@ -133,12 +153,13 @@ export class BoostsController {
   @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
   @ApiResponse({ status: HttpStatus.OK, description: 'CSV file of boosts data.' })
   async exportCsv(
-    @Param('accountId') accountId: string,
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
     @Query() query: TimeframeQueryDto,
     @GetUser() user: UserEntity,
     @Res() res: Response,
   ): Promise<void> {
-    this.logger.log(`Exporting boosts CSV for account ${accountId}, timeframe ${query.timeframe}, user ${user.id}`);
-    await this.boostsService.exportCsv(accountId, query.timeframe, user, res);
+    this.logger.log(`Exporting boosts CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
+    await this.boostsService.exportCsv(account, query.timeframe, res);
   }
 }

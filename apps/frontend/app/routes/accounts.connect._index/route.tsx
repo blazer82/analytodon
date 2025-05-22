@@ -67,7 +67,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
 
       // 2. Initiate the OAuth connection
       const connectionResponse = await accountsApi.accountsControllerConnect({
-        id: account.id,
+        accountId: account.id,
         body: {}, // Empty body is fine for this endpoint
       });
 
