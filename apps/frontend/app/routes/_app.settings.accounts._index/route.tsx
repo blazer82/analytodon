@@ -7,7 +7,6 @@ import ReconnectIcon from '@mui/icons-material/Sync';
 import {
   Alert,
   Box,
-  Button,
   Container,
   Dialog,
   DialogActions,
@@ -30,7 +29,7 @@ import { redirect, useActionData, useLoaderData, useNavigate, useSubmit } from '
 import AccountSetup from '~/components/AccountSetup';
 import AccountSetupComplete from '~/components/AccountSetupComplete';
 import { DataTablePaper } from '~/components/Layout/styles';
-import { StyledTextField } from '~/components/StyledFormElements';
+import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import Title from '~/components/Title';
 import { createAccountsApiWithAuth } from '~/services/api.server';
 import { formatDate } from '~/utils/formatters';
@@ -152,6 +151,8 @@ export default function AccountsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [accountToDelete, setAccountToDelete] = React.useState<AccountResponseDto | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = React.useState('');
+  const [reconnectDialogOpen, setReconnectDialogOpen] = React.useState(false);
+  const [accountToReconnect, setAccountToReconnect] = React.useState<AccountResponseDto | null>(null);
   const [addAccountDialogOpen, setAddAccountDialogOpen] = React.useState(false);
   const [showSetupComplete, setShowSetupComplete] = React.useState(showSetupCompleteDialog || false);
 
@@ -170,11 +171,20 @@ export default function AccountsPage() {
     navigate(`/settings/accounts/${accountId}`);
   };
 
-  const handleReconnect = (accountId: string) => {
-    const formData = new FormData();
-    formData.append('_action', 'reconnect');
-    formData.append('accountId', accountId);
-    submit(formData, { method: 'post' });
+  const openReconnectDialog = (account: AccountResponseDto) => {
+    setAccountToReconnect(account);
+    setReconnectDialogOpen(true);
+  };
+
+  const handleReconnect = () => {
+    if (accountToReconnect) {
+      const formData = new FormData();
+      formData.append('_action', 'reconnect');
+      formData.append('accountId', accountToReconnect.id);
+      submit(formData, { method: 'post' });
+      setReconnectDialogOpen(false);
+      setAccountToReconnect(null);
+    }
   };
 
   const openDeleteDialog = (account: AccountResponseDto) => {
@@ -271,7 +281,7 @@ export default function AccountsPage() {
                   <TableCell align="right">
                     <IconButton
                       title="Reconnect"
-                      onClick={() => handleReconnect(account.id)}
+                      onClick={() => openReconnectDialog(account)}
                       sx={{
                         transition: 'transform 0.2s ease',
                         '&:hover': { transform: 'scale(1.1)' },
@@ -309,19 +319,9 @@ export default function AccountsPage() {
 
       {canAddAccount && (
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-start' }}>
-          <Button
-            variant="contained"
-            onClick={() => setAddAccountDialogOpen(true)}
-            sx={{
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: theme.shadows[4],
-              },
-            }}
-          >
+          <StyledButton variant="contained" onClick={() => setAddAccountDialogOpen(true)}>
             Add Account
-          </Button>
+          </StyledButton>
         </Box>
       )}
 
@@ -359,6 +359,38 @@ export default function AccountsPage() {
         />
       )}
 
+      {/* Reconnect Account Dialog */}
+      <Dialog
+        open={reconnectDialogOpen}
+        onClose={() => setReconnectDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          },
+        }}
+      >
+        <DialogTitle>Reconnect Account</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You are about to reconnect your account{' '}
+            <strong>{accountToReconnect?.name || accountToReconnect?.accountName}</strong>. This will redirect you to
+            your Mastodon server where you&apos;ll need to authorize Analytodon again.
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 2 }}>
+            This is useful if your authorization has expired or if you&apos;ve revoked access on your Mastodon server.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ mb: 1, mr: 2 }}>
+          <StyledButton variant="outlined" onClick={() => setReconnectDialogOpen(false)}>
+            Cancel
+          </StyledButton>
+          <StyledButton variant="contained" onClick={handleReconnect} color="primary">
+            Reconnect
+          </StyledButton>
+        </DialogActions>
+      </Dialog>
+
       {/* Delete Account Dialog */}
       <Dialog
         open={deleteDialogOpen}
@@ -387,21 +419,6 @@ export default function AccountsPage() {
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               required
               fullWidth
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: (theme) => theme.palette.primary.main,
-                    },
-                  },
-                  '&.Mui-focused': {
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderWidth: '2px',
-                    },
-                  },
-                },
-              }}
             />
           </FormGroup>
           {actionData?.error && (
@@ -411,34 +428,17 @@ export default function AccountsPage() {
           )}
         </DialogContent>
         <DialogActions sx={{ mb: 1, mr: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={() => setDeleteDialogOpen(false)}
-            sx={{
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: theme.shadows[4],
-              },
-            }}
-          >
+          <StyledButton variant="outlined" onClick={() => setDeleteDialogOpen(false)}>
             Cancel
-          </Button>
-          <Button
+          </StyledButton>
+          <StyledButton
             variant="contained"
             onClick={handleDeleteConfirm}
             disabled={deleteConfirmText !== 'delete'}
             color="error"
-            sx={{
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: theme.shadows[4],
-              },
-            }}
           >
             Delete Account
-          </Button>
+          </StyledButton>
         </DialogActions>
       </Dialog>
     </Container>
