@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "module": "Node16",
+    "module": "commonjs",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
     "target": "es2022",
-    "moduleResolution": "node16"
+    "composite": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
   },
-  "include": ["./src/**/*"],
-  "ts-node": {
-    "esm": true
-  }
+  "include": ["src/**/*"]
 }

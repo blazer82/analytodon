@@ -6,14 +6,20 @@
   "bin": {
     "analytodon-cli": "./bin/run.js"
   },
-  "bugs": "https://github.com/blazer82/https://github.com/blazer82/analytodon.git/issues",
+  "bugs": "https://github.com/blazer82/analytodon/issues",
   "dependencies": {
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
-    "@oclif/plugin-plugins": "^5"
+    "@oclif/plugin-plugins": "^5",
+    "axios": "^1.9.0",
+    "megalodon": "^10.1.1",
+    "mongodb": "^6.16.0",
+    "pino": "^9.7.0",
+    "timezone-support": "^3.1.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1",
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
     "@types/chai": "^4",
@@ -38,13 +44,12 @@
     "./dist",
     "./oclif.manifest.json"
   ],
-  "homepage": "https://github.com/blazer82/https://github.com/blazer82/analytodon.git",
+  "homepage": "https://github.com/blazer82/analytodon",
   "keywords": [
     "oclif"
   ],
   "license": "GPL-3.0-only",
   "main": "dist/index.js",
-  "type": "module",
   "oclif": {
     "bin": "analytodon-cli",
     "dirname": "analytodon-cli",
@@ -60,9 +65,9 @@
       }
     }
   },
-  "repository": "blazer82/https://github.com/blazer82/analytodon.git",
+  "repository": "blazer82/analytodon",
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b",
+    "build": "shx rm -rf dist && shx rm -f tsconfig.tsbuildinfo && tsc -b",
     "prettier:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "prettier:write": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint",

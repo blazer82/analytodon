@@ -1,0 +1,8 @@
+{
+  "importOrder": ["<THIRD_PARTY_MODULES>", "", "^components/(.*)$", "", "^[./]"],
+  "importOrderParserPlugins": ["typescript", "decorators-legacy"],
+  "plugins": ["@ianvs/prettier-plugin-sort-imports"],
+  "printWidth": 120,
+  "singleQuote": true,
+  "trailingComma": "all"
+}

@@ -16,40 +16,326 @@ Analytodon CLI Tools
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g mycli123
-$ mycli123 COMMAND
+$ npm install -g @analytodon/cli
+$ analytodon-cli COMMAND
 running command...
-$ mycli123 (--version)
-mycli123/0.0.0 darwin-arm64 node-v20.12.2
-$ mycli123 --help [COMMAND]
+$ analytodon-cli (--version)
+@analytodon/cli/0.0.0 darwin-arm64 node-v23.11.0
+$ analytodon-cli --help [COMMAND]
 USAGE
-  $ mycli123 COMMAND
+  $ analytodon-cli COMMAND
 ...
 ```
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`mycli123 hello PERSON`](#mycli123-hello-person)
-* [`mycli123 hello world`](#mycli123-hello-world)
-* [`mycli123 help [COMMAND]`](#mycli123-help-command)
-* [`mycli123 plugins`](#mycli123-plugins)
-* [`mycli123 plugins add PLUGIN`](#mycli123-plugins-add-plugin)
-* [`mycli123 plugins:inspect PLUGIN...`](#mycli123-pluginsinspect-plugin)
-* [`mycli123 plugins install PLUGIN`](#mycli123-plugins-install-plugin)
-* [`mycli123 plugins link PATH`](#mycli123-plugins-link-path)
-* [`mycli123 plugins remove [PLUGIN]`](#mycli123-plugins-remove-plugin)
-* [`mycli123 plugins reset`](#mycli123-plugins-reset)
-* [`mycli123 plugins uninstall [PLUGIN]`](#mycli123-plugins-uninstall-plugin)
-* [`mycli123 plugins unlink [PLUGIN]`](#mycli123-plugins-unlink-plugin)
-* [`mycli123 plugins update`](#mycli123-plugins-update)
+* [`analytodon-cli aggregate dailyaccountstats`](#analytodon-cli-aggregate-dailyaccountstats)
+* [`analytodon-cli aggregate dailytootstats`](#analytodon-cli-aggregate-dailytootstats)
+* [`analytodon-cli auth requesttoken`](#analytodon-cli-auth-requesttoken)
+* [`analytodon-cli cleanup accountdata`](#analytodon-cli-cleanup-accountdata)
+* [`analytodon-cli cleanup accounts`](#analytodon-cli-cleanup-accounts)
+* [`analytodon-cli cleanup oldaccounts`](#analytodon-cli-cleanup-oldaccounts)
+* [`analytodon-cli cleanup tootstats`](#analytodon-cli-cleanup-tootstats)
+* [`analytodon-cli cleanup usercredentials`](#analytodon-cli-cleanup-usercredentials)
+* [`analytodon-cli cleanup users`](#analytodon-cli-cleanup-users)
+* [`analytodon-cli fetch accountstats`](#analytodon-cli-fetch-accountstats)
+* [`analytodon-cli fetch initialstats`](#analytodon-cli-fetch-initialstats)
+* [`analytodon-cli fetch tootstats`](#analytodon-cli-fetch-tootstats)
+* [`analytodon-cli hello PERSON`](#analytodon-cli-hello-person)
+* [`analytodon-cli hello world`](#analytodon-cli-hello-world)
+* [`analytodon-cli help [COMMAND]`](#analytodon-cli-help-command)
+* [`analytodon-cli mail oldaccounts`](#analytodon-cli-mail-oldaccounts)
+* [`analytodon-cli mail weeklystats`](#analytodon-cli-mail-weeklystats)
+* [`analytodon-cli plugins`](#analytodon-cli-plugins)
+* [`analytodon-cli plugins add PLUGIN`](#analytodon-cli-plugins-add-plugin)
+* [`analytodon-cli plugins:inspect PLUGIN...`](#analytodon-cli-pluginsinspect-plugin)
+* [`analytodon-cli plugins install PLUGIN`](#analytodon-cli-plugins-install-plugin)
+* [`analytodon-cli plugins link PATH`](#analytodon-cli-plugins-link-path)
+* [`analytodon-cli plugins remove [PLUGIN]`](#analytodon-cli-plugins-remove-plugin)
+* [`analytodon-cli plugins reset`](#analytodon-cli-plugins-reset)
+* [`analytodon-cli plugins uninstall [PLUGIN]`](#analytodon-cli-plugins-uninstall-plugin)
+* [`analytodon-cli plugins unlink [PLUGIN]`](#analytodon-cli-plugins-unlink-plugin)
+* [`analytodon-cli plugins update`](#analytodon-cli-plugins-update)
+* [`analytodon-cli tools rebuilddailytootstats`](#analytodon-cli-tools-rebuilddailytootstats)
 
-## `mycli123 hello PERSON`
+## `analytodon-cli aggregate dailyaccountstats`
+
+Aggregate daily account stats for all accounts
+
+```
+USAGE
+  $ analytodon-cli aggregate dailyaccountstats [-c <value>] [-d <value>] [-z <value>]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -z, --timezone=<value>          Process accounts with this timezone
+
+DESCRIPTION
+  Aggregate daily account stats for all accounts
+
+EXAMPLES
+  $ analytodon-cli aggregate dailyaccountstats
+```
+
+_See code: [src/commands/aggregate/dailyaccountstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/aggregate/dailyaccountstats.ts)_
+
+## `analytodon-cli aggregate dailytootstats`
+
+Aggregate daily toot stats for all accounts
+
+```
+USAGE
+  $ analytodon-cli aggregate dailytootstats [-c <value>] [-d <value>] [-z <value>]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -z, --timezone=<value>          Process accounts with this timezone
+
+DESCRIPTION
+  Aggregate daily toot stats for all accounts
+
+EXAMPLES
+  $ analytodon-cli aggregate dailytootstats
+```
+
+_See code: [src/commands/aggregate/dailytootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/aggregate/dailytootstats.ts)_
+
+## `analytodon-cli auth requesttoken`
+
+Aid with requesting OAuth token manually
+
+```
+USAGE
+  $ analytodon-cli auth requesttoken -i <value> [-c <value>] [-s <value>] [-o <value>]
+
+FLAGS
+  -c, --clientID=<value>      OAuth client ID
+  -i, --serverURL=<value>     (required) Mastodon instance URL
+  -o, --code=<value>          OAuth code
+  -s, --clientSecret=<value>  OAuth client secret
+
+DESCRIPTION
+  Aid with requesting OAuth token manually
+
+EXAMPLES
+  $ analytodon-cli auth requesttoken
+```
+
+_See code: [src/commands/auth/requesttoken.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/auth/requesttoken.ts)_
+
+## `analytodon-cli cleanup accountdata`
+
+Clean up orphaned account data.
+
+```
+USAGE
+  $ analytodon-cli cleanup accountdata [-c <value>] [-d <value>] [-x]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -x, --dryRun                    Dry run, no actual changes made
+
+DESCRIPTION
+  Clean up orphaned account data.
+
+EXAMPLES
+  $ analytodon-cli cleanup accountdata
+```
+
+_See code: [src/commands/cleanup/accountdata.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/cleanup/accountdata.ts)_
+
+## `analytodon-cli cleanup accounts`
+
+Clean up accounts.
+
+```
+USAGE
+  $ analytodon-cli cleanup accounts [-c <value>] [-d <value>] [-x]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -x, --dryRun                    Dry run, no actual changes made
+
+DESCRIPTION
+  Clean up accounts.
+
+EXAMPLES
+  $ analytodon-cli cleanup accounts
+```
+
+_See code: [src/commands/cleanup/accounts.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/cleanup/accounts.ts)_
+
+## `analytodon-cli cleanup oldaccounts`
+
+Delete users with old accounts
+
+```
+USAGE
+  $ analytodon-cli cleanup oldaccounts [-c <value>] [-d <value>] [-h <value>] [-x]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -h, --host=<value>              [default: https://app.analytodon.com] App host URL
+  -x, --dryRun                    Dry run, no actual changes made
+
+DESCRIPTION
+  Delete users with old accounts
+
+EXAMPLES
+  $ analytodon-cli cleanup oldaccounts
+```
+
+_See code: [src/commands/cleanup/oldaccounts.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/cleanup/oldaccounts.ts)_
+
+## `analytodon-cli cleanup tootstats`
+
+Clean up old tootstats.
+
+```
+USAGE
+  $ analytodon-cli cleanup tootstats [-c <value>] [-d <value>] [-r <value>] [-x]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -r, --days=<value>              [default: 30] Retain tootstats for this number of days back
+  -x, --dryRun                    Dry run, no actual changes made
+
+DESCRIPTION
+  Clean up old tootstats.
+
+EXAMPLES
+  $ analytodon-cli cleanup tootstats
+```
+
+_See code: [src/commands/cleanup/tootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/cleanup/tootstats.ts)_
+
+## `analytodon-cli cleanup usercredentials`
+
+Clean up user credentials.
+
+```
+USAGE
+  $ analytodon-cli cleanup usercredentials [-c <value>] [-d <value>] [-x]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -x, --dryRun                    Dry run, no actual changes made
+
+DESCRIPTION
+  Clean up user credentials.
+
+EXAMPLES
+  $ analytodon-cli cleanup usercredentials
+```
+
+_See code: [src/commands/cleanup/usercredentials.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/cleanup/usercredentials.ts)_
+
+## `analytodon-cli cleanup users`
+
+Clean up users that haven't completed setup.
+
+```
+USAGE
+  $ analytodon-cli cleanup users [-c <value>] [-d <value>] [-x]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -x, --dryRun                    Dry run, no actual changes made
+
+DESCRIPTION
+  Clean up users that haven't completed setup.
+
+EXAMPLES
+  $ analytodon-cli cleanup users
+```
+
+_See code: [src/commands/cleanup/users.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/cleanup/users.ts)_
+
+## `analytodon-cli fetch accountstats`
+
+Gather account stats for all accounts
+
+```
+USAGE
+  $ analytodon-cli fetch accountstats [-c <value>] [-d <value>] [-z <value>]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -z, --timezone=<value>          Process accounts with this timezone
+
+DESCRIPTION
+  Gather account stats for all accounts
+
+EXAMPLES
+  $ analytodon-cli fetch accountstats
+```
+
+_See code: [src/commands/fetch/accountstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/fetch/accountstats.ts)_
+
+## `analytodon-cli fetch initialstats`
+
+Gather initial stats for all accounts (only 1 per call)
+
+```
+USAGE
+  $ analytodon-cli fetch initialstats [-c <value>] [-d <value>] [-a <value>] [-h <value>] [-t <value>]
+
+FLAGS
+  -a, --account=<value>           Only process specific account
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -h, --host=<value>              [default: https://app.analytodon.com] App host URL
+  -t, --authorization=<value>     [default: no-key] Authorization header
+
+DESCRIPTION
+  Gather initial stats for all accounts (only 1 per call)
+
+EXAMPLES
+  $ analytodon-cli fetch initialstats
+```
+
+_See code: [src/commands/fetch/initialstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/fetch/initialstats.ts)_
+
+## `analytodon-cli fetch tootstats`
+
+Gather toot stats for all accounts
+
+```
+USAGE
+  $ analytodon-cli fetch tootstats [-c <value>] [-d <value>] [-a] [-z <value>] [-m <value>]
+
+FLAGS
+  -a, --all                       Fetch all (legacy, always on)
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -m, --account=<value>           Only process this account (disables timezone filter!)
+  -z, --timezone=<value>          Process accounts with this timezone
+
+DESCRIPTION
+  Gather toot stats for all accounts
+
+EXAMPLES
+  $ analytodon-cli fetch tootstats
+```
+
+_See code: [src/commands/fetch/tootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/fetch/tootstats.ts)_
+
+## `analytodon-cli hello PERSON`
 
 Say hello
 
 ```
 USAGE
-  $ mycli123 hello PERSON -f <value>
+  $ analytodon-cli hello PERSON -f <value>
 
 ARGUMENTS
   PERSON  Person to say hello to
@@ -61,37 +347,37 @@ DESCRIPTION
   Say hello
 
 EXAMPLES
-  $ mycli123 hello friend --from oclif
+  $ analytodon-cli hello friend --from oclif
   hello friend from oclif! (./src/commands/hello/index.ts)
 ```
 
-_See code: [src/commands/hello/index.ts](https://github.com/mdonnalley/mycli123/blob/v0.0.0/src/commands/hello/index.ts)_
+_See code: [src/commands/hello/index.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/hello/index.ts)_
 
-## `mycli123 hello world`
+## `analytodon-cli hello world`
 
 Say hello world
 
 ```
 USAGE
-  $ mycli123 hello world
+  $ analytodon-cli hello world
 
 DESCRIPTION
   Say hello world
 
 EXAMPLES
-  $ mycli123 hello world
+  $ analytodon-cli hello world
   hello world! (./src/commands/hello/world.ts)
 ```
 
-_See code: [src/commands/hello/world.ts](https://github.com/mdonnalley/mycli123/blob/v0.0.0/src/commands/hello/world.ts)_
+_See code: [src/commands/hello/world.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/hello/world.ts)_
 
-## `mycli123 help [COMMAND]`
+## `analytodon-cli help [COMMAND]`
 
-Display help for mycli123.
+Display help for analytodon-cli.
 
 ```
 USAGE
-  $ mycli123 help [COMMAND...] [-n]
+  $ analytodon-cli help [COMMAND...] [-n]
 
 ARGUMENTS
   COMMAND...  Command to show help for.
@@ -100,18 +386,68 @@ FLAGS
   -n, --nested-commands  Include all nested commands in the output.
 
 DESCRIPTION
-  Display help for mycli123.
+  Display help for analytodon-cli.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.21/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.28/src/commands/help.ts)_
 
-## `mycli123 plugins`
+## `analytodon-cli mail oldaccounts`
+
+Send deletion reminder email to users with old accounts
+
+```
+USAGE
+  $ analytodon-cli mail oldaccounts [-c <value>] [-d <value>] [-h <value>] [-t <value>] [-u <value>] [-x]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -h, --host=<value>              [default: https://app.analytodon.com] App host URL
+  -t, --authorization=<value>     [default: no-key] Authorization header
+  -u, --user=<value>              Only process specific user
+  -x, --dryRun                    Dry run, no actual changes made
+
+DESCRIPTION
+  Send deletion reminder email to users with old accounts
+
+EXAMPLES
+  $ analytodon-cli mail oldaccounts
+```
+
+_See code: [src/commands/mail/oldaccounts.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/mail/oldaccounts.ts)_
+
+## `analytodon-cli mail weeklystats`
+
+Send weekly stats email to users
+
+```
+USAGE
+  $ analytodon-cli mail weeklystats [-c <value>] [-d <value>] [-h <value>] [-t <value>] [-u <value>] [-z <value>]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -h, --host=<value>              [default: https://app.analytodon.com] App host URL
+  -t, --authorization=<value>     [default: no-key] Authorization header
+  -u, --user=<value>              Only process specific user
+  -z, --timezone=<value>          Process accounts with this timezone
+
+DESCRIPTION
+  Send weekly stats email to users
+
+EXAMPLES
+  $ analytodon-cli mail weeklystats
+```
+
+_See code: [src/commands/mail/weeklystats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/mail/weeklystats.ts)_
+
+## `analytodon-cli plugins`
 
 List installed plugins.
 
 ```
 USAGE
-  $ mycli123 plugins [--json] [--core]
+  $ analytodon-cli plugins [--json] [--core]
 
 FLAGS
   --core  Show core plugins.
@@ -123,18 +459,18 @@ DESCRIPTION
   List installed plugins.
 
 EXAMPLES
-  $ mycli123 plugins
+  $ analytodon-cli plugins
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.0.16/src/commands/plugins/index.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/index.ts)_
 
-## `mycli123 plugins add PLUGIN`
+## `analytodon-cli plugins add PLUGIN`
 
-Installs a plugin into mycli123.
+Installs a plugin into analytodon-cli.
 
 ```
 USAGE
-  $ mycli123 plugins add PLUGIN... [--json] [-f] [-h] [-s | -v]
+  $ analytodon-cli plugins add PLUGIN... [--json] [-f] [-h] [-s | -v]
 
 ARGUMENTS
   PLUGIN...  Plugin to install.
@@ -149,39 +485,39 @@ GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Installs a plugin into mycli123.
+  Installs a plugin into analytodon-cli.
 
-  Uses bundled npm executable to install plugins into /Users/mdonnalley/.local/share/mycli123
+  Uses npm to install plugins.
 
   Installation of a user-installed plugin will override a core plugin.
 
-  Use the MYCLI123_NPM_LOG_LEVEL environment variable to set the npm loglevel.
-  Use the MYCLI123_NPM_REGISTRY environment variable to set the npm registry.
+  Use the ANALYTODON_CLI_NPM_LOG_LEVEL environment variable to set the npm loglevel.
+  Use the ANALYTODON_CLI_NPM_REGISTRY environment variable to set the npm registry.
 
 ALIASES
-  $ mycli123 plugins add
+  $ analytodon-cli plugins add
 
 EXAMPLES
   Install a plugin from npm registry.
 
-    $ mycli123 plugins add myplugin
+    $ analytodon-cli plugins add myplugin
 
   Install a plugin from a github url.
 
-    $ mycli123 plugins add https://github.com/someuser/someplugin
+    $ analytodon-cli plugins add https://github.com/someuser/someplugin
 
   Install a plugin from a github slug.
 
-    $ mycli123 plugins add someuser/someplugin
+    $ analytodon-cli plugins add someuser/someplugin
 ```
 
-## `mycli123 plugins:inspect PLUGIN...`
+## `analytodon-cli plugins:inspect PLUGIN...`
 
 Displays installation properties of a plugin.
 
 ```
 USAGE
-  $ mycli123 plugins inspect PLUGIN...
+  $ analytodon-cli plugins inspect PLUGIN...
 
 ARGUMENTS
   PLUGIN...  [default: .] Plugin to inspect.
@@ -197,18 +533,18 @@ DESCRIPTION
   Displays installation properties of a plugin.
 
 EXAMPLES
-  $ mycli123 plugins inspect myplugin
+  $ analytodon-cli plugins inspect myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.0.16/src/commands/plugins/inspect.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/inspect.ts)_
 
-## `mycli123 plugins install PLUGIN`
+## `analytodon-cli plugins install PLUGIN`
 
-Installs a plugin into mycli123.
+Installs a plugin into analytodon-cli.
 
 ```
 USAGE
-  $ mycli123 plugins install PLUGIN... [--json] [-f] [-h] [-s | -v]
+  $ analytodon-cli plugins install PLUGIN... [--json] [-f] [-h] [-s | -v]
 
 ARGUMENTS
   PLUGIN...  Plugin to install.
@@ -223,41 +559,41 @@ GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Installs a plugin into mycli123.
+  Installs a plugin into analytodon-cli.
 
-  Uses bundled npm executable to install plugins into /Users/mdonnalley/.local/share/mycli123
+  Uses npm to install plugins.
 
   Installation of a user-installed plugin will override a core plugin.
 
-  Use the MYCLI123_NPM_LOG_LEVEL environment variable to set the npm loglevel.
-  Use the MYCLI123_NPM_REGISTRY environment variable to set the npm registry.
+  Use the ANALYTODON_CLI_NPM_LOG_LEVEL environment variable to set the npm loglevel.
+  Use the ANALYTODON_CLI_NPM_REGISTRY environment variable to set the npm registry.
 
 ALIASES
-  $ mycli123 plugins add
+  $ analytodon-cli plugins add
 
 EXAMPLES
   Install a plugin from npm registry.
 
-    $ mycli123 plugins install myplugin
+    $ analytodon-cli plugins install myplugin
 
   Install a plugin from a github url.
 
-    $ mycli123 plugins install https://github.com/someuser/someplugin
+    $ analytodon-cli plugins install https://github.com/someuser/someplugin
 
   Install a plugin from a github slug.
 
-    $ mycli123 plugins install someuser/someplugin
+    $ analytodon-cli plugins install someuser/someplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.0.16/src/commands/plugins/install.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/install.ts)_
 
-## `mycli123 plugins link PATH`
+## `analytodon-cli plugins link PATH`
 
 Links a plugin into the CLI for development.
 
 ```
 USAGE
-  $ mycli123 plugins link PATH [-h] [--install] [-v]
+  $ analytodon-cli plugins link PATH [-h] [--install] [-v]
 
 ARGUMENTS
   PATH  [default: .] path to plugin
@@ -269,6 +605,7 @@ FLAGS
 
 DESCRIPTION
   Links a plugin into the CLI for development.
+
   Installation of a linked plugin will override a user-installed or core plugin.
 
   e.g. If you have a user-installed or core plugin that has a 'hello' command, installing a linked plugin with a 'hello'
@@ -276,18 +613,18 @@ DESCRIPTION
 
 
 EXAMPLES
-  $ mycli123 plugins link myplugin
+  $ analytodon-cli plugins link myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.0.16/src/commands/plugins/link.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/link.ts)_
 
-## `mycli123 plugins remove [PLUGIN]`
+## `analytodon-cli plugins remove [PLUGIN]`
 
 Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ mycli123 plugins remove [PLUGIN...] [-h] [-v]
+  $ analytodon-cli plugins remove [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
   PLUGIN...  plugin to uninstall
@@ -300,35 +637,35 @@ DESCRIPTION
   Removes a plugin from the CLI.
 
 ALIASES
-  $ mycli123 plugins unlink
-  $ mycli123 plugins remove
+  $ analytodon-cli plugins unlink
+  $ analytodon-cli plugins remove
 
 EXAMPLES
-  $ mycli123 plugins remove myplugin
+  $ analytodon-cli plugins remove myplugin
 ```
 
-## `mycli123 plugins reset`
+## `analytodon-cli plugins reset`
 
 Remove all user-installed and linked plugins.
 
 ```
 USAGE
-  $ mycli123 plugins reset [--hard] [--reinstall]
+  $ analytodon-cli plugins reset [--hard] [--reinstall]
 
 FLAGS
   --hard       Delete node_modules and package manager related files in addition to uninstalling plugins.
   --reinstall  Reinstall all plugins after uninstalling.
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.0.16/src/commands/plugins/reset.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/reset.ts)_
 
-## `mycli123 plugins uninstall [PLUGIN]`
+## `analytodon-cli plugins uninstall [PLUGIN]`
 
 Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ mycli123 plugins uninstall [PLUGIN...] [-h] [-v]
+  $ analytodon-cli plugins uninstall [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
   PLUGIN...  plugin to uninstall
@@ -341,22 +678,22 @@ DESCRIPTION
   Removes a plugin from the CLI.
 
 ALIASES
-  $ mycli123 plugins unlink
-  $ mycli123 plugins remove
+  $ analytodon-cli plugins unlink
+  $ analytodon-cli plugins remove
 
 EXAMPLES
-  $ mycli123 plugins uninstall myplugin
+  $ analytodon-cli plugins uninstall myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.0.16/src/commands/plugins/uninstall.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/uninstall.ts)_
 
-## `mycli123 plugins unlink [PLUGIN]`
+## `analytodon-cli plugins unlink [PLUGIN]`
 
 Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ mycli123 plugins unlink [PLUGIN...] [-h] [-v]
+  $ analytodon-cli plugins unlink [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
   PLUGIN...  plugin to uninstall
@@ -369,20 +706,20 @@ DESCRIPTION
   Removes a plugin from the CLI.
 
 ALIASES
-  $ mycli123 plugins unlink
-  $ mycli123 plugins remove
+  $ analytodon-cli plugins unlink
+  $ analytodon-cli plugins remove
 
 EXAMPLES
-  $ mycli123 plugins unlink myplugin
+  $ analytodon-cli plugins unlink myplugin
 ```
 
-## `mycli123 plugins update`
+## `analytodon-cli plugins update`
 
 Update installed plugins.
 
 ```
 USAGE
-  $ mycli123 plugins update [-h] [-v]
+  $ analytodon-cli plugins update [-h] [-v]
 
 FLAGS
   -h, --help     Show CLI help.
@@ -392,5 +729,29 @@ DESCRIPTION
   Update installed plugins.
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.0.16/src/commands/plugins/update.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/update.ts)_
+
+## `analytodon-cli tools rebuilddailytootstats`
+
+Aggregate daily toot stats for all accounts
+
+```
+USAGE
+  $ analytodon-cli tools rebuilddailytootstats [-c <value>] [-d <value>] [-m <value>] [-e <value>] [-a]
+
+FLAGS
+  -a, --all                       Rebuild daily toot stats for all accounts
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -e, --entry=<value>             Rebuild a specific entry only
+  -m, --account=<value>           Rebuild daily toot stats for this account
+
+DESCRIPTION
+  Aggregate daily toot stats for all accounts
+
+EXAMPLES
+  $ analytodon-cli tools rebuilddailytootstats
+```
+
+_See code: [src/commands/tools/rebuilddailytootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/tools/rebuilddailytootstats.ts)_
 <!-- commandsstop -->
