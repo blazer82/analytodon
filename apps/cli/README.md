@@ -31,7 +31,6 @@ USAGE
 <!-- commands -->
 * [`analytodon-cli aggregate dailyaccountstats`](#analytodon-cli-aggregate-dailyaccountstats)
 * [`analytodon-cli aggregate dailytootstats`](#analytodon-cli-aggregate-dailytootstats)
-* [`analytodon-cli auth requesttoken`](#analytodon-cli-auth-requesttoken)
 * [`analytodon-cli cleanup accountdata`](#analytodon-cli-cleanup-accountdata)
 * [`analytodon-cli cleanup accounts`](#analytodon-cli-cleanup-accounts)
 * [`analytodon-cli cleanup oldaccounts`](#analytodon-cli-cleanup-oldaccounts)
@@ -101,29 +100,6 @@ EXAMPLES
 ```
 
 _See code: [src/commands/aggregate/dailytootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/aggregate/dailytootstats.ts)_
-
-## `analytodon-cli auth requesttoken`
-
-Aid with requesting OAuth token manually
-
-```
-USAGE
-  $ analytodon-cli auth requesttoken -i <value> [-c <value>] [-s <value>] [-o <value>]
-
-FLAGS
-  -c, --clientID=<value>      OAuth client ID
-  -i, --serverURL=<value>     (required) Mastodon instance URL
-  -o, --code=<value>          OAuth code
-  -s, --clientSecret=<value>  OAuth client secret
-
-DESCRIPTION
-  Aid with requesting OAuth token manually
-
-EXAMPLES
-  $ analytodon-cli auth requesttoken
-```
-
-_See code: [src/commands/auth/requesttoken.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/auth/requesttoken.ts)_
 
 ## `analytodon-cli cleanup accountdata`
 
