@@ -5,8 +5,7 @@ import { BaseCommand } from '../../base';
 import { encryptText, isEncrypted } from '../../helpers/encryption';
 
 export default class EncryptAccountCredentials extends BaseCommand {
-  static description =
-    'Encrypts unencrypted accessTokens and legacyClientSecrets in the accountcredentials collection.';
+  static description = 'Encrypts unencrypted accessTokens and clientSecrets in the accountcredentials collection.';
 
   static examples = [`$ <%= config.bin %> <%= command.id %>`, `$ <%= config.bin %> <%= command.id %> --dryRun`];
 
@@ -49,7 +48,7 @@ export default class EncryptAccountCredentials extends BaseCommand {
 
       client = new MongoClient(connectionString);
       await client.connect();
-      this.log(`Successfully connected to MongoDB at ${connectionString}.`);
+      this.log('Successfully connected to MongoDB.');
       const db = client.db(database);
       const collection = db.collection('accountcredentials');
 
@@ -81,17 +80,17 @@ export default class EncryptAccountCredentials extends BaseCommand {
           }
         }
 
-        // Check legacyClientSecret
-        if (doc.legacyClientSecret && typeof doc.legacyClientSecret === 'string') {
-          if (!isEncrypted(doc.legacyClientSecret)) {
-            this.log(`Credential ID ${doc._id}: legacyClientSecret is unencrypted. Attempting encryption...`);
-            const encryptedSecret = encryptText(doc.legacyClientSecret);
+        // Check clientSecret
+        if (doc.clientSecret && typeof doc.clientSecret === 'string') {
+          if (!isEncrypted(doc.clientSecret)) {
+            this.log(`Credential ID ${doc._id}: clientSecret is unencrypted. Attempting encryption...`);
+            const encryptedSecret = encryptText(doc.clientSecret);
             if (encryptedSecret) {
-              updates.legacyClientSecret = encryptedSecret;
+              updates.clientSecret = encryptedSecret;
               needsDatabaseUpdate = true;
-              this.log(`Credential ID ${doc._id}: legacyClientSecret successfully prepared for encryption.`);
+              this.log(`Credential ID ${doc._id}: clientSecret successfully prepared for encryption.`);
             } else {
-              this.warn(`Credential ID ${doc._id}: Failed to encrypt legacyClientSecret. Skipping this field.`);
+              this.warn(`Credential ID ${doc._id}: Failed to encrypt clientSecret. Skipping this field.`);
               errorsEncountered++;
             }
           }

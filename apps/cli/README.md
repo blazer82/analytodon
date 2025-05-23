@@ -56,6 +56,7 @@ USAGE
 * [`analytodon-cli plugins unlink [PLUGIN]`](#analytodon-cli-plugins-unlink-plugin)
 * [`analytodon-cli plugins update`](#analytodon-cli-plugins-update)
 * [`analytodon-cli tools encryptaccountcredentials`](#analytodon-cli-tools-encryptaccountcredentials)
+* [`analytodon-cli tools migrateaccountcredentialstomastodonapps`](#analytodon-cli-tools-migrateaccountcredentialstomastodonapps)
 * [`analytodon-cli tools rebuilddailytootstats`](#analytodon-cli-tools-rebuilddailytootstats)
 
 ## `analytodon-cli aggregate dailyaccountstats`
@@ -710,7 +711,7 @@ _See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/
 
 ## `analytodon-cli tools encryptaccountcredentials`
 
-Encrypts unencrypted accessTokens and legacyClientSecrets in the accountcredentials collection.
+Encrypts unencrypted accessTokens and clientSecrets in the accountcredentials collection.
 
 ```
 USAGE
@@ -722,7 +723,7 @@ FLAGS
   -n, --dryRun                    Perform a dry run without making changes to the database.
 
 DESCRIPTION
-  Encrypts unencrypted accessTokens and legacyClientSecrets in the accountcredentials collection.
+  Encrypts unencrypted accessTokens and clientSecrets in the accountcredentials collection.
 
 EXAMPLES
   $ analytodon-cli tools encryptaccountcredentials
@@ -731,6 +732,34 @@ EXAMPLES
 ```
 
 _See code: [src/commands/tools/encryptaccountcredentials.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/tools/encryptaccountcredentials.ts)_
+
+## `analytodon-cli tools migrateaccountcredentialstomastodonapps`
+
+Migrates account credentials to the mastodon_apps collection for unique server URLs. It uses the latest valid account (setupComplete=true, specific scopes) for each server to source clientID and clientSecret from its credentials, creating a new mastodon_app entry if one does not already exist for that serverURL.
+
+```
+USAGE
+  $ analytodon-cli tools migrateaccountcredentialstomastodonapps [-c <value>] [-d <value>] [-n]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string.
+  -d, --database=<value>          [default: analytodon] Source database name.
+  -n, --dryRun                    Perform a dry run without making changes to the database.
+
+DESCRIPTION
+  Migrates account credentials to the mastodon_apps collection for unique server URLs. It uses the latest valid account
+  (setupComplete=true, specific scopes) for each server to source clientID and clientSecret from its credentials,
+  creating a new mastodon_app entry if one does not already exist for that serverURL.
+
+EXAMPLES
+  $ analytodon-cli tools migrateaccountcredentialstomastodonapps
+
+  $ analytodon-cli tools migrateaccountcredentialstomastodonapps --dryRun
+
+  $ analytodon-cli tools migrateaccountcredentialstomastodonapps --connectionString "mongodb://user:pass@host:port" --database "custom_db"
+```
+
+_See code: [src/commands/tools/migrateaccountcredentialstomastodonapps.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/tools/migrateaccountcredentialstomastodonapps.ts)_
 
 ## `analytodon-cli tools rebuilddailytootstats`
 
