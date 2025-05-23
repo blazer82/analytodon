@@ -1,31 +1,32 @@
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # Analytodon cron jobs
 
-#*/15 * * * * /app/apps/cli/bin/run.js hello analytodon -f "the cron tab"
+#* * * * * analytodon /app/apps/cli/bin/run.js hello analytodon -f "the cron tab" > /tmp/cron_job_pipe 2>&1
 
 # analytodon initial stats
-* * * * * /app/apps/cli/bin/run.js fetch initialstats
+* * * * * analytodon /app/apps/cli/bin/run.js fetch initialstats > /tmp/cron_job_pipe 2>&1
 
 # analytodon fetch
-35 * * * * /app/apps/cli/bin/run.js fetch accountstats
-35 * * * * /app/apps/cli/bin/run.js fetch tootstats -a
+35 * * * * analytodon /app/apps/cli/bin/run.js fetch accountstats > /tmp/cron_job_pipe 2>&1
+35 * * * * analytodon /app/apps/cli/bin/run.js fetch tootstats -a > /tmp/cron_job_pipe 2>&1
 
 # analytodon aggregate
-5 * * * * /app/apps/cli/bin/run.js aggregate dailyaccountstats
-5 * * * * /app/apps/cli/bin/run.js aggregate dailytootstats
+5 * * * * analytodon /app/apps/cli/bin/run.js aggregate dailyaccountstats > /tmp/cron_job_pipe 2>&1
+5 * * * * analytodon /app/apps/cli/bin/run.js aggregate dailytootstats > /tmp/cron_job_pipe 2>&1
 
 # analytodon weekly mail
-0 19,20,21,22,23 * * 0 /app/apps/cli/bin/run.js mail weeklystats
-0 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 * * 1 /app/apps/cli/bin/run.js mail weeklystats
+0 19,20,21,22,23 * * 0 analytodon /app/apps/cli/bin/run.js mail weeklystats > /tmp/cron_job_pipe 2>&1
+0 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 * * 1 analytodon /app/apps/cli/bin/run.js mail weeklystats > /tmp/cron_job_pipe 2>&1
 
 # analytodon old accounts mail
-0 18 * * * /app/apps/cli/bin/run.js mail oldaccounts
+0 18 * * * analytodon /app/apps/cli/bin/run.js mail oldaccounts > /tmp/cron_job_pipe 2>&1
 
 # analytodon cleanup
-45 11 * * * /app/apps/cli/bin/run.js cleanup users
-46 11 * * * /app/apps/cli/bin/run.js cleanup usercredentials
-47 11 * * * /app/apps/cli/bin/run.js cleanup accounts
-48 11 * * * /app/apps/cli/bin/run.js cleanup accountdata
-40 2 * * * /app/apps/cli/bin/run.js cleanup tootstats
-5 17 * * * /app/apps/cli/bin/run.js cleanup oldaccounts
+45 11 * * * analytodon /app/apps/cli/bin/run.js cleanup users > /tmp/cron_job_pipe 2>&1
+46 11 * * * analytodon /app/apps/cli/bin/run.js cleanup usercredentials > /tmp/cron_job_pipe 2>&1
+47 11 * * * analytodon /app/apps/cli/bin/run.js cleanup accounts > /tmp/cron_job_pipe 2>&1
+48 11 * * * analytodon /app/apps/cli/bin/run.js cleanup accountdata > /tmp/cron_job_pipe 2>&1
+40 2 * * * analytodon /app/apps/cli/bin/run.js cleanup tootstats > /tmp/cron_job_pipe 2>&1
+5 17 * * * analytodon /app/apps/cli/bin/run.js cleanup oldaccounts > /tmp/cron_job_pipe 2>&1
 
 # An empty line is required at the end of this file for a valid cron file.
