@@ -1,11 +1,11 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { MongoClient } from 'mongodb';
 
+import { BaseCommand } from '../../base';
 import { getTimezones } from '../../helpers/getTimezones';
-import { logger } from '../../helpers/logger';
 import { generateDailyTootstats } from '../../service/tootstats/generateDailyTootstats';
 
-export default class DailyTootStats extends Command {
+export default class DailyTootStats extends BaseCommand {
   static description = 'Aggregate daily toot stats for all accounts';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -32,11 +32,11 @@ export default class DailyTootStats extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(DailyTootStats);
 
-    logger.info('Daily toot stats: Aggregation started');
+    this.log('Daily toot stats: Aggregation started');
 
     const timezones = flags.timezone ? [flags.timezone] : getTimezones([0]); // run at 00:00
 
-    logger.info(`Daily toot stats: Timezones: ${timezones.join(',')}`);
+    this.log(`Daily toot stats: Timezones: ${timezones.join(',')}`);
 
     // Connect to database
     const connection = await new MongoClient(flags.connectionString).connect();
@@ -54,7 +54,7 @@ export default class DailyTootStats extends Command {
       try {
         await generateDailyTootstats(db, account);
       } catch (error: any) {
-        logger.error(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
+        this.error(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
       }
     }
 

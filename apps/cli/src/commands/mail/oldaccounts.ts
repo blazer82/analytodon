@@ -1,10 +1,10 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import axios from 'axios';
 import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 
-import { logger } from '../../helpers/logger';
+import { BaseCommand } from '../../base';
 
-export default class OldAccounts extends Command {
+export default class OldAccounts extends BaseCommand {
   static args = {};
   static description = 'Send deletion reminder email to users with old accounts';
 
@@ -43,7 +43,7 @@ export default class OldAccounts extends Command {
   };
 
   async run(): Promise<void> {
-    logger.info('Send old accounts email to users started.');
+    this.log('Send old accounts email to users started.');
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 90);
@@ -58,7 +58,7 @@ export default class OldAccounts extends Command {
       const usersQuery: Filter<Document> = {};
 
       if (flags.user) {
-        logger.info(`Send old accounts: Only process user ${flags.user}`);
+        this.log(`Send old accounts: Only process user ${flags.user}`);
         usersQuery['_id'] = new ObjectId(flags.user);
       } else {
         const credentialsQuery: Filter<Document> = {
@@ -90,7 +90,7 @@ export default class OldAccounts extends Command {
       for (const userID of userSet) {
         try {
           if (!flags.dryRun) {
-            logger.info(`Send old accounts: Trigger mail for user ${userID}`);
+            this.log(`Send old accounts: Trigger mail for user ${userID}`);
             await axios.post(
               `${flags.host}/api/mail/oldaccount`,
               { userID },
@@ -102,18 +102,18 @@ export default class OldAccounts extends Command {
               },
             );
           } else {
-            logger.info(`Send old accounts: Trigger mail for user ${userID} (DRY RUN)`);
+            this.log(`Send old accounts: Trigger mail for user ${userID} (DRY RUN)`);
           }
         } catch (error: any) {
-          logger.error(`Send old accounts: Failed for user ${userID} with error ${error?.message}`);
+          this.error(`Send old accounts: Failed for user ${userID} with error ${error?.message}`);
         }
       }
 
       await connection.close();
     } catch (error: any) {
-      logger.error(`Send old accounts: Failed with error ${error?.message}`);
+      this.error(`Send old accounts: Failed with error ${error?.message}`);
     }
 
-    logger.info('Send old accounts email to users done.');
+    this.log('Send old accounts email to users done.');
   }
 }

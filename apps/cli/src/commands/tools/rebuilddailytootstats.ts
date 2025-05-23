@@ -1,10 +1,10 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 
-import { logger } from '../../helpers/logger';
+import { BaseCommand } from '../../base';
 import { generateDailyTootstats } from '../../service/tootstats/generateDailyTootstats';
 
-export default class RebuildDailyTootStats extends Command {
+export default class RebuildDailyTootStats extends BaseCommand {
   static description = 'Aggregate daily toot stats for all accounts';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -41,7 +41,7 @@ export default class RebuildDailyTootStats extends Command {
     const { flags } = await this.parse(RebuildDailyTootStats);
 
     if (!flags.account && !flags.all) {
-      logger.warn('Rebuild daily toot stats: Either flag -a or -m must be set');
+      this.warn('Rebuild daily toot stats: Either flag -a or -m must be set');
       return;
     }
 
@@ -54,23 +54,23 @@ export default class RebuildDailyTootStats extends Command {
     };
 
     if (flags.account) {
-      logger.info(`Rebuild daily toot stats for account ${flags.account}`);
+      this.log(`Rebuild daily toot stats for account ${flags.account}`);
       accountFilter['_id'] = new ObjectId(flags.account);
     } else {
-      logger.info('Rebuild daily toot stats for all accounts');
+      this.log('Rebuild daily toot stats for all accounts');
     }
 
     const accounts = await db.collection('accounts').find(accountFilter).toArray();
 
     for (const account of accounts) {
-      logger.info(`Rebuild daily toot stats for account ${account.name}`);
+      this.log(`Rebuild daily toot stats for account ${account.name}`);
 
       const entriesFilter: Filter<Document> = {
         account: account._id,
       };
 
       if (flags.entry) {
-        logger.info(`Rebuild daily toot stats for entry ${flags.entry} only`);
+        this.log(`Rebuild daily toot stats for entry ${flags.entry} only`);
         entriesFilter['_id'] = new ObjectId(flags.entry);
       }
 
@@ -87,7 +87,7 @@ export default class RebuildDailyTootStats extends Command {
             upsert: true,
           });
         } catch (error: any) {
-          logger.error(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
+          this.error(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
         }
       }
     }

@@ -1,9 +1,9 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { Document, Filter, MongoClient } from 'mongodb';
 
-import { logger } from '../../helpers/logger';
+import { BaseCommand } from '../../base';
 
-export default class Accountdata extends Command {
+export default class Accountdata extends BaseCommand {
   static description = 'Clean up orphaned account data.';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -31,7 +31,7 @@ export default class Accountdata extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(Accountdata);
 
-    logger.info('Clean up account data: Started');
+    this.log('Clean up account data: Started');
 
     // Connect to database
     const connection = await new MongoClient(flags.connectionString).connect();
@@ -61,16 +61,16 @@ export default class Accountdata extends Command {
       for (const collection of collections) {
         if (!flags.dryRun) {
           const { deletedCount } = await db.collection(collection).deleteMany(filter);
-          logger.info(`Clean up account data: Removed ${deletedCount} ${collection}`);
+          this.log(`Clean up account data: Removed ${deletedCount} ${collection}`);
         } else {
           const count = await db.collection(collection).count(filter);
-          logger.info(`Clean up account data: Removed ${count} ${collection} (DRY RUN)`);
+          this.log(`Clean up account data: Removed ${count} ${collection} (DRY RUN)`);
         }
       }
 
-      logger.info('Clean up account data: Done');
+      this.log('Clean up account data: Done');
     } else {
-      logger.warn('Clean up account data: Something went wrong, no changes made.');
+      this.warn('Clean up account data: Something went wrong, no changes made.');
     }
 
     await connection.close();

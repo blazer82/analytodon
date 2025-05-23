@@ -1,11 +1,11 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { MongoClient } from 'mongodb';
 
+import { BaseCommand } from '../../base';
 import { getTimezones } from '../../helpers/getTimezones';
 import { getYesterday } from '../../helpers/getYesterday';
-import { logger } from '../../helpers/logger';
 
-export default class DailyAccountStats extends Command {
+export default class DailyAccountStats extends BaseCommand {
   static description = 'Aggregate daily account stats for all accounts';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -32,11 +32,11 @@ export default class DailyAccountStats extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(DailyAccountStats);
 
-    logger.info('Daily account stats: Aggregation started.');
+    this.log('Daily account stats: Aggregation started.');
 
     const timezones = flags.timezone ? [flags.timezone] : getTimezones([0]); // run at 00:00
 
-    logger.info(`Daily account stats: Timezones: ${timezones.join(',')}`);
+    this.log(`Daily account stats: Timezones: ${timezones.join(',')}`);
 
     // Connect to database
     const connection = await new MongoClient(flags.connectionString).connect();
@@ -51,7 +51,7 @@ export default class DailyAccountStats extends Command {
       .toArray();
 
     for (const account of accounts) {
-      logger.info(`Daily account stats: Processing account ${account.name}`);
+      this.log(`Daily account stats: Processing account ${account.name}`);
 
       try {
         const yesterday = getYesterday(account.timezone);
@@ -119,9 +119,9 @@ export default class DailyAccountStats extends Command {
         }
 
         await Promise.all(dbPromises);
-        logger.info(`Daily account stats: Done for ${account.name}`);
+        this.log(`Daily account stats: Done for ${account.name}`);
       } catch (error: any) {
-        logger.error(`Daily account stats: Failed for ${account.name}: ${error?.message}`);
+        this.error(`Daily account stats: Failed for ${account.name}: ${error?.message}`);
       }
     }
 

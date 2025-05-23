@@ -1,9 +1,9 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { Document, Filter, MongoClient } from 'mongodb';
 
-import { logger } from '../../helpers/logger';
+import { BaseCommand } from '../../base';
 
-export default class OldAccounts extends Command {
+export default class OldAccounts extends BaseCommand {
   static args = {};
   static description = 'Delete users with old accounts';
 
@@ -33,7 +33,7 @@ export default class OldAccounts extends Command {
   };
 
   async run(): Promise<void> {
-    logger.info('Cleanup old accounts started.');
+    this.log('Cleanup old accounts started.');
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 120);
@@ -70,21 +70,21 @@ export default class OldAccounts extends Command {
       for (const userID of userSet) {
         try {
           if (!flags.dryRun) {
-            logger.info(`Cleanup old accounts: Delete user ${userID}`);
+            this.log(`Cleanup old accounts: Delete user ${userID}`);
             await db.collection('users').deleteOne({ _id: userID });
           } else {
-            logger.info(`Cleanup old accounts: Delete user ${userID} (DRY RUN)`);
+            this.log(`Cleanup old accounts: Delete user ${userID} (DRY RUN)`);
           }
         } catch (error: any) {
-          logger.error(`Cleanup old accounts: Failed for user ${userID} with error ${error?.message}`);
+          this.error(`Cleanup old accounts: Failed for user ${userID} with error ${error?.message}`);
         }
       }
 
       await connection.close();
     } catch (error: any) {
-      logger.error(`Cleanup old accounts: Failed with error ${error?.message}`);
+      this.error(`Cleanup old accounts: Failed with error ${error?.message}`);
     }
 
-    logger.info('Cleanup old accounts done.');
+    this.log('Cleanup old accounts done.');
   }
 }

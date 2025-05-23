@@ -1,11 +1,11 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import generator from 'megalodon';
 import { MongoClient } from 'mongodb';
 
+import { BaseCommand } from '../../base';
 import { getTimezones } from '../../helpers/getTimezones';
-import { logger } from '../../helpers/logger';
 
-export default class AccountStats extends Command {
+export default class AccountStats extends BaseCommand {
   static description = 'Gather account stats for all accounts';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -32,11 +32,11 @@ export default class AccountStats extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(AccountStats);
 
-    logger.info('Fetching account stats: Started');
+    this.log('Fetching account stats: Started');
 
     const timezones = flags.timezone ? [flags.timezone] : getTimezones([16, 20, 23]); // run at 16:00, 20:00, and 23:00
 
-    logger.info(`Fetching account stats: Timezones: ${timezones.join(',')}`);
+    this.log(`Fetching account stats: Timezones: ${timezones.join(',')}`);
 
     // Connect to database
     const connection = await new MongoClient(flags.connectionString).connect();
@@ -52,12 +52,12 @@ export default class AccountStats extends Command {
       .toArray();
 
     for (const account of accounts) {
-      logger.info(`Fetching account stats: Processing account ${account.name}`);
+      this.log(`Fetching account stats: Processing account ${account.name}`);
 
       const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
 
       if (!credentials?.accessToken) {
-        logger.info(`Fetching account stats: Access token not found for ${account.name}`);
+        this.log(`Fetching account stats: Access token not found for ${account.name}`);
       } else {
         try {
           const mastodon = generator('mastodon', account.serverURL, credentials.accessToken);
@@ -76,9 +76,9 @@ export default class AccountStats extends Command {
             fetchedAt: new Date(),
           });
 
-          logger.info(`Fetching account stats: Done for ${account.name}`);
+          this.log(`Fetching account stats: Done for ${account.name}`);
         } catch (error: any) {
-          logger.error(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
+          this.error(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
         }
       }
     }

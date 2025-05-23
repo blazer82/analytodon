@@ -1,12 +1,12 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { MongoClient } from 'mongodb';
 
-import { logger } from '../../helpers/logger';
+import { BaseCommand } from '../../base';
 import { processInBatches } from '../../helpers/processInBatches';
 
 const BATCH_SIZE = 5;
 
-export default class Accounts extends Command {
+export default class Accounts extends BaseCommand {
   static description = 'Clean up accounts.';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -34,7 +34,7 @@ export default class Accounts extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(Accounts);
 
-    logger.info('Clean up accounts: Started');
+    this.log('Clean up accounts: Started');
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 7);
@@ -62,22 +62,22 @@ export default class Accounts extends Command {
         .toArray()
     ).map(({ _id }) => _id);
 
-    logger.info(`Clean up accounts: ${accountIds.length} accounts to clean up.`);
+    this.log(`Clean up accounts: ${accountIds.length} accounts to clean up.`);
 
     await processInBatches(BATCH_SIZE, accountIds, async (id) => {
-      logger.info(`Clean up accounts: Remove account ${id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+      this.log(`Clean up accounts: Remove account ${id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
       if (!flags.dryRun) {
         await db.collection('accounts').deleteOne({ _id: id });
         await db.collection('accountcredentials').deleteOne({ account: id });
       }
     });
 
-    logger.info(`Clean up accounts: Update affected users${flags.dryRun ? ' (DRY RUN)' : ''}`);
+    this.log(`Clean up accounts: Update affected users${flags.dryRun ? ' (DRY RUN)' : ''}`);
     if (!flags.dryRun) {
       await db.collection('users').updateMany({}, { $pull: { accounts: { $in: accountIds } } as any });
     }
 
-    logger.info('Clean up accounts: Done');
+    this.log('Clean up accounts: Done');
 
     await connection.close();
   }

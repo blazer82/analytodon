@@ -1,12 +1,12 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { MongoClient } from 'mongodb';
 
-import { logger } from '../../helpers/logger';
+import { BaseCommand } from '../../base';
 import { processInBatches } from '../../helpers/processInBatches';
 
 const BATCH_SIZE = 5;
 
-export default class Usercredentials extends Command {
+export default class Usercredentials extends BaseCommand {
   static description = 'Clean up user credentials.';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -34,7 +34,7 @@ export default class Usercredentials extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(Usercredentials);
 
-    logger.info('Clean up user credentials: Started');
+    this.log('Clean up user credentials: Started');
 
     // Connect to database
     const connection = await new MongoClient(flags.connectionString).connect();
@@ -57,16 +57,16 @@ export default class Usercredentials extends Command {
       )
       .toArray();
 
-    logger.info(`Clean up user credentials: ${credentials.length} credentials to clean up.`);
+    this.log(`Clean up user credentials: ${credentials.length} credentials to clean up.`);
 
     await processInBatches(BATCH_SIZE, credentials, async (doc) => {
-      logger.info(`Clean up user credentials: Remove credentials ${doc._id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+      this.log(`Clean up user credentials: Remove credentials ${doc._id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
       if (!flags.dryRun) {
         await db.collection('usercredentials').deleteOne({ _id: doc._id });
       }
     });
 
-    logger.info('Clean up user credentials: Done');
+    this.log('Clean up user credentials: Done');
 
     await connection.close();
   }

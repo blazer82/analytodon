@@ -1,11 +1,11 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import axios from 'axios';
 import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 
+import { BaseCommand } from '../../base';
 import { getTimezones } from '../../helpers/getTimezones';
-import { logger } from '../../helpers/logger';
 
-export default class WeeklyStats extends Command {
+export default class WeeklyStats extends BaseCommand {
   static args = {};
   static description = 'Send weekly stats email to users';
 
@@ -43,13 +43,13 @@ export default class WeeklyStats extends Command {
   };
 
   async run(): Promise<void> {
-    logger.info('Send weekly stats email to users');
+    this.log('Send weekly stats email to users');
 
     try {
       const { flags } = await this.parse(WeeklyStats);
 
       const timezones = flags.timezone ? [flags.timezone] : getTimezones([6]); // run at 06:00
-      logger.info(`Send weekly stats: Timezones: ${timezones.join(',')}`);
+      this.log(`Send weekly stats: Timezones: ${timezones.join(',')}`);
 
       const accountsQuery: Filter<Document> = {
         isActive: true,
@@ -61,7 +61,7 @@ export default class WeeklyStats extends Command {
       };
 
       if (flags.user) {
-        logger.info(`Send weekly stats: Only process user ${flags.user}`);
+        this.log(`Send weekly stats: Only process user ${flags.user}`);
         accountsQuery['owner'] = new ObjectId(flags.user);
       }
 
@@ -95,7 +95,7 @@ export default class WeeklyStats extends Command {
 
             if (accounts.length > 0) {
               const accountIds = accounts.map(({ _id }) => `${_id}`);
-              logger.info(`Send weekly stats: Trigger mail for user ${user._id} with accounts ${accountIds.join(',')}`);
+              this.log(`Send weekly stats: Trigger mail for user ${user._id} with accounts ${accountIds.join(',')}`);
 
               await axios.post(
                 `${flags.host}/api/mail/weeklystats`,
@@ -109,16 +109,16 @@ export default class WeeklyStats extends Command {
               );
             }
           } else {
-            logger.info(`Send weekly stats: Skipping user ${owner}`);
+            this.log(`Send weekly stats: Skipping user ${owner}`);
           }
         } catch (error: any) {
-          logger.error(`Send weekly stats: Failed for user ${owner} with error ${error?.message}`);
+          this.error(`Send weekly stats: Failed for user ${owner} with error ${error?.message}`);
         }
       }
 
       await connection.close();
     } catch (error: any) {
-      logger.error(`Send weekly stats: Failed with error ${error?.message}`);
+      this.error(`Send weekly stats: Failed with error ${error?.message}`);
     }
   }
 }

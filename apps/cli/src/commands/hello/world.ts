@@ -1,6 +1,6 @@
-import { Command } from '@oclif/core';
+import { BaseCommand } from '../../base';
 
-export default class World extends Command {
+export default class World extends BaseCommand {
   static args = {};
   static description = 'Say hello world';
   static examples = [

@@ -1,6 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 
-export default class Hello extends Command {
+import { BaseCommand } from '../../base';
+
+export default class Hello extends BaseCommand {
   static args = {
     person: Args.string({ description: 'Person to say hello to', required: true }),
   };

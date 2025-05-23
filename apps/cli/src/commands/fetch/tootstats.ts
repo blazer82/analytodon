@@ -1,11 +1,11 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 
+import { BaseCommand } from '../../base';
 import { fetchTootstatsForAccount } from '../../helpers/fetchTootstatsForAccount';
 import { getTimezones } from '../../helpers/getTimezones';
-import { logger } from '../../helpers/logger';
 
-export default class TootStats extends Command {
+export default class TootStats extends BaseCommand {
   static description = 'Gather toot stats for all accounts';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -41,7 +41,7 @@ export default class TootStats extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(TootStats);
 
-    logger.info('Fetching toot stats: Started');
+    this.log('Fetching toot stats: Started');
 
     const timezones = flags.timezone ? [flags.timezone] : getTimezones([16, 20, 23]); // run at 16:00, 20:00, and 23:00
 
@@ -55,10 +55,10 @@ export default class TootStats extends Command {
     };
 
     if (flags.account) {
-      logger.info(`Fetching toot stats: Account: ${flags.account}`);
+      this.log(`Fetching toot stats: Account: ${flags.account}`);
       accountFilter['_id'] = new ObjectId(flags.account);
     } else {
-      logger.info(`Fetching toot stats: Timezones: ${timezones.join(',')}`);
+      this.log(`Fetching toot stats: Timezones: ${timezones.join(',')}`);
       accountFilter['timezone'] = { $in: timezones };
     }
 

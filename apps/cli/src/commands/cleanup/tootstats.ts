@@ -1,13 +1,13 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { Document, Filter, MongoClient } from 'mongodb';
 
+import { BaseCommand } from '../../base';
 import { getDaysAgo } from '../../helpers/getDaysAgo';
-import { logger } from '../../helpers/logger';
 import { processInBatches } from '../../helpers/processInBatches';
 
 const BATCH_SIZE = 5;
 
-export default class Tootstats extends Command {
+export default class Tootstats extends BaseCommand {
   static description = 'Clean up old tootstats.';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -40,7 +40,7 @@ export default class Tootstats extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(Tootstats);
 
-    logger.info('Clean up tootstats: Started');
+    this.log('Clean up tootstats: Started');
 
     // Connect to database
     const connection = await new MongoClient(flags.connectionString).connect();
@@ -84,10 +84,10 @@ export default class Tootstats extends Command {
       ])
       .toArray();
 
-    logger.info(`Clean up tootstats: ${tootstats.length} toots to clean up.`);
+    this.log(`Clean up tootstats: ${tootstats.length} toots to clean up.`);
 
     await processInBatches(BATCH_SIZE, tootstats, async (info) => {
-      logger.info(`Clean up tootstats: Clean up for toot ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+      this.log(`Clean up tootstats: Clean up for toot ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
 
       const cleanupFilter: Filter<Document> = {
         uri: info._id.uri,
@@ -99,9 +99,7 @@ export default class Tootstats extends Command {
 
       const count = await db.collection('tootstats').countDocuments(cleanupFilter);
 
-      logger.info(
-        `Clean up tootstats: Remove ${count} instances of ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`,
-      );
+      this.log(`Clean up tootstats: Remove ${count} instances of ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
 
       if (!flags.dryRun) {
         await db.collection('tootstats').deleteMany(cleanupFilter);

@@ -1,13 +1,13 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import axios from 'axios';
 import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 
+import { BaseCommand } from '../../base';
 import { createInitialAccountStats } from '../../helpers/createInitialAccountStats';
 import { createInitialTootStats } from '../../helpers/createInitialTootStats';
 import { fetchTootstatsForAccount } from '../../helpers/fetchTootstatsForAccount';
-import { logger } from '../../helpers/logger';
 
-export default class InitialStats extends Command {
+export default class InitialStats extends BaseCommand {
   static description = 'Gather initial stats for all accounts (only 1 per call)';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
@@ -44,7 +44,7 @@ export default class InitialStats extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(InitialStats);
 
-    logger.info('Fetching initial stats: Started');
+    this.log('Fetching initial stats: Started');
 
     // Connect to database
     const connection = await new MongoClient(flags.connectionString).connect();
@@ -58,27 +58,27 @@ export default class InitialStats extends Command {
     };
 
     if (flags.account) {
-      logger.info(`Fetching initial stats: Only process account ${flags.account}`);
+      this.log(`Fetching initial stats: Only process account ${flags.account}`);
       accountQuery['_id'] = new ObjectId(flags.account);
     }
 
     const account = await db.collection('accounts').findOne(accountQuery);
 
     if (account) {
-      logger.info(`Fetching initial stats: Processing account ${account.name}`);
+      this.log(`Fetching initial stats: Processing account ${account.name}`);
 
       const user = await db.collection('users').findOne({ accounts: { $in: [account._id] } });
 
       if (user) {
         await db.collection('accounts').updateOne({ _id: account._id }, { $set: { initialStatsFetched: true } });
 
-        logger.info(`Fetching initial stats: Fetch toot history for account ${account.name}`);
+        this.log(`Fetching initial stats: Fetch toot history for account ${account.name}`);
         await fetchTootstatsForAccount(db, account);
 
-        logger.info(`Fetching initial stats: Create initial account stats for account ${account.name}`);
+        this.log(`Fetching initial stats: Create initial account stats for account ${account.name}`);
         await createInitialAccountStats(db, account);
 
-        logger.info(`Fetching initial stats: Create initial toot stats for account ${account.name}`);
+        this.log(`Fetching initial stats: Create initial toot stats for account ${account.name}`);
         await createInitialTootStats(db, account);
 
         await axios.post(
@@ -92,10 +92,10 @@ export default class InitialStats extends Command {
           },
         );
       } else {
-        logger.warn(`Fetching initial stats: Owner of account ${account._id} not found.`);
+        this.warn(`Fetching initial stats: Owner of account ${account._id} not found.`);
       }
     } else {
-      logger.info('Fetching initial stats: Nothing to do.');
+      this.log('Fetching initial stats: Nothing to do.');
     }
 
     await connection.close();
