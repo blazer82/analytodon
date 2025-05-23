@@ -14,6 +14,7 @@ This project is a monorepo using pnpm workspaces containing:
 
 - 🚀 **Backend**: A NestJS application providing the API services (`apps/backend`)
 - 💻 **Frontend**: A Remix application for the user interface (`apps/frontend`)
+- 🛠️ **CLI**: Command-line tools for data management and maintenance (`apps/cli`)
 - 🔌 **REST Client**: Auto-generated TypeScript client for the API (`packages/rest-client`)
 
 ## 🛠️ Development
@@ -100,9 +101,24 @@ pnpm --filter @analytodon/frontend run build
 pnpm --filter @analytodon/frontend run start
 ```
 
+## 🛠️ CLI (oclif)
+
+The CLI provides command-line tools for data management, maintenance, and automation tasks.
+
+```bash
+# Build the CLI
+pnpm --filter @analytodon/cli run build
+
+# Run a CLI command
+pnpm --filter @analytodon/cli run analytodon-cli [command]
+
+# See available commands
+pnpm --filter @analytodon/cli run analytodon-cli help
+```
+
 ## 🚢 Deployment
 
-For production deployment, build both applications:
+For production deployment, build all applications:
 
 ```bash
 pnpm run build
