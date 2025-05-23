@@ -18,7 +18,7 @@ export default class OldAccounts extends BaseCommand {
     database: Flags.string({
       char: 'd',
       description: 'Source database name',
-      default: 'analytodon',
+      default: process.env.MONGODB_DATABASE || 'analytodon',
     }),
     host: Flags.string({
       char: 'h',

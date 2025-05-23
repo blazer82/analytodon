@@ -9,7 +9,6 @@ export class EncryptionService implements OnModuleInit {
   private key: Buffer;
   private readonly algorithm = 'aes-256-gcm';
   private readonly ivLength = 16; // For AES, this is always 16
-  private readonly authTagLength = 16; // For GCM
 
   constructor(private readonly configService: ConfigService) {}
 

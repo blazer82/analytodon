@@ -17,7 +17,7 @@ export default class Accountdata extends BaseCommand {
     database: Flags.string({
       char: 'd',
       description: 'Source database name',
-      default: 'analytodon',
+      default: process.env.MONGODB_DATABASE || 'analytodon',
     }),
     dryRun: Flags.boolean({
       char: 'x',

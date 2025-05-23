@@ -19,7 +19,7 @@ export default class DailyTootStats extends BaseCommand {
     database: Flags.string({
       char: 'd',
       description: 'Source database name',
-      default: 'analytodon',
+      default: process.env.MONGODB_DATABASE || 'analytodon',
     }),
     timezone: Flags.string({
       char: 'z',

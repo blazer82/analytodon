@@ -55,6 +55,7 @@ USAGE
 * [`analytodon-cli plugins uninstall [PLUGIN]`](#analytodon-cli-plugins-uninstall-plugin)
 * [`analytodon-cli plugins unlink [PLUGIN]`](#analytodon-cli-plugins-unlink-plugin)
 * [`analytodon-cli plugins update`](#analytodon-cli-plugins-update)
+* [`analytodon-cli tools encryptaccountcredentials`](#analytodon-cli-tools-encryptaccountcredentials)
 * [`analytodon-cli tools rebuilddailytootstats`](#analytodon-cli-tools-rebuilddailytootstats)
 
 ## `analytodon-cli aggregate dailyaccountstats`
@@ -706,6 +707,30 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/update.ts)_
+
+## `analytodon-cli tools encryptaccountcredentials`
+
+Encrypts unencrypted accessTokens and legacyClientSecrets in the accountcredentials collection.
+
+```
+USAGE
+  $ analytodon-cli tools encryptaccountcredentials [-c <value>] [-d <value>] [-n]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -n, --dryRun                    Perform a dry run without making changes to the database.
+
+DESCRIPTION
+  Encrypts unencrypted accessTokens and legacyClientSecrets in the accountcredentials collection.
+
+EXAMPLES
+  $ analytodon-cli tools encryptaccountcredentials
+
+  $ analytodon-cli tools encryptaccountcredentials --dryRun
+```
+
+_See code: [src/commands/tools/encryptaccountcredentials.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/tools/encryptaccountcredentials.ts)_
 
 ## `analytodon-cli tools rebuilddailytootstats`
 

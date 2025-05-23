@@ -3,6 +3,7 @@ import generator from 'megalodon';
 import { MongoClient } from 'mongodb';
 
 import { BaseCommand } from '../../base';
+import { decryptText } from '../../helpers/encryption';
 import { getTimezones } from '../../helpers/getTimezones';
 
 export default class AccountStats extends BaseCommand {
@@ -19,7 +20,7 @@ export default class AccountStats extends BaseCommand {
     database: Flags.string({
       char: 'd',
       description: 'Source database name',
-      default: 'analytodon',
+      default: process.env.MONGODB_DATABASE || 'analytodon',
     }),
     timezone: Flags.string({
       char: 'z',
@@ -57,29 +58,36 @@ export default class AccountStats extends BaseCommand {
       const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
 
       if (!credentials?.accessToken) {
-        this.log(`Fetching account stats: Access token not found for ${account.name}`);
-      } else {
-        try {
-          const mastodon = generator('mastodon', account.serverURL, credentials.accessToken);
+        this.warn(`Fetching account stats: Access token not found for ${account.name}`);
+        continue;
+      }
 
-          const userInfo = await mastodon.verifyAccountCredentials();
+      const decryptedAccessToken = decryptText(credentials.accessToken);
+      if (!decryptedAccessToken) {
+        this.warn(`Fetching account stats: Failed to decrypt access token for ${account.name}. Skipping.`);
+        continue;
+      }
 
-          const accountStats = {
-            followersCount: userInfo.data.followers_count ?? 0,
-            followingCount: userInfo.data.following_count ?? 0,
-            statusesCount: userInfo.data.statuses_count ?? 0,
-          };
+      try {
+        const mastodon = generator('mastodon', account.serverURL, decryptedAccessToken);
 
-          await db.collection('accountstats').insertOne({
-            account: account._id,
-            ...accountStats,
-            fetchedAt: new Date(),
-          });
+        const userInfo = await mastodon.verifyAccountCredentials();
 
-          this.log(`Fetching account stats: Done for ${account.name}`);
-        } catch (error: any) {
-          this.error(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
-        }
+        const accountStats = {
+          followersCount: userInfo.data.followers_count ?? 0,
+          followingCount: userInfo.data.following_count ?? 0,
+          statusesCount: userInfo.data.statuses_count ?? 0,
+        };
+
+        await db.collection('accountstats').insertOne({
+          account: account._id,
+          ...accountStats,
+          fetchedAt: new Date(),
+        });
+
+        this.log(`Fetching account stats: Done for ${account.name}`);
+      } catch (error: any) {
+        this.error(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
       }
     }
 

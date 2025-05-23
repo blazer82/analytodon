@@ -1,6 +1,7 @@
 import generator, { Entity, Response } from 'megalodon';
 import { Db, Document } from 'mongodb';
 
+import { decryptText } from './encryption';
 import { logger } from './logger';
 
 const MAX_ITERATIONS = 200;
@@ -16,125 +17,129 @@ export const fetchTootstatsForAccount = async (db: Db, account: Document) => {
 
   if (!credentials?.accessToken) {
     logger.info(`Fetching toot stats: Access token not found for ${account.name}`);
-  } else {
-    try {
-      const mastodon = generator('mastodon', account.serverURL, credentials.accessToken);
+    return;
+  }
 
-      let pagingCursor = undefined;
+  const decryptedAccessToken = decryptText(credentials.accessToken);
+  if (!decryptedAccessToken) {
+    logger.error(`Fetching toot stats: Failed to decrypt access token for ${account.name}. Skipping.`);
+    return;
+  }
 
-      let more = true;
-      let iterationCount = 0;
+  try {
+    const mastodon = generator('mastodon', account.serverURL, decryptedAccessToken);
 
-      const userInfo = await mastodon.verifyAccountCredentials();
+    let pagingCursor = undefined;
 
-      while (more) {
-        iterationCount++;
+    let more = true;
+    let iterationCount = 0;
 
-        if (iterationCount % PAUSE_INTERVAL === 0) {
-          logger.info(`Fetching toot stats: Pausing for ${account.name}`);
-          await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
-        }
+    const userInfo = await mastodon.verifyAccountCredentials();
 
-        const statusesResponse: Response<Array<Entity.Status>> = await mastodon.getAccountStatuses(userInfo.data.id, {
-          limit: QUERY_LIMIT,
-          exclude_reblogs: true,
-          max_id: pagingCursor,
-        });
+    while (more) {
+      iterationCount++;
 
-        const unfilteredStatusList = statusesResponse.data ?? [];
-        if (unfilteredStatusList.length > 0) {
-          const statusList = unfilteredStatusList.filter(({ visibility }) =>
-            ['public', 'unlisted'].includes(visibility),
+      if (iterationCount % PAUSE_INTERVAL === 0) {
+        logger.info(`Fetching toot stats: Pausing for ${account.name}`);
+        await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
+      }
+
+      const statusesResponse: Response<Array<Entity.Status>> = await mastodon.getAccountStatuses(userInfo.data.id, {
+        limit: QUERY_LIMIT,
+        exclude_reblogs: true,
+        max_id: pagingCursor,
+      });
+
+      const unfilteredStatusList = statusesResponse.data ?? [];
+      if (unfilteredStatusList.length > 0) {
+        const statusList = unfilteredStatusList.filter(({ visibility }) => ['public', 'unlisted'].includes(visibility));
+
+        if (statusList.length > 0) {
+          logger.info(
+            `Fetching toot stats: Updating ${statusList.length} toots for ${account.name} from ${statusList[0].id} to ${
+              statusList[statusList.length - 1].id
+            }`,
           );
 
-          if (statusList.length > 0) {
-            logger.info(
-              `Fetching toot stats: Updating ${statusList.length} toots for ${account.name} from ${statusList[0].id} to ${
-                statusList[statusList.length - 1].id
-              }`,
+          const updatePromises = [];
+
+          for (const status of statusList) {
+            const toot = {
+              uri: status.uri,
+              url: status.url,
+              content: status.content,
+              visibility: status.visibility,
+              tags: status.tags,
+              language: status.language,
+              repliesCount: status.replies_count,
+              reblogsCount: status.reblogs_count,
+              favouritesCount: status.favourites_count,
+              createdAt: new Date(status.created_at),
+            };
+
+            const tootStats = {
+              repliesCount: status.replies_count,
+              reblogsCount: status.reblogs_count,
+              favouritesCount: status.favourites_count,
+            };
+
+            updatePromises.push(
+              db.collection('toots').updateOne(
+                { uri: toot.uri },
+                {
+                  $set: {
+                    account: account._id,
+                    ...toot,
+                    fetchedAt: new Date(),
+                  },
+                },
+                { upsert: true },
+              ),
             );
 
-            const updatePromises = [];
-
-            for (const status of statusList) {
-              const toot = {
-                uri: status.uri,
-                url: status.url,
-                content: status.content,
-                visibility: status.visibility,
-                tags: status.tags,
-                language: status.language,
-                repliesCount: status.replies_count,
-                reblogsCount: status.reblogs_count,
-                favouritesCount: status.favourites_count,
-                createdAt: new Date(status.created_at),
-              };
-
-              const tootStats = {
-                repliesCount: status.replies_count,
-                reblogsCount: status.reblogs_count,
-                favouritesCount: status.favourites_count,
-              };
-
-              updatePromises.push(
-                db.collection('toots').updateOne(
-                  { uri: toot.uri },
-                  {
-                    $set: {
-                      account: account._id,
-                      ...toot,
-                      fetchedAt: new Date(),
-                    },
-                  },
-                  { upsert: true },
-                ),
-              );
-
-              updatePromises.push(
-                db.collection('tootstats').insertOne({
-                  uri: toot.uri,
-                  account: account._id,
-                  ...tootStats,
-                  fetchedAt: new Date(),
-                }),
-              );
-            }
-
-            await Promise.all(updatePromises);
+            updatePromises.push(
+              db.collection('tootstats').insertOne({
+                uri: toot.uri,
+                account: account._id,
+                ...tootStats,
+                fetchedAt: new Date(),
+              }),
+            );
           }
 
-          pagingCursor = unfilteredStatusList[unfilteredStatusList.length - 1].id;
-          more = true;
+          await Promise.all(updatePromises);
         }
 
-        logger.info(`Fetching toot stats: Done for ${account.name}`);
-
-        if (
-          iterationCount >= MAX_ITERATIONS ||
-          unfilteredStatusList.length <= 0 ||
-          (account.tootHistoryComplete &&
-            new Date().getTime() -
-              new Date(unfilteredStatusList[unfilteredStatusList.length - 1].created_at).getTime() >
-              MAX_AGE)
-        ) {
-          more = false;
-
-          logger.info(`Fetching toot stats: Status list empty or limit reached for ${account.name}, resetting cursor`);
-
-          pagingCursor = undefined;
-
-          await db.collection('accounts').updateOne(
-            { _id: account._id },
-            {
-              $set: {
-                tootHistoryComplete: true,
-              },
-            },
-          );
-        }
+        pagingCursor = unfilteredStatusList[unfilteredStatusList.length - 1].id;
+        more = true;
       }
-    } catch (error: any) {
-      logger.error(`Fetching toot stats: Error while processing ${account.name} (${account._id}): ${error?.message}`);
+
+      logger.info(`Fetching toot stats: Done for ${account.name}`);
+
+      if (
+        iterationCount >= MAX_ITERATIONS ||
+        unfilteredStatusList.length <= 0 ||
+        (account.tootHistoryComplete &&
+          new Date().getTime() - new Date(unfilteredStatusList[unfilteredStatusList.length - 1].created_at).getTime() >
+            MAX_AGE)
+      ) {
+        more = false;
+
+        logger.info(`Fetching toot stats: Status list empty or limit reached for ${account.name}, resetting cursor`);
+
+        pagingCursor = undefined;
+
+        await db.collection('accounts').updateOne(
+          { _id: account._id },
+          {
+            $set: {
+              tootHistoryComplete: true,
+            },
+          },
+        );
+      }
     }
+  } catch (error: any) {
+    logger.error(`Fetching toot stats: Error while processing ${account.name} (${account._id}): ${error?.message}`);
   }
 };
