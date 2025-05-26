@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_BACKEND: production-build/analytodon-backend
+  IMAGE_NAME_BACKEND: blazer82/analytodon-backend
 
 jobs:
   build-and-push:

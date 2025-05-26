@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_CLI: production-build/analytodon-cli
+  IMAGE_NAME_CLI: blazer82/analytodon-cli
 
 jobs:
   build-and-push:
