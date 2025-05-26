@@ -21,9 +21,6 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
           envFrom:
             - secretRef:
                 name: analytodon-cli-env
