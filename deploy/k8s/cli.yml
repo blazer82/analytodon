@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytodon-cli
+  namespace: analytodon2
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: analytodon-cli
+  template:
+    metadata:
+      labels:
+        app: analytodon-cli
+    spec:
+      containers:
+        - name: analytodon-cli
+          image: productionbuild/analytodon-cli:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          envFrom:
+            - secretRef:
+                name: analytodon-cli-env
+          resources:
+            requests:
+              memory: "10Mi"
+              cpu: "100m"
+            limits:
+              memory: "744Mi"
+              cpu: "500m"

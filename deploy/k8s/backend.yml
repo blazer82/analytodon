@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytodon-backend
+  namespace: analytodon
+spec:
+  selector:
+    matchLabels:
+      app: analytodon-backend
+  template:
+    metadata:
+      labels:
+        app: analytodon-backend
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: github-packages
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: project
+                    operator: In
+                    values:
+                      - default
+      containers:
+        - name: analytodon-backend
+          image: ghcr.io/production-build/analytodon-backend:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: api-port
+              containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: analytodon-backend-env
+          startupProbe:
+            failureThreshold: 120
+            httpGet:
+              path: /
+              port: api-port
+          readinessProbe:
+            httpGet:
+              path: /
+              port: api-port
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytodon-backend
+  namespace: analytodon
+spec:
+  ports:
+    - port: 80
+      targetPort: api-port
+      protocol: TCP
+  type: NodePort
+  selector:
+    app: analytodon-backend
