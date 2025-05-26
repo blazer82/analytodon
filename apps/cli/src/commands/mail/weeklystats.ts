@@ -25,7 +25,7 @@ export default class WeeklyStats extends BaseCommand {
     host: Flags.string({
       char: 'h',
       description: 'App host URL',
-      default: process.env.APP_URL || 'https://app.analytodon.com',
+      default: process.env.APP_URL || 'http://localhost:3000',
     }),
     authorization: Flags.string({
       char: 't',
@@ -98,7 +98,7 @@ export default class WeeklyStats extends BaseCommand {
               this.log(`Send weekly stats: Trigger mail for user ${user._id} with accounts ${accountIds.join(',')}`);
 
               await axios.post(
-                `${flags.host}/api/mail/weeklystats`,
+                `${flags.host}/mail/weekly-stats`,
                 { userID: `${user._id}`, accounts: accountIds },
                 {
                   headers: {

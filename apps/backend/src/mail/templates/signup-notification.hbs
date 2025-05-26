@@ -1,11 +1,92 @@
-A new user just signed up to Analytodon:
-
-{{ userEmail }}
-
-Best regards,
-{{ emailSenderName }}
-
----
-Email: {{ supportEmail }}
-Website: {{ marketingURL }}
-Mastodon: https://undefined.social/@analytodon
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New User Signup Notification</title>
+  <style>
+    body {
+      font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      line-height: 1.6;
+      color: #455a64;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .logo {
+      margin-bottom: 15px;
+    }
+    .content {
+      padding: 20px 0;
+    }
+    .user-email {
+      background-color: #f5f7fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-size: 16px;
+      text-align: center;
+      font-weight: 500;
+    }
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 14px;
+      color: #607d8b;
+    }
+    .social-link {
+      color: #607d8b;
+      text-decoration: none;
+    }
+    h1 {
+      color: #455a64;
+      font-weight: 700;
+    }
+    p {
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <img src="{{ appURL }}/images/logo-tr.png" alt="Analytodon Logo" width="120">
+      </div>
+      <h1>New User Signup</h1>
+    </div>
+    
+    <div class="content">
+      <p>A new user just signed up to Analytodon:</p>
+      
+      <div class="user-email">
+        {{ userEmail }}
+      </div>
+      
+      <p>Best regards,<br>{{ emailSenderName }}</p>
+    </div>
+    
+    <div class="footer">
+      <p>
+        Email: <a href="mailto:{{ supportEmail }}" class="social-link">{{ supportEmail }}</a><br>
+        Website: <a href="{{ marketingURL }}" class="social-link">{{ marketingURL }}</a><br>
+        Mastodon: <a href="https://undefined.social/@analytodon" class="social-link">@analytodon@undefined.social</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

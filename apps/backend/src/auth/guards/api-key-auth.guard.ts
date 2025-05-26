@@ -10,7 +10,7 @@ export class ApiKeyAuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
-    const apiKeyHeader = request.headers['authorization']; // Matches legacy check
+    const authHeader = request.headers['authorization']; // Matches legacy check
 
     const validApiKey = this.configService.get<string>('EMAIL_API_KEY');
 
@@ -23,11 +23,24 @@ export class ApiKeyAuthGuard implements CanActivate {
       throw new UnauthorizedException('API key endpoint is not properly configured.');
     }
 
-    if (apiKeyHeader && apiKeyHeader === validApiKey) {
+    if (!authHeader) {
+      this.logger.warn('Missing Authorization header.');
+      throw new UnauthorizedException('Missing API key.');
+    }
+
+    let apiKeyToValidate: string;
+    const bearerPrefix = 'Bearer ';
+    if (authHeader.startsWith(bearerPrefix)) {
+      apiKeyToValidate = authHeader.substring(bearerPrefix.length);
+    } else {
+      apiKeyToValidate = authHeader;
+    }
+
+    if (apiKeyToValidate === validApiKey) {
       return true;
     }
 
-    this.logger.warn(`Invalid or missing API key attempt. Header: ${apiKeyHeader}`);
-    throw new UnauthorizedException('Invalid or missing API key.');
+    this.logger.warn(`Invalid API key attempt. Header: ${authHeader}`);
+    throw new UnauthorizedException('Invalid API key.');
   }
 }

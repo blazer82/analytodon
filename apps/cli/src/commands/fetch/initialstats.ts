@@ -30,7 +30,7 @@ export default class InitialStats extends BaseCommand {
     host: Flags.string({
       char: 'h',
       description: 'App host URL',
-      default: process.env.APP_URL || 'https://app.analytodon.com',
+      default: process.env.APP_URL || 'http://localhost:3000',
     }),
     authorization: Flags.string({
       char: 't',
@@ -99,7 +99,7 @@ export default class InitialStats extends BaseCommand {
         await createInitialTootStats(db, account);
 
         await axios.post(
-          `${flags.host}/api/mail/firststats`,
+          `${flags.host}/mail/first-stats`,
           { userID: `${user._id}`, accounts: [account._id] },
           {
             headers: {

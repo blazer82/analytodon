@@ -1,16 +1,100 @@
-Hi and thanks again for signing up to Analytodon!
-
-We completed the initial processing of your Mastodon account {{ accountName }} which means your analytics data is ready!
-
-Here’s the link to your dashboard:
-{{ appURL }}
-
-Should you encounter any issues or have any questions don't hesitate to contact me directly by replying to this email.
-
-Best regards,
-{{ emailSenderName }}
-
----
-Email: {{ supportEmail }}
-Website: {{ marketingURL }}
-Mastodon: https://undefined.social/@analytodon
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Analytodon Stats Are Ready!</title>
+  <style>
+    body {
+      font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      line-height: 1.6;
+      color: #455a64;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .logo {
+      margin-bottom: 15px;
+    }
+    .content {
+      padding: 20px 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #455a64 0%, #1c313a 100%);
+      color: #ffffff;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 14px;
+      color: #607d8b;
+    }
+    .social-link {
+      color: #607d8b;
+      text-decoration: none;
+    }
+    h1 {
+      color: #455a64;
+      font-weight: 700;
+    }
+    p {
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <img src="{{ appURL }}/images/logo-tr.png" alt="Analytodon Logo" width="120">
+      </div>
+      <h1>Your Analytics Are Ready!</h1>
+    </div>
+    
+    <div class="content">
+      <p>Hi and thanks again for signing up to Analytodon!</p>
+      
+      <p>We completed the initial processing of your Mastodon account <strong>{{ accountName }}</strong> which means your analytics data is ready!</p>
+      
+      <p>Check out your dashboard to see your stats:</p>
+      
+      <div style="text-align: center;">
+        <a href="{{ appURL }}" class="button">View Your Dashboard</a>
+      </div>
+      
+      <p>Should you encounter any issues or have any questions don't hesitate to contact me directly by replying to this email.</p>
+      
+      <p>Best regards,<br>{{ emailSenderName }}</p>
+    </div>
+    
+    <div class="footer">
+      <p>
+        Email: <a href="mailto:{{ supportEmail }}" class="social-link">{{ supportEmail }}</a><br>
+        Website: <a href="{{ marketingURL }}" class="social-link">{{ marketingURL }}</a><br>
+        Mastodon: <a href="https://undefined.social/@analytodon" class="social-link">@analytodon@undefined.social</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

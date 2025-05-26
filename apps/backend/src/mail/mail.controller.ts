@@ -8,7 +8,7 @@ import { WeeklyStatsMailDto } from './dto/weekly-stats-mail.dto';
 import { MailService } from './mail.service';
 
 @ApiTags('Mail (Internal)')
-@ApiBearerAuth('ApiKeyAuth') // Optional: For Swagger UI to show an auth input
+@ApiBearerAuth()
 @UseGuards(ApiKeyAuthGuard) // Apply guard to all routes in this controller
 @Controller('mail')
 export class MailController {

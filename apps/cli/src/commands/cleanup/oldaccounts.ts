@@ -23,7 +23,7 @@ export default class OldAccounts extends BaseCommand {
     host: Flags.string({
       char: 'h',
       description: 'App host URL',
-      default: process.env.APP_URL || 'https://app.analytodon.com',
+      default: process.env.APP_URL || 'http://localhost:3000',
     }),
     dryRun: Flags.boolean({
       char: 'x',

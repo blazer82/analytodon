@@ -24,7 +24,7 @@ export default class OldAccounts extends BaseCommand {
     host: Flags.string({
       char: 'h',
       description: 'App host URL',
-      default: process.env.APP_URL || 'https://app.analytodon.com',
+      default: process.env.APP_URL || 'http://localhost:3000',
     }),
     authorization: Flags.string({
       char: 't',
@@ -92,7 +92,7 @@ export default class OldAccounts extends BaseCommand {
           if (!flags.dryRun) {
             this.log(`Send old accounts: Trigger mail for user ${userID}`);
             await axios.post(
-              `${flags.host}/api/mail/oldaccount`,
+              `${flags.host}/mail/old-account`,
               { userID },
               {
                 headers: {
