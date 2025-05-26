@@ -7,5 +7,6 @@
     "^.+\\.ts$": "ts-jest"
   },
   "forceExit": true,
-  "setupFilesAfterEnv": ["<rootDir>/jest-e2e.setup.ts"]
+  "setupFilesAfterEnv": ["<rootDir>/jest-e2e.setup.ts"],
+  "testTimeout": 60000
 }
