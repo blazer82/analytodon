@@ -27,7 +27,7 @@ spec:
                       - default
       containers:
         - name: analytodon-frontend
-          image: ghcr.io/production-build/analytodon-frontend:latest
+          image: ghcr.io/blazer82/analytodon-frontend:latest
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: analytodon-cli
-          image: productionbuild/analytodon-cli:latest
+          image: ghcr.io/blazer82/analytodon-cli:latest
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
