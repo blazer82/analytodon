@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: analytodon-backend
-  namespace: analytodon
+  namespace: analytodon2
 spec:
   selector:
     matchLabels:
@@ -61,7 +61,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: analytodon-backend
-  namespace: analytodon
+  namespace: analytodon2
 spec:
   ports:
     - port: 80
