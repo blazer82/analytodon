@@ -10,7 +10,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { TimeframeQueryDto } from '../boosts/dto/timeframe-query.dto';
+import { TimeframeQueryDto } from '../shared/dto/timeframe-query.dto';
 import { resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { AllTopTootsResponseDto } from './dto/all-top-toots-response.dto';
 import { TootRankingEnum } from './dto/get-top-toots-query.dto';

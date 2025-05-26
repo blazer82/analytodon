@@ -6,8 +6,8 @@ import { stringify } from 'csv-stringify';
 import { Response } from 'express';
 
 import { AccountsService } from '../accounts/accounts.service';
-import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto';
-import { TotalSnapshotDto } from '../boosts/dto/total-snapshot.dto';
+import { ChartDataPointDto } from '../shared/dto/chart-data-point.dto';
+import { TotalSnapshotDto } from '../shared/dto/total-snapshot.dto';
 import {
   formatDateISO,
   getDaysToMonthBeginning,

@@ -10,9 +10,9 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto';
-import { TimeframeQueryDto } from '../boosts/dto/timeframe-query.dto';
-import { TotalSnapshotDto } from '../boosts/dto/total-snapshot.dto';
+import { ChartDataPointDto } from '../shared/dto/chart-data-point.dto';
+import { TimeframeQueryDto } from '../shared/dto/timeframe-query.dto';
+import { TotalSnapshotDto } from '../shared/dto/total-snapshot.dto';
 import { FollowersKpiDto } from './dto/followers-kpi.dto';
 import { FollowersService } from './followers.service';
 

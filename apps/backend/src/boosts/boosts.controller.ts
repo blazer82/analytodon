@@ -10,12 +10,12 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { ChartDataPointDto } from '../shared/dto/chart-data-point.dto';
+import { TimeframeQueryDto } from '../shared/dto/timeframe-query.dto';
+import { TotalSnapshotDto } from '../shared/dto/total-snapshot.dto';
 import { BoostsService } from './boosts.service';
 import { BoostedTootDto } from './dto/boosted-toot.dto';
 import { BoostsKpiDto } from './dto/boosts-kpi.dto';
-import { ChartDataPointDto } from './dto/chart-data-point.dto';
-import { TimeframeQueryDto } from './dto/timeframe-query.dto';
-import { TotalSnapshotDto } from './dto/total-snapshot.dto';
 
 @ApiTags('Boosts')
 @ApiBearerAuth()
