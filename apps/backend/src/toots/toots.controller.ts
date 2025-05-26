@@ -1,7 +1,7 @@
+import { AccountEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { Controller, Get, HttpStatus, Logger, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { AccountEntity } from '../accounts/entities/account.entity';
 // To get account timezone // No longer needed directly if GetAccount provides it
 import { CheckAccount } from '../auth/decorators/check-account.decorator';
 import { GetAccount } from '../auth/decorators/get-account.decorator';
@@ -10,10 +10,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { TimeframeQueryDto } from '../boosts/dto/timeframe-query.dto'; // Re-use from boosts or create a shared one
-import { UserRole } from '../shared/enums/user-role.enum';
+import { TimeframeQueryDto } from '../boosts/dto/timeframe-query.dto';
 import { resolveTimeframe } from '../shared/utils/timeframe.helper';
-import { UserEntity } from '../users/entities/user.entity';
 import { AllTopTootsResponseDto } from './dto/all-top-toots-response.dto';
 import { TootRankingEnum } from './dto/get-top-toots-query.dto';
 import { RankedTootDto } from './dto/ranked-toot.dto';

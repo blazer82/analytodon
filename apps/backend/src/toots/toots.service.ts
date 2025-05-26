@@ -1,11 +1,10 @@
+import { TootEntity } from '@analytodon/shared-orm';
 import { EntityRepository, FilterQuery } from '@mikro-orm/core';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
-// RankedTootDto is now a concern of the controller
-import { TootEntity } from './entities/toot.entity';
 
 export type RankedTootEntity = TootEntity & { rank: number };
 

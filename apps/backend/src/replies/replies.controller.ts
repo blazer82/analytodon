@@ -1,8 +1,8 @@
+import { AccountEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
-import { AccountEntity } from '../accounts/entities/account.entity';
 import { CheckAccount } from '../auth/decorators/check-account.decorator';
 import { GetAccount } from '../auth/decorators/get-account.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -10,11 +10,9 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto'; // Reusing from boosts
-import { TimeframeQueryDto } from '../boosts/dto/timeframe-query.dto'; // Reusing from boosts
-import { TotalSnapshotDto } from '../boosts/dto/total-snapshot.dto'; // Reusing from boosts
-import { UserRole } from '../shared/enums/user-role.enum';
-import { UserEntity } from '../users/entities/user.entity';
+import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto';
+import { TimeframeQueryDto } from '../boosts/dto/timeframe-query.dto';
+import { TotalSnapshotDto } from '../boosts/dto/total-snapshot.dto';
 import { RepliedTootDto } from './dto/replied-toot.dto';
 import { RepliesKpiDto } from './dto/replies-kpi.dto';
 import { RepliesService } from './replies.service';

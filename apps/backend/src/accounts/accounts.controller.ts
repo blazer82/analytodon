@@ -1,3 +1,4 @@
+import { AccountEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import {
   Body,
   Controller,
@@ -23,8 +24,6 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { AccountOwnerGuard } from '../auth/guards/account-owner.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { UserRole } from '../shared/enums/user-role.enum';
-import { UserEntity } from '../users/entities/user.entity';
 import { AccountsService } from './accounts.service';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { ConnectAccountCallbackQueryDto } from './dto/connect-account-callback.dto';
@@ -32,7 +31,6 @@ import { ConnectAccountResponseDto } from './dto/connect-account-response.dto';
 import { ConnectAccountBodyDto } from './dto/connect-account.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { AccountEntity } from './entities/account.entity';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()

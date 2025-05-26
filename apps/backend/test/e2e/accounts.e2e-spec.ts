@@ -1,3 +1,10 @@
+import {
+  AccountCredentialsEntity,
+  AccountEntity,
+  UserCredentialsEntity,
+  UserEntity,
+  UserRole,
+} from '@analytodon/shared-orm';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,13 +17,8 @@ import { AccountsService } from '../../src/accounts/accounts.service';
 import { AccountResponseDto } from '../../src/accounts/dto/account-response.dto';
 import { CreateAccountDto } from '../../src/accounts/dto/create-account.dto';
 import { UpdateAccountDto } from '../../src/accounts/dto/update-account.dto';
-import { AccountCredentialsEntity } from '../../src/accounts/entities/account-credentials.entity';
-import { AccountEntity } from '../../src/accounts/entities/account.entity';
 import { AppModule } from '../../src/app.module';
-import { UserCredentialsEntity } from '../../src/auth/entities/user-credentials.entity';
 import { authConstants } from '../../src/shared/constants/auth.constants';
-import { UserRole } from '../../src/shared/enums/user-role.enum';
-import { UserEntity } from '../../src/users/entities/user.entity';
 import { UsersService } from '../../src/users/users.service';
 
 describe('AccountsController (e2e)', () => {

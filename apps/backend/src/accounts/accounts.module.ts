@@ -1,3 +1,4 @@
+import { AccountCredentialsEntity, AccountEntity, MastodonAppEntity } from '@analytodon/shared-orm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 
@@ -5,9 +6,6 @@ import { SharedModule } from '../shared/shared.module';
 import { UsersModule } from '../users/users.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
-import { AccountCredentialsEntity } from './entities/account-credentials.entity';
-import { AccountEntity } from './entities/account.entity';
-import { MastodonAppEntity } from './entities/mastodon-app.entity';
 
 @Module({
   imports: [

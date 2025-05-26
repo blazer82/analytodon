@@ -1,3 +1,4 @@
+import { UserRole } from '@analytodon/shared-orm';
 import {
   Body,
   Controller,
@@ -16,7 +17,6 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } 
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { UserRole } from '../shared/enums/user-role.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { ManageSubscriptionDto } from './dto/subscription-query.dto';

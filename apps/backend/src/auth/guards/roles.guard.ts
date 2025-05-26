@@ -1,8 +1,7 @@
+import { UserEntity, UserRole } from '@analytodon/shared-orm';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
-import { UserRole } from '../../shared/enums/user-role.enum';
-import { UserEntity } from '../../users/entities/user.entity';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
 @Injectable()

@@ -1,6 +1,6 @@
+import { DailyAccountStatsEntity } from '@analytodon/shared-orm';
 import { EntityRepository } from '@mikro-orm/core';
 
-import { DailyAccountStatsEntity } from '../../followers/entities/daily-account-stats.entity';
 import {
   formatDateISO,
   getDaysAgo,

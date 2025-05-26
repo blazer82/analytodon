@@ -1,7 +1,7 @@
 import { Entity, OneToOne, Property, Rel } from '@mikro-orm/core';
 
-import { BaseEntity } from '../../shared/entities/base.entity';
-import { UserEntity } from '../../users/entities/user.entity';
+import { BaseEntity } from './base.entity';
+import { UserEntity } from './user.entity';
 
 @Entity({ collection: 'usercredentials' })
 export class UserCredentialsEntity extends BaseEntity {

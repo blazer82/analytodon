@@ -1,7 +1,7 @@
+import { UserRole } from '@analytodon/shared-orm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsEmail, IsEnum, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
 
-import { UserRole } from '../../shared/enums/user-role.enum';
 import { IsValidTimezone } from '../../shared/validators/is-valid-timezone.validator';
 
 export class UpdateUserDto {

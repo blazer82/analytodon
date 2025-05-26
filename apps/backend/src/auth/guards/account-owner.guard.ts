@@ -1,3 +1,4 @@
+import { UserEntity } from '@analytodon/shared-orm';
 import {
   BadRequestException,
   CanActivate,
@@ -10,7 +11,6 @@ import {
 import { Reflector } from '@nestjs/core';
 
 import { AccountsService } from '../../accounts/accounts.service';
-import { UserEntity } from '../../users/entities/user.entity';
 import { CHECK_ACCOUNT_KEY, CheckAccountOptions } from '../decorators/check-account.decorator';
 
 @Injectable()

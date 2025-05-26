@@ -1,3 +1,4 @@
+import { AccountCredentialsEntity, AccountEntity, MastodonAppEntity, UserEntity } from '@analytodon/shared-orm';
 import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import {
@@ -14,15 +15,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { EncryptionService } from '../shared/services/encryption.service'; // Import EncryptionService
 
-import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { AccountsService } from './accounts.service';
 import { ConnectAccountCallbackQueryDto } from './dto/connect-account-callback.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { AccountCredentialsEntity } from './entities/account-credentials.entity';
-import { AccountEntity } from './entities/account.entity';
-import { MastodonAppEntity } from './entities/mastodon-app.entity';
 
 // Mocks
 jest.mock('uuid');

@@ -1,6 +1,6 @@
 import { Entity, Property, Unique } from '@mikro-orm/core';
 
-import { BaseEntity } from '../../shared/entities/base.entity';
+import { BaseEntity } from './base.entity';
 
 @Entity({ collection: 'mastodon_apps' })
 export class MastodonAppEntity extends BaseEntity {

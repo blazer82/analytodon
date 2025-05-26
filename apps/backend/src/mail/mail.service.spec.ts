@@ -1,10 +1,9 @@
+import { AccountEntity, UserEntity } from '@analytodon/shared-orm';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AccountEntity } from '../accounts/entities/account.entity';
-import { UserEntity } from '../users/entities/user.entity';
 import { MailService } from './mail.service';
 
 describe('MailService', () => {

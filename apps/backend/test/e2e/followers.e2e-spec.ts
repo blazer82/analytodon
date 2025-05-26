@@ -1,3 +1,10 @@
+import {
+  AccountEntity,
+  DailyAccountStatsEntity,
+  UserCredentialsEntity,
+  UserEntity,
+  UserRole,
+} from '@analytodon/shared-orm';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -8,13 +15,8 @@ import * as request from 'supertest';
 
 import { AccountsService } from '../../src/accounts/accounts.service';
 import { CreateAccountDto } from '../../src/accounts/dto/create-account.dto';
-import { AccountEntity } from '../../src/accounts/entities/account.entity';
 import { AppModule } from '../../src/app.module';
-import { UserCredentialsEntity } from '../../src/auth/entities/user-credentials.entity';
-import { DailyAccountStatsEntity } from '../../src/followers/entities/daily-account-stats.entity';
 import { authConstants } from '../../src/shared/constants/auth.constants';
-import { UserRole } from '../../src/shared/enums/user-role.enum';
-import { UserEntity } from '../../src/users/entities/user.entity';
 import { UsersService } from '../../src/users/users.service';
 
 describe('FollowersController (e2e)', () => {

@@ -1,3 +1,4 @@
+import { AccountEntity, DailyTootStatsEntity, TootEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { EntityManager, EntityRepository, Loaded, Rel } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Logger } from '@nestjs/common';
@@ -7,14 +8,9 @@ import { stringify } from 'csv-stringify';
 import { Response } from 'express';
 
 import { AccountsService } from '../accounts/accounts.service';
-import { AccountEntity } from '../accounts/entities/account.entity';
-import { UserRole } from '../shared/enums/user-role.enum';
 import * as timeframeHelper from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
-import { DailyTootStatsEntity } from '../toots/entities/daily-toot-stats.entity';
-import { TootEntity } from '../toots/entities/toot.entity';
 import { TootsService } from '../toots/toots.service';
-import { UserEntity } from '../users/entities/user.entity';
 import { BoostsService } from './boosts.service';
 
 // Mocks for external modules and helpers

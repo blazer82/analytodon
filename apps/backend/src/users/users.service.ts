@@ -1,17 +1,15 @@
+import { UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { EntityRepository, FilterQuery, Loaded } from '@mikro-orm/mongodb';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
 
-import { UserCredentialsEntity } from '../auth/entities/user-credentials.entity';
 import { MailService } from '../mail/mail.service';
-import { UserRole } from '../shared/enums/user-role.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { ManageSubscriptionDto } from './dto/subscription-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserEntity } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {

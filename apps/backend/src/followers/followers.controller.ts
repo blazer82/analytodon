@@ -1,8 +1,8 @@
+import { AccountEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
-import { AccountEntity } from '../accounts/entities/account.entity';
 import { CheckAccount } from '../auth/decorators/check-account.decorator';
 import { GetAccount } from '../auth/decorators/get-account.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -13,8 +13,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChartDataPointDto } from '../boosts/dto/chart-data-point.dto';
 import { TimeframeQueryDto } from '../boosts/dto/timeframe-query.dto';
 import { TotalSnapshotDto } from '../boosts/dto/total-snapshot.dto';
-import { UserRole } from '../shared/enums/user-role.enum';
-import { UserEntity } from '../users/entities/user.entity';
 import { FollowersKpiDto } from './dto/followers-kpi.dto';
 import { FollowersService } from './followers.service';
 

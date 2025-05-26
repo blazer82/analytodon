@@ -1,3 +1,4 @@
+import { UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -7,14 +8,11 @@ import { ObjectId } from 'bson';
 import { v4 as uuidv4 } from 'uuid';
 
 import { MailService } from '../mail/mail.service';
-import { UserRole } from '../shared/enums/user-role.enum';
-import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { UserCredentialsEntity } from './entities/user-credentials.entity';
 
 // Mock external libraries
 jest.mock('bcrypt');

@@ -1,4 +1,4 @@
-import { UserRole } from '../../shared/enums/user-role.enum';
+import { UserRole } from '@analytodon/shared-orm';
 
 export interface JwtPayload {
   sub: string; // User ID

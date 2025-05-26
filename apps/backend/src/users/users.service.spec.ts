@@ -1,3 +1,4 @@
+import { UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/mongodb';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { ConflictException, Logger, NotFoundException } from '@nestjs/common';
@@ -5,13 +6,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
 
-import { UserCredentialsEntity } from '../auth/entities/user-credentials.entity';
 import { MailService } from '../mail/mail.service';
-import { UserRole } from '../shared/enums/user-role.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ManageSubscriptionDto } from './dto/subscription-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
 
 // Mock bcrypt

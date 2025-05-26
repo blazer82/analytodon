@@ -1,3 +1,4 @@
+import { AccountEntity, UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -5,16 +6,12 @@ import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
-import { AccountEntity } from '../../src/accounts/entities/account.entity';
 import { AppModule } from '../../src/app.module';
 import { LoginDto } from '../../src/auth/dto/login.dto';
 import { RegisterUserDto } from '../../src/auth/dto/register-user.dto';
 import { ResetPasswordDto } from '../../src/auth/dto/reset-password.dto';
-import { UserCredentialsEntity } from '../../src/auth/entities/user-credentials.entity';
 import { MailService } from '../../src/mail/mail.service';
 import { authConstants } from '../../src/shared/constants/auth.constants';
-import { UserRole } from '../../src/shared/enums/user-role.enum';
-import { UserEntity } from '../../src/users/entities/user.entity';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;

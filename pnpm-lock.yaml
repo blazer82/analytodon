@@ -14,6 +14,9 @@ importers:
 
   apps/backend:
     dependencies:
+      '@analytodon/shared-orm':
+        specifier: workspace:*
+        version: link:../../packages/shared-orm
       '@mikro-orm/core':
         specifier: ^6.4.15
         version: 6.4.15
@@ -350,6 +353,37 @@ importers:
       typescript:
         specifier: ^4.0 || ^5.0
         version: 5.8.3
+
+  packages/shared-orm:
+    dependencies:
+      '@mikro-orm/core':
+        specifier: ^6.4.15
+        version: 6.4.15
+      '@mikro-orm/mongodb':
+        specifier: ^6.4.15
+        version: 6.4.15(@mikro-orm/core@6.4.15)(socks@2.8.4)
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.27.0
+        version: 9.27.0
+      '@ianvs/prettier-plugin-sort-imports':
+        specifier: ^4.4.1
+        version: 4.4.1(prettier@3.5.3)
+      eslint:
+        specifier: ^9.27.0
+        version: 9.27.0(jiti@1.21.7)
+      prettier:
+        specifier: ^3.5.3
+        version: 3.5.3
+      shx:
+        specifier: ^0.3.3
+        version: 0.3.4
+      typescript:
+        specifier: ^5.5.4
+        version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.32.1
+        version: 8.32.1(eslint@9.27.0(jiti@1.21.7))(typescript@5.8.3)
 
 packages:
 

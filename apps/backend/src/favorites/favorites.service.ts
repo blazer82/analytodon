@@ -1,3 +1,4 @@
+import { AccountEntity, DailyTootStatsEntity } from '@analytodon/shared-orm';
 import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, Logger } from '@nestjs/common';
@@ -5,7 +6,6 @@ import { stringify } from 'csv-stringify';
 import { Response } from 'express';
 
 import { AccountsService } from '../accounts/accounts.service';
-import { AccountEntity } from '../accounts/entities/account.entity';
 import {
   formatDateISO,
   getDaysToMonthBeginning,
@@ -16,7 +16,6 @@ import {
   resolveTimeframe,
 } from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
-import { DailyTootStatsEntity } from '../toots/entities/daily-toot-stats.entity';
 import { RankedTootEntity, TootsService } from '../toots/toots.service';
 
 // FavoritedTootDto is now a concern of the controller

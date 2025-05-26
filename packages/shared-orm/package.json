@@ -1,0 +1,33 @@
+{
+  "name": "@analytodon/shared-orm",
+  "version": "2.0.0",
+  "license": "GPL-3.0-only",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prettier:check": "prettier --check \"src/**/*.ts\"",
+    "prettier:write": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint",
+    "clean": "shx rm -rf dist tsconfig.tsbuildinfo",
+    "build": "pnpm run clean && tsc -b",
+    "prepublishOnly": "pnpm run build"
+  },
+  "packageManager": "pnpm@10.5.2",
+  "dependencies": {
+    "@mikro-orm/core": "^6.4.15",
+    "@mikro-orm/mongodb": "^6.4.15"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "eslint": "^9.27.0",
+    "prettier": "^3.5.3",
+    "shx": "^0.3.3",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.32.1"
+  }
+}

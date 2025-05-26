@@ -1,7 +1,5 @@
+import { UserEntity, UserRole } from '@analytodon/shared-orm';
 import { ApiProperty } from '@nestjs/swagger';
-
-import { UserRole } from '../../shared/enums/user-role.enum';
-import { UserEntity } from '../entities/user.entity';
 
 export class UserResponseDto {
   @ApiProperty({ example: '60d0fe4f5311236168a109ca', description: 'User ID' })

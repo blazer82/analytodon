@@ -1,3 +1,4 @@
+import { AccountEntity, DailyAccountStatsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Logger } from '@nestjs/common';
@@ -7,11 +8,7 @@ import { stringify } from 'csv-stringify';
 import { Response } from 'express';
 
 import { AccountsService } from '../accounts/accounts.service';
-import { AccountEntity } from '../accounts/entities/account.entity';
-import { UserRole } from '../shared/enums/user-role.enum';
 import * as timeframeHelper from '../shared/utils/timeframe.helper';
-import { UserEntity } from '../users/entities/user.entity';
-import { DailyAccountStatsEntity } from './entities/daily-account-stats.entity';
 import { FollowersService } from './followers.service';
 
 // Mocks for external modules and helpers

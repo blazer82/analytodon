@@ -1,9 +1,8 @@
+import { UserCredentialsEntity, UserEntity } from '@analytodon/shared-orm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { forwardRef, Module } from '@nestjs/common'; // Import forwardRef
+import { forwardRef, Module } from '@nestjs/common';
 
-import { UserCredentialsEntity } from '../auth/entities/user-credentials.entity';
 import { MailModule } from '../mail/mail.module';
-import { UserEntity } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 

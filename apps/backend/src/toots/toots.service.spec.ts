@@ -1,12 +1,11 @@
+import { AccountEntity, TootEntity } from '@analytodon/shared-orm';
 import { Rel } from '@mikro-orm/core';
 import { EntityManager, EntityRepository, FilterQuery, ObjectId } from '@mikro-orm/mongodb';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AccountEntity } from '../accounts/entities/account.entity';
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
-import { TootEntity } from './entities/toot.entity';
 import { TootsService } from './toots.service';
 
 describe('TootsService', () => {

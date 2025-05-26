@@ -1,7 +1,7 @@
 import { Entity, ManyToOne, PrimaryKey, Property, Rel } from '@mikro-orm/core';
 import { ObjectId } from '@mikro-orm/mongodb';
 
-import { AccountEntity } from '../../accounts/entities/account.entity';
+import { AccountEntity } from './account.entity';
 
 @Entity({ collection: 'dailytootstats' })
 export class DailyTootStatsEntity {

@@ -1,6 +1,6 @@
+import { UserEntity } from '@analytodon/shared-orm';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { UserEntity } from '../../users/entities/user.entity';
 import { SessionAccountDto } from './session-account.dto';
 
 export class SessionUserDto {

@@ -1,9 +1,13 @@
 import { Collection, Entity, Enum, Index, OneToMany, OneToOne, Property, Rel } from '@mikro-orm/core';
 
-import { AccountEntity } from '../../accounts/entities/account.entity';
-import { UserCredentialsEntity } from '../../auth/entities/user-credentials.entity';
-import { BaseEntity } from '../../shared/entities/base.entity';
-import { UserRole } from '../../shared/enums/user-role.enum';
+import { AccountEntity } from './account.entity';
+import { BaseEntity } from './base.entity';
+import { UserCredentialsEntity } from './user-credentials.entity';
+
+export enum UserRole {
+  Admin = 'admin',
+  AccountOwner = 'account-owner',
+}
 
 @Entity({ collection: 'users' })
 export class UserEntity extends BaseEntity {

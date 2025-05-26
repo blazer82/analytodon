@@ -1,9 +1,7 @@
+import { AccountEntity, UserEntity } from '@analytodon/shared-orm';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
-import { AccountEntity } from '../accounts/entities/account.entity';
-import { UserEntity } from '../users/entities/user.entity';
 
 // TODO: Replace these with actual imports from your entity definitions
 interface Kpi {

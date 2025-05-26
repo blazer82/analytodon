@@ -1,6 +1,5 @@
+import { AccountEntity } from '@analytodon/shared-orm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-import { AccountEntity } from '../entities/account.entity';
 
 export class AccountResponseDto {
   @ApiProperty({ example: '60d0fe4f5311236168a109cb', description: 'Account ID' })

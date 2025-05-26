@@ -1,11 +1,9 @@
+import { DailyAccountStatsEntity, DailyTootStatsEntity } from '@analytodon/shared-orm';
 import { EntityRepository } from '@mikro-orm/core';
 import { Logger } from '@nestjs/common';
 import { parseISO as dateFnsParseISO } from 'date-fns';
 import { intlFormat } from 'date-fns/intlFormat';
 import { findTimeZone, getUTCOffset } from 'timezone-support';
-
-import { DailyAccountStatsEntity } from '../../followers/entities/daily-account-stats.entity';
-import { DailyTootStatsEntity } from '../../toots/entities/daily-toot-stats.entity';
 
 // Define Timeframe type based on legacy usage
 export type Timeframe =

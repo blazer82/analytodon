@@ -1,7 +1,7 @@
+import { UserEntity } from '@analytodon/shared-orm';
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { UserEntity } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
 import { GetUser } from './decorators/get-user.decorator';
 import { AuthResponseDto } from './dto/auth-response.dto';

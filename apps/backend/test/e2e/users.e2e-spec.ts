@@ -1,3 +1,4 @@
+import { UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -7,15 +8,12 @@ import { ObjectId } from 'bson';
 import * as request from 'supertest';
 
 import { AppModule } from '../../src/app.module';
-import { UserCredentialsEntity } from '../../src/auth/entities/user-credentials.entity';
 import { authConstants } from '../../src/shared/constants/auth.constants';
-import { UserRole } from '../../src/shared/enums/user-role.enum';
 import { CreateUserDto } from '../../src/users/dto/create-user.dto';
 import { SendEmailDto } from '../../src/users/dto/send-email.dto';
 import { ManageSubscriptionDto } from '../../src/users/dto/subscription-query.dto';
 import { UpdateUserDto } from '../../src/users/dto/update-user.dto';
 import { UserResponseDto } from '../../src/users/dto/user-response.dto';
-import { UserEntity } from '../../src/users/entities/user.entity';
 import { UsersService } from '../../src/users/users.service';
 
 describe('UsersController (e2e)', () => {
