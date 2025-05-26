@@ -52,6 +52,9 @@ jobs:
       - name: Run typecheck
         run: pnpm --filter @analytodon/frontend typecheck
 
+      - name: Build dependencies
+        run: pnpm --filter @analytodon/shared-orm build
+
       - name: Run unit tests
         run: pnpm --filter @analytodon/backend test:unit
 
