@@ -1,13 +1,26 @@
 import { AccountEntity, UserEntity } from '@analytodon/shared-orm';
 import { MailerService } from '@nestjs-modules/mailer';
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { BoostsService } from '../boosts/boosts.service';
+import { FavoritesService } from '../favorites/favorites.service';
+import { FollowersService } from '../followers/followers.service';
+import { RepliesService } from '../replies/replies.service';
+import { UsersService } from '../users/users.service';
+import { FirstStatsMailDto } from './dto/first-stats-mail.dto';
+import { OldAccountMailDto } from './dto/old-account-mail.dto';
+import { WeeklyStatsMailDto } from './dto/weekly-stats-mail.dto';
 import { MailService } from './mail.service';
 
 describe('MailService', () => {
   let service: MailService;
+  let usersService: jest.Mocked<UsersService>;
+  let followersService: jest.Mocked<FollowersService>;
+  let repliesService: jest.Mocked<RepliesService>;
+  let boostsService: jest.Mocked<BoostsService>;
+  let favoritesService: jest.Mocked<FavoritesService>;
   let mailerService: jest.Mocked<MailerService>;
   let loggerLogSpy: jest.SpyInstance;
   let loggerErrorSpy: jest.SpyInstance;
@@ -54,11 +67,47 @@ describe('MailService', () => {
             get: jest.fn(), // For non-essential configs if any
           },
         },
+        {
+          provide: UsersService,
+          useValue: {
+            findById: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
+          provide: FollowersService,
+          useValue: {
+            getWeeklyKpi: jest.fn(),
+          },
+        },
+        {
+          provide: RepliesService,
+          useValue: {
+            getWeeklyKpi: jest.fn(),
+          },
+        },
+        {
+          provide: BoostsService,
+          useValue: {
+            getWeeklyKpi: jest.fn(),
+          },
+        },
+        {
+          provide: FavoritesService,
+          useValue: {
+            getWeeklyKpi: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<MailService>(MailService);
     mailerService = module.get(MailerService);
+    usersService = module.get(UsersService);
+    followersService = module.get(FollowersService);
+    repliesService = module.get(RepliesService);
+    boostsService = module.get(BoostsService);
+    favoritesService = module.get(FavoritesService);
 
     // Setup spies for logger methods
     loggerLogSpy = jest.spyOn(Logger.prototype, 'log');
@@ -303,7 +352,9 @@ describe('MailService', () => {
           subject,
         },
       });
-      expect(loggerLogSpy).toHaveBeenCalledWith(`Weekly stats mail sent to ${mockUser.email}`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        `Weekly stats mail sent to ${mockUser.email} (User: ${mockUser.email})`,
+      );
     });
 
     it('should log an error and re-throw if sending fails', async () => {
@@ -312,7 +363,7 @@ describe('MailService', () => {
 
       await expect(service.sendWeeklyStatsMail(mockUser, mockStats)).rejects.toThrow(error);
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        `Error while sending weekly stats mail to ${mockUser.email}`,
+        `Error while sending weekly stats mail to ${mockUser.email} (User: ${mockUser.email})`,
         error.stack,
       );
     });
@@ -346,4 +397,257 @@ describe('MailService', () => {
       );
     });
   });
+
+  describe('formatKpiForEmail', () => {
+    it('should format KPI data with positive change', () => {
+      const kpiData = { currentPeriod: 10, previousPeriod: 5 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formatted = (service as any).formatKpiForEmail(kpiData);
+      expect(formatted).toEqual({ value: 10, change: '(+5)' });
+    });
+
+    it('should format KPI data with negative change', () => {
+      const kpiData = { currentPeriod: 3, previousPeriod: 5 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formatted = (service as any).formatKpiForEmail(kpiData);
+      expect(formatted).toEqual({ value: 3, change: '(-2)' });
+    });
+
+    it('should format KPI data with no change', () => {
+      const kpiData = { currentPeriod: 5, previousPeriod: 5 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formatted = (service as any).formatKpiForEmail(kpiData);
+      expect(formatted).toEqual({ value: 5, change: '(no change)' });
+    });
+
+    it('should handle undefined currentPeriod', () => {
+      const kpiData = { previousPeriod: 5 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formatted = (service as any).formatKpiForEmail(kpiData);
+      expect(formatted).toEqual({ value: 0, change: '' });
+    });
+
+    it('should handle undefined previousPeriod', () => {
+      const kpiData = { currentPeriod: 10 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formatted = (service as any).formatKpiForEmail(kpiData);
+      expect(formatted).toEqual({ value: 10, change: '' });
+    });
+
+    it('should handle both undefined periods', () => {
+      const kpiData = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formatted = (service as any).formatKpiForEmail(kpiData);
+      expect(formatted).toEqual({ value: 0, change: '' });
+    });
+  });
+
+  describe('processAndSendFirstStatsAvailableMail', () => {
+    const dto: FirstStatsMailDto = {
+      userID: 'user-id-123',
+      accounts: ['account-id-456', 'account-id-789'],
+    };
+    const account1 = { id: 'account-id-456', name: 'Acc1' } as AccountEntity;
+    const account2 = { id: 'account-id-789', name: 'Acc2' } as AccountEntity;
+
+    it('should send emails if user and accounts are found', async () => {
+      const userWithAccounts = {
+        ...mockUser,
+        accounts: {
+          init: jest.fn().mockResolvedValue(undefined),
+          getItems: jest.fn().mockReturnValue([account1, account2]),
+        },
+      } as unknown as UserEntity;
+      usersService.findById.mockResolvedValue(userWithAccounts);
+      jest.spyOn(service, 'sendFirstStatsAvailableMail').mockResolvedValue(undefined);
+
+      await service.processAndSendFirstStatsAvailableMail(dto);
+
+      expect(usersService.findById).toHaveBeenCalledWith(dto.userID);
+      expect(service.sendFirstStatsAvailableMail).toHaveBeenCalledTimes(2);
+      expect(service.sendFirstStatsAvailableMail).toHaveBeenCalledWith(userWithAccounts, account1);
+      expect(service.sendFirstStatsAvailableMail).toHaveBeenCalledWith(userWithAccounts, account2);
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      usersService.findById.mockResolvedValue(null);
+      await expect(service.processAndSendFirstStatsAvailableMail(dto)).rejects.toThrow(NotFoundException);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        `User not found: ${dto.userID} for first stats email. Email not sent.`,
+      );
+    });
+
+    it('should log a warning and not send emails if no matching accounts found', async () => {
+      const userWithNoMatchingAccounts = {
+        ...mockUser,
+        accounts: {
+          init: jest.fn().mockResolvedValue(undefined),
+          getItems: jest.fn().mockReturnValue([{ id: 'other-account' } as AccountEntity]),
+        },
+      } as unknown as UserEntity;
+      usersService.findById.mockResolvedValue(userWithNoMatchingAccounts);
+      const sendMailSpy = jest.spyOn(service, 'sendFirstStatsAvailableMail');
+
+      await service.processAndSendFirstStatsAvailableMail(dto);
+
+      expect(loggerWarnSpy).toHaveBeenCalled(); // loggerWarnSpy needs to be defined: jest.spyOn(Logger.prototype, 'warn');
+      expect(sendMailSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('processAndSendOldAccountWarningMail', () => {
+    const dto: OldAccountMailDto = { userID: 'user-id-123' };
+
+    it('should send email and update user if user is found', async () => {
+      const userToUpdate = { ...mockUser, oldAccountDeletionNoticeSent: false } as UserEntity;
+      usersService.findById.mockResolvedValue(userToUpdate);
+      usersService.save.mockResolvedValue({ ...userToUpdate, oldAccountDeletionNoticeSent: true });
+      jest.spyOn(service, 'sendOldAccountWarningMail').mockResolvedValue(undefined);
+
+      await service.processAndSendOldAccountWarningMail(dto);
+
+      expect(usersService.findById).toHaveBeenCalledWith(dto.userID);
+      expect(userToUpdate.oldAccountDeletionNoticeSent).toBe(true);
+      expect(usersService.save).toHaveBeenCalledWith(userToUpdate);
+      expect(service.sendOldAccountWarningMail).toHaveBeenCalledWith(userToUpdate);
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      usersService.findById.mockResolvedValue(null);
+      await expect(service.processAndSendOldAccountWarningMail(dto)).rejects.toThrow(NotFoundException);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        `User not found: ${dto.userID} for old account warning. Email not sent.`,
+      );
+    });
+  });
+
+  describe('processAndSendWeeklyStatsMail', () => {
+    const account1 = {
+      id: 'acc1',
+      serverURL: 'http://mastodon.social',
+      accountName: '@test@mastodon.social',
+      setupComplete: true,
+    } as AccountEntity;
+    const account2 = {
+      id: 'acc2',
+      serverURL: 'http://example.com',
+      name: 'Example Account',
+      setupComplete: true,
+    } as AccountEntity;
+    const dto: WeeklyStatsMailDto = {
+      userID: 'user-id-123',
+      accounts: [account1.id, account2.id],
+    };
+    const userWithAccounts = {
+      ...mockUser,
+      accounts: {
+        init: jest.fn().mockResolvedValue(undefined),
+        getItems: jest.fn().mockReturnValue([account1, account2]),
+      },
+    } as unknown as UserEntity;
+
+    const kpiResponse = { currentPeriod: 10, previousPeriod: 5 }; // Example KPI data
+
+    beforeEach(() => {
+      followersService.getWeeklyKpi.mockResolvedValue(kpiResponse);
+      repliesService.getWeeklyKpi.mockResolvedValue(kpiResponse);
+      boostsService.getWeeklyKpi.mockResolvedValue(kpiResponse);
+      favoritesService.getWeeklyKpi.mockResolvedValue(kpiResponse);
+      jest.spyOn(service, 'sendWeeklyStatsMail').mockResolvedValue(undefined);
+    });
+
+    it('should send weekly stats email with correct data', async () => {
+      usersService.findById.mockResolvedValue(userWithAccounts);
+
+      await service.processAndSendWeeklyStatsMail(dto);
+
+      expect(usersService.findById).toHaveBeenCalledWith(dto.userID);
+      expect(followersService.getWeeklyKpi).toHaveBeenCalledWith(account1);
+      expect(followersService.getWeeklyKpi).toHaveBeenCalledWith(account2);
+      expect(service.sendWeeklyStatsMail).toHaveBeenCalledTimes(1);
+      const sendMailArgs = (service.sendWeeklyStatsMail as jest.Mock).mock.calls[0];
+      expect(sendMailArgs[0]).toBe(userWithAccounts); // user
+      expect(sendMailArgs[1].length).toBe(2); // stats array
+      expect(sendMailArgs[1][0].accountName).toBe(account1.accountName);
+      expect(sendMailArgs[1][1].accountName).toBe(account2.name); // Fallback
+      expect(sendMailArgs[1][0].followers).toEqual({ value: 10, change: '(+5)' });
+      expect(sendMailArgs[2]).toBeUndefined(); // rerouteToEmail
+    });
+
+    it('should reroute email if email is provided in DTO', async () => {
+      usersService.findById.mockResolvedValue(userWithAccounts);
+      const rerouteDto: WeeklyStatsMailDto = { ...dto, email: 'reroute@example.com' };
+      await service.processAndSendWeeklyStatsMail(rerouteDto);
+      expect(service.sendWeeklyStatsMail).toHaveBeenCalledWith(
+        userWithAccounts,
+        expect.any(Array),
+        'reroute@example.com',
+      );
+    });
+
+    it('should throw NotFoundException if user not found', async () => {
+      usersService.findById.mockResolvedValue(null);
+      await expect(service.processAndSendWeeklyStatsMail(dto)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should log warning and not send if no setup-complete accounts match', async () => {
+      const userWithNonSetupAccount = {
+        ...mockUser,
+        accounts: {
+          init: jest.fn().mockResolvedValue(undefined),
+          getItems: jest.fn().mockReturnValue([{ ...account1, setupComplete: false }]),
+        },
+      } as unknown as UserEntity;
+      usersService.findById.mockResolvedValue(userWithNonSetupAccount);
+      await service.processAndSendWeeklyStatsMail(dto);
+      expect(loggerWarnSpy).toHaveBeenCalled();
+      expect(service.sendWeeklyStatsMail).not.toHaveBeenCalled();
+    });
+
+    it('should log error for an account if KPI fetching fails but send for others', async () => {
+      usersService.findById.mockResolvedValue(userWithAccounts);
+      followersService.getWeeklyKpi.mockImplementation(async (acc) => {
+        if (acc.id === account1.id) throw new Error('KPI fetch failed');
+        return kpiResponse;
+      });
+
+      await service.processAndSendWeeklyStatsMail(dto);
+
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`Failed to retrieve weekly KPIs for account ${account1.id}`),
+        expect.any(String), // stack
+      );
+      expect(service.sendWeeklyStatsMail).toHaveBeenCalledTimes(1);
+      const sendMailArgs = (service.sendWeeklyStatsMail as jest.Mock).mock.calls[0];
+      expect(sendMailArgs[1].length).toBe(1); // Only stats for account2
+      expect(sendMailArgs[1][0].accountName).toBe(account2.name);
+    });
+
+    it('should log warning and not send if all KPI fetching fails', async () => {
+      usersService.findById.mockResolvedValue(userWithAccounts);
+      followersService.getWeeklyKpi.mockRejectedValue(new Error('KPI fetch failed'));
+      repliesService.getWeeklyKpi.mockRejectedValue(new Error('KPI fetch failed'));
+      boostsService.getWeeklyKpi.mockRejectedValue(new Error('KPI fetch failed'));
+      favoritesService.getWeeklyKpi.mockRejectedValue(new Error('KPI fetch failed'));
+
+      await service.processAndSendWeeklyStatsMail(dto);
+
+      expect(loggerErrorSpy).toHaveBeenCalledTimes(2); // For account1 and account2
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `No stats successfully generated for user ${mockUser.email} (ID: ${mockUser.id}), weekly email not sent.`,
+        ),
+      );
+      expect(service.sendWeeklyStatsMail).not.toHaveBeenCalled();
+    });
+  });
+});
+
+// Helper to define loggerWarnSpy if not already defined globally for tests
+let loggerWarnSpy: jest.SpyInstance;
+beforeAll(() => {
+  loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn');
+});
+afterAll(() => {
+  loggerWarnSpy.mockRestore();
 });

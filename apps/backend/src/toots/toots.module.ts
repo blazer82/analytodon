@@ -1,6 +1,6 @@
 import { DailyTootStatsEntity, TootEntity } from '@analytodon/shared-orm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { AccountsModule } from '../accounts/accounts.module'; // Import AccountsModule for AccountEntity relation
 import { TootsController } from './toots.controller';
@@ -11,7 +11,7 @@ import { TootsService } from './toots.service';
     MikroOrmModule.forFeature({
       entities: [TootEntity, DailyTootStatsEntity],
     }),
-    AccountsModule,
+    forwardRef(() => AccountsModule),
   ],
   controllers: [TootsController],
   providers: [TootsService],

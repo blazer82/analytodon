@@ -1,5 +1,5 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { AccountsModule } from '../accounts/accounts.module';
 import { TootsModule } from '../toots/toots.module';
@@ -11,10 +11,11 @@ import { BoostsService } from './boosts.service';
     MikroOrmModule.forFeature({
       entities: [], // DailyTootStatsEntity and TootEntity are expected from TootsModule
     }),
-    AccountsModule, // For accessing account information (e.g., timezone, ownership verification)
+    forwardRef(() => AccountsModule), // For accessing account information (e.g., timezone, ownership verification)
     TootsModule, // For TootsService and entities (DailyTootStatsEntity, TootEntity)
   ],
   controllers: [BoostsController],
   providers: [BoostsService],
+  exports: [BoostsService],
 })
 export class BoostsModule {}

@@ -1,5 +1,5 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { AccountsModule } from '../accounts/accounts.module';
 import { TootsModule } from '../toots/toots.module';
@@ -11,10 +11,11 @@ import { RepliesService } from './replies.service';
     MikroOrmModule.forFeature({
       entities: [], // DailyTootStatsEntity and TootEntity are provided by TootsModule
     }),
-    AccountsModule,
+    forwardRef(() => AccountsModule),
     TootsModule,
   ],
   controllers: [RepliesController],
   providers: [RepliesService],
+  exports: [RepliesService],
 })
 export class RepliesModule {}

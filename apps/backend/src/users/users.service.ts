@@ -1,7 +1,7 @@
 import { UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { EntityRepository, FilterQuery, Loaded } from '@mikro-orm/mongodb';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
 
@@ -20,7 +20,7 @@ export class UsersService {
     private readonly userRepository: EntityRepository<UserEntity>,
     @InjectRepository(UserCredentialsEntity)
     private readonly userCredentialsRepository: EntityRepository<UserCredentialsEntity>,
-    private readonly mailService: MailService,
+    @Inject(forwardRef(() => MailService)) private readonly mailService: MailService,
   ) {}
 
   /**

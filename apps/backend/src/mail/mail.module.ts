@@ -6,6 +6,10 @@ import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AccountsModule } from '../accounts/accounts.module';
+import { BoostsModule } from '../boosts/boosts.module';
+import { FavoritesModule } from '../favorites/favorites.module';
+import { FollowersModule } from '../followers/followers.module';
+import { RepliesModule } from '../replies/replies.module';
 import { UsersModule } from '../users/users.module';
 import { MailController } from './mail.controller';
 import { MailService } from './mail.service';
@@ -47,6 +51,10 @@ import { MailService } from './mail.service';
     }),
     forwardRef(() => UsersModule),
     forwardRef(() => AccountsModule),
+    BoostsModule,
+    FavoritesModule,
+    FollowersModule,
+    RepliesModule,
   ],
   controllers: [MailController],
   providers: [MailService],
