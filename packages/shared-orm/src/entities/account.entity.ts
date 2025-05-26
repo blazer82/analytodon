@@ -52,6 +52,6 @@ export class AccountEntity extends BaseEntity {
   @Property({ type: 'array', nullable: true })
   requestedScope?: string[];
 
-  @Property()
+  @Property({ nullable: true })
   tootHistoryComplete?: boolean;
 }
