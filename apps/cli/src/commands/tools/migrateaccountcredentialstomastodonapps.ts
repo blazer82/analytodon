@@ -130,19 +130,11 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
           continue;
         }
 
-        const credentialsId = accountDoc.credentials as ObjectId | undefined;
-        if (!credentialsId) {
-          this.warn(
-            `Account ID ${accountId} (serverURL: ${serverURL}) has no associated credentials reference. Cannot create Mastodon App.`,
-          );
-          errorsEncounteredCount++;
-          continue;
-        }
-
-        const credentialDoc = await accountCredentialsCollection.findOne({ _id: credentialsId });
+        // Fetch credentials using the accountId by querying the 'account' field in 'accountcredentials'
+        const credentialDoc = await accountCredentialsCollection.findOne({ account: accountId });
         if (!credentialDoc) {
           this.warn(
-            `Could not find AccountCredentials document with ID ${credentialsId} (for Account ID ${accountId}, serverURL: ${serverURL}). Cannot create Mastodon App.`,
+            `Could not find AccountCredentials document for Account ID ${accountId} (serverURL: ${serverURL}). Cannot create Mastodon App.`,
           );
           errorsEncounteredCount++;
           continue;
@@ -153,7 +145,7 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
 
         if (!legacyClientID) {
           this.warn(
-            `Account ID ${accountId} (serverURL: ${serverURL}): 'clientID' is missing in credentials ID ${credentialsId}. Cannot create Mastodon App.`,
+            `Account ID ${accountId} (serverURL: ${serverURL}): 'clientID' is missing in credentials document ${credentialDoc._id}. Cannot create Mastodon App.`,
           );
           errorsEncounteredCount++;
           continue;
@@ -161,7 +153,7 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
 
         if (!legacyClientSecret) {
           this.warn(
-            `Account ID ${accountId} (serverURL: ${serverURL}): 'clientSecret' is missing in credentials ID ${credentialsId}. Cannot create Mastodon App.`,
+            `Account ID ${accountId} (serverURL: ${serverURL}): 'clientSecret' is missing in credentials document ${credentialDoc._id}. Cannot create Mastodon App.`,
           );
           errorsEncounteredCount++;
           continue;

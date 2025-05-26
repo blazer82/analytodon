@@ -72,11 +72,6 @@ export default class Accounts extends BaseCommand {
       }
     });
 
-    this.log(`Clean up accounts: Update affected users${flags.dryRun ? ' (DRY RUN)' : ''}`);
-    if (!flags.dryRun) {
-      await db.collection('users').updateMany({}, { $pull: { accounts: { $in: accountIds } } as any });
-    }
-
     this.log('Clean up accounts: Done');
 
     await connection.close();

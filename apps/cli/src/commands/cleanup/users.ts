@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import { Document, Filter, MongoClient } from 'mongodb';
+import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 
 import { BaseCommand } from '../../base';
 import { processInBatches } from '../../helpers/processInBatches';
@@ -43,9 +43,16 @@ export default class Users extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
+    // Get all distinct owner IDs from the accounts collection that are valid ObjectIds
+    const activeAccountOwnerIds = (
+      await db.collection('accounts').distinct('owner', { owner: { $exists: true, $ne: null } })
+    )
+      .filter((id) => ObjectId.isValid(id as string | ObjectId)) // Filter out invalid representations if any
+      .map((id) => new ObjectId(id as string | ObjectId)); // Ensure they are ObjectId instances
+
     const usersQuery: Filter<Document> = {
+      _id: { $nin: activeAccountOwnerIds }, // User's _id is not in the list of owners from accounts
       role: 'account-owner',
-      'accounts.0': { $exists: false },
       createdAt: { $lt: cutoffDate },
     };
 

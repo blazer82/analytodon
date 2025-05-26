@@ -47,7 +47,6 @@ export default class AccountStats extends BaseCommand {
       .collection('accounts')
       .find({
         isActive: true,
-        credentials: { $exists: true },
         timezone: { $in: timezones },
       })
       .toArray();

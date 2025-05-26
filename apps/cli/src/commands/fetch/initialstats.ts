@@ -52,7 +52,6 @@ export default class InitialStats extends BaseCommand {
 
     const accountQuery: Filter<Document> = {
       isActive: true,
-      credentials: { $exists: true },
       initialStatsFetched: { $ne: true },
       requestedScope: { $all: ['read:accounts', 'read:statuses', 'read:notifications'] },
     };
@@ -65,11 +64,29 @@ export default class InitialStats extends BaseCommand {
     const account = await db.collection('accounts').findOne(accountQuery);
 
     if (account) {
-      this.log(`Fetching initial stats: Processing account ${account.name}`);
+      this.log(`Fetching initial stats: Processing account ${account.name} (ID: ${account._id})`);
 
-      const user = await db.collection('users').findOne({ accounts: { $in: [account._id] } });
+      // Check if credentials exist for this account
+      const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
+      if (!credentials) {
+        this.warn(
+          `Fetching initial stats: No credentials found for account ${account.name} (ID: ${account._id}). Skipping.`,
+        );
+        await connection.close();
+        return;
+      }
+
+      if (!account.owner) {
+        this.warn(
+          `Fetching initial stats: Account ${account._id} (${account.name}) does not have an owner field. Skipping.`,
+        );
+        await connection.close();
+        return;
+      }
+      const user = await db.collection('users').findOne({ _id: account.owner as ObjectId });
 
       if (user) {
+        this.log(`Fetching initial stats: Found owner ${user._id} for account ${account.name}`);
         await db.collection('accounts').updateOne({ _id: account._id }, { $set: { initialStatsFetched: true } });
 
         this.log(`Fetching initial stats: Fetch toot history for account ${account.name}`);
