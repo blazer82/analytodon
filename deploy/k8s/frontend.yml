@@ -70,3 +70,28 @@ spec:
   type: NodePort
   selector:
     app: analytodon-frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: analytodon-frontend-ingress
+  namespace: analytodon2
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+    - hosts:
+        - beta.analytodon.com
+      secretName: letsencrypt-analytodon-tls
+  rules:
+    - host: beta.analytodon.com
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: analytodon-frontend
+                port:
+                  number: 80
