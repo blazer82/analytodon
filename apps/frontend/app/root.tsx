@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useLayoutEffect } from 'react';
 
 import { CacheProvider, withEmotionCache } from '@emotion/react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
@@ -45,12 +45,15 @@ interface DocumentProps {
   title?: string;
 }
 
+// Define the isomorphic hook
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
 const Document = withEmotionCache(({ children, title }: DocumentProps, emotionCache) => {
   const theme = useAppTheme();
   const clientStyleData = useContext(ClientStyleContext);
 
   // Only executed on client
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     // Re-link sheet container
     emotionCache.sheet.container = document.head;
 
