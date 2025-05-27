@@ -16,14 +16,14 @@ export function formatDate(date: string | Date): string {
 }
 
 /**
- * Formats a number using the current locale's number formatting.
- * e.g., 12345.67 -> "12,345.67" (for en-US)
+ * Formats a number using the en-US locale's number formatting.
+ * e.g., 12345.67 -> "12,345.67"
  * @param num The number to format.
  * @returns The formatted number string.
  */
 export function formatNumber(num: number): string {
   if (num == null) return '0'; // Or handle as an error/empty string
-  return new Intl.NumberFormat().format(num);
+  return new Intl.NumberFormat('en-US').format(num);
 }
 
 /**
