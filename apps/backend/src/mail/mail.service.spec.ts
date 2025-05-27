@@ -1,3 +1,5 @@
+import * as path from 'path';
+
 import { AccountEntity, UserEntity } from '@analytodon/shared-orm';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Logger, NotFoundException } from '@nestjs/common';
@@ -144,6 +146,13 @@ describe('MailService', () => {
         to: mockUser.email,
         subject,
         template: './password-reset',
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+            cid: 'logo@analytodon.com',
+          },
+        ],
         context: {
           appURL: mockConfigValues.FRONTEND_URL,
           supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
@@ -180,6 +189,13 @@ describe('MailService', () => {
         to: mockUser.email,
         subject,
         template: './email-verification',
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+            cid: 'logo@analytodon.com',
+          },
+        ],
         context: {
           appURL: mockConfigValues.FRONTEND_URL,
           supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
@@ -214,6 +230,13 @@ describe('MailService', () => {
         to: mockUser.email,
         subject,
         template: './old-account-warning',
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+            cid: 'logo@analytodon.com',
+          },
+        ],
         context: {
           appURL: mockConfigValues.FRONTEND_URL,
           supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
@@ -247,6 +270,13 @@ describe('MailService', () => {
         to: mockUser.email,
         subject,
         template: './first-stats-available',
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+            cid: 'logo@analytodon.com',
+          },
+        ],
         context: {
           appURL: mockConfigValues.FRONTEND_URL,
           supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
@@ -297,6 +327,13 @@ describe('MailService', () => {
         to: mockConfigValues.EMAIL_FROM_ADDRESS, // Admin email
         subject,
         template: './signup-notification',
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+            cid: 'logo@analytodon.com',
+          },
+        ],
         context: {
           appURL: mockConfigValues.FRONTEND_URL,
           supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
