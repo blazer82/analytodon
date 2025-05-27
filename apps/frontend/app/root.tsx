@@ -67,7 +67,6 @@ const Document = withEmotionCache(({ children, title }: DocumentProps, emotionCa
 
     // Reset cache to reapply global styles
     clientStyleData.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
