@@ -9,8 +9,8 @@ const Footer: FunctionComponent = () => {
   const rootData = useRouteLoaderData<{ ENV: { MARKETING_URL: string; SUPPORT_EMAIL: string } }>('root');
 
   // Default values in case we're in an error boundary where loader data isn't available
-  const marketingUrl = rootData?.ENV?.MARKETING_URL || import.meta.env.VITE_MARKETING_URL || 'https://analytodon.com';
-  const supportEmail = rootData?.ENV?.SUPPORT_EMAIL || import.meta.env.VITE_SUPPORT_EMAIL || 'support@analytodon.com';
+  const marketingUrl = rootData?.ENV?.MARKETING_URL || 'https://analytodon.com';
+  const supportEmail = rootData?.ENV?.SUPPORT_EMAIL || 'support@analytodon.com';
 
   return (
     <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 8, mb: 4 }}>
