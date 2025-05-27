@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import type { SessionUserDto } from '@analytodon/rest-client';
 import { Box, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import { Link as RemixLink } from '@remix-run/react';
+import { Link as RemixLink, useRouteLoaderData } from '@remix-run/react';
 import Title from '~/components/Title';
 import { formatDate, shortenToot } from '~/utils/formatters';
 
@@ -25,6 +26,9 @@ const TopToots: React.FunctionComponent<{
   showBoosts?: boolean;
   showFavorites?: boolean;
 }> = ({ data, title, linkText, link, showReplies = true, showBoosts = true, showFavorites = true }) => {
+  const appData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto };
+  const userTimezone = appData?.user?.timezone;
+
   return (
     <React.Fragment>
       {title && <Title>{title}</Title>}
@@ -98,7 +102,7 @@ const TopToots: React.FunctionComponent<{
           <TableBody>
             {data.map((toot) => (
               <TableRow key={toot.uri} sx={{ transition: 'background-color 0.2s ease' }}>
-                <TableCell>{formatDate(toot.createdAt)}</TableCell>
+                <TableCell>{formatDate(toot.createdAt, userTimezone)}</TableCell>
                 <TableCell>
                   <Link
                     href={toot.url}

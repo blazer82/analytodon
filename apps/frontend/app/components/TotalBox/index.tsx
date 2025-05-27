@@ -1,8 +1,9 @@
 import * as React from 'react';
 
+import type { SessionUserDto } from '@analytodon/rest-client';
 import { Box, Link } from '@mui/material';
 import Typography from '@mui/material/Typography';
-import { Link as RemixLink } from '@remix-run/react';
+import { Link as RemixLink, useRouteLoaderData } from '@remix-run/react';
 import Title from '~/components/Title';
 import { formatDate } from '~/utils/formatters';
 
@@ -18,6 +19,9 @@ const TotalBox: React.FunctionComponent<{
   linkText?: string;
   link?: string;
 }> = ({ title, amount, date, linkText, link }) => {
+  const appData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto };
+  const userTimezone = appData?.user?.timezone;
+
   return (
     <React.Fragment>
       <Title>{title}</Title>
@@ -45,7 +49,7 @@ const TotalBox: React.FunctionComponent<{
           opacity: 0.8,
         }}
       >
-        on {formatDate(date)}
+        on {formatDate(date, userTimezone)}
       </Typography>
       {linkText && link && (
         <Box sx={{ mt: 2 }}>

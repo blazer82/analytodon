@@ -277,7 +277,7 @@ export default function AccountsPage() {
                   <TableCell>{account.username}</TableCell>
                   <TableCell>{stripSchema(account.serverURL)}</TableCell>
                   <TableCell>{account.timezone}</TableCell>
-                  <TableCell>{formatDate(account.createdAt)}</TableCell>
+                  <TableCell>{formatDate(account.createdAt, user.timezone)}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       title="Reconnect"

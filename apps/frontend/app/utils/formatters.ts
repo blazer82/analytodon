@@ -1,18 +1,21 @@
+import dayjs from 'dayjs';
+import tz from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+
 /**
  * Formats a date string or Date object into "MMM DD, YYYY" format.
  * e.g., "Apr 24, 2025"
  * @param date The date to format.
+ * @param timezone Optional timezone string (e.g., "America/New_York").
  * @returns The formatted date string.
  */
-export function formatDate(date: string | Date): string {
-  if (typeof date === 'string') {
-    date = new Date(date);
+export function formatDate(date: string | Date, timezone?: string): string {
+  dayjs.extend(utc);
+  dayjs.extend(tz);
+  if (timezone) {
+    return dayjs(date).tz(timezone.replace(' ', '_')).format('MMM DD, YYYY');
   }
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date);
+  return dayjs(date).utc().format('MMM DD, YYYY');
 }
 
 /**
@@ -23,6 +26,7 @@ export function formatDate(date: string | Date): string {
  */
 export function formatNumber(num: number): string {
   if (num == null) return '0'; // Or handle as an error/empty string
+  // Explicitly use 'en-US' locale for consistent number formatting
   return new Intl.NumberFormat('en-US').format(num);
 }
 
