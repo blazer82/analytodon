@@ -98,16 +98,20 @@ export default class InitialStats extends BaseCommand {
         this.log(`Fetching initial stats: Create initial toot stats for account ${account.name}`);
         await createInitialTootStats(db, account);
 
-        await axios.post(
-          `${flags.host}/mail/first-stats`,
-          { userID: `${user._id}`, accounts: [account._id] },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: flags.authorization,
+        try {
+          await axios.post(
+            `${flags.host}/mail/first-stats`,
+            { userID: `${user._id}`, accounts: [account._id] },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: flags.authorization,
+              },
             },
-          },
-        );
+          );
+        } catch (error) {
+          this.error(`Fetching initial stats: Failed to send email notification for user ${user._id}: ${error}`);
+        }
       } else {
         this.warn(`Fetching initial stats: Owner of account ${account._id} not found.`);
       }

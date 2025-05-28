@@ -158,7 +158,7 @@ USAGE
 FLAGS
   -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
   -d, --database=<value>          [default: analytodon] Source database name
-  -h, --host=<value>              [default: https://app.analytodon.com] App host URL
+  -h, --host=<value>              [default: http://localhost:3000] App host URL
   -x, --dryRun                    Dry run, no actual changes made
 
 DESCRIPTION
@@ -271,7 +271,7 @@ FLAGS
   -a, --account=<value>           Only process specific account
   -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
   -d, --database=<value>          [default: analytodon] Source database name
-  -h, --host=<value>              [default: https://app.analytodon.com] App host URL
+  -h, --host=<value>              [default: http://localhost:3000] App host URL
   -t, --authorization=<value>     [default: no-key] Authorization header
 
 DESCRIPTION
@@ -380,7 +380,7 @@ USAGE
 FLAGS
   -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
   -d, --database=<value>          [default: analytodon] Source database name
-  -h, --host=<value>              [default: https://app.analytodon.com] App host URL
+  -h, --host=<value>              [default: http://localhost:3000] App host URL
   -t, --authorization=<value>     [default: no-key] Authorization header
   -u, --user=<value>              Only process specific user
   -x, --dryRun                    Dry run, no actual changes made
@@ -405,7 +405,7 @@ USAGE
 FLAGS
   -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
   -d, --database=<value>          [default: analytodon] Source database name
-  -h, --host=<value>              [default: https://app.analytodon.com] App host URL
+  -h, --host=<value>              [default: http://localhost:3000] App host URL
   -t, --authorization=<value>     [default: no-key] Authorization header
   -u, --user=<value>              Only process specific user
   -z, --timezone=<value>          Process accounts with this timezone

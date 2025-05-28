@@ -71,6 +71,10 @@ export const createInitialTootStats = async (db: Db, account: Document) => {
           statsList[index].repliesCount = runningTotal.repliesCount;
           statsList[index].boostsCount = runningTotal.boostsCount;
           statsList[index].favouritesCount = runningTotal.favouritesCount;
+        } else {
+          logger.warn(
+            `Create initial toot stats: Toot date ${tootDate.toISOString()} not found in stats list for account ${account.name}.`,
+          );
         }
 
         if (tootDate.getTime() < actualStartDate.getTime()) {
