@@ -3,7 +3,7 @@ import * as React from 'react';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Alert, Box, IconButton, InputAdornment, Link as MuiLink, Typography, useTheme } from '@mui/material';
-import { Form, Link } from '@remix-run/react';
+import { Form, Link, useNavigation } from '@remix-run/react';
 import Footer from '~/components/Footer';
 import Logo from '~/components/Logo';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
@@ -20,6 +20,9 @@ import {
 
 const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
   const theme = useTheme();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
+
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -114,8 +117,15 @@ const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
               </Alert>
             )}
 
-            <StyledButton type="submit" fullWidth variant="contained" size="large" sx={{ mt: 2, mb: 3 }}>
-              Sign In
+            <StyledButton
+              type="submit"
+              fullWidth
+              variant="contained"
+              size="large"
+              sx={{ mt: 2, mb: 3 }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
             </StyledButton>
 
             <LinksContainer>

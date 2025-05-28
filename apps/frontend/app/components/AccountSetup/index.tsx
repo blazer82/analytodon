@@ -17,7 +17,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { Form } from '@remix-run/react';
+import { Form, useNavigation } from '@remix-run/react';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import timezones from '~/utils/timezones.json';
 
@@ -59,6 +59,8 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting' && navigation.formData?.get('_action') === 'connect';
 
   const [values, setValues] = React.useState<AccountSetupFormData>({
     serverURL: initialServerURL,
@@ -134,8 +136,8 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
                 Cancel
               </StyledButton>
             )}
-            <StyledButton variant="contained" type="submit" name="_action" value="connect">
-              Connect Account
+            <StyledButton variant="contained" type="submit" name="_action" value="connect" disabled={isSubmitting}>
+              {isSubmitting ? 'Connecting...' : 'Connect Account'}
             </StyledButton>
           </DialogActions>
         </Form>

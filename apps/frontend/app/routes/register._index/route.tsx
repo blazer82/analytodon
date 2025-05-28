@@ -13,7 +13,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
-import { Form, Link, useActionData } from '@remix-run/react';
+import { Form, Link, useActionData, useNavigation } from '@remix-run/react';
 import Footer from '~/components/Footer';
 import {
   FormCard,
@@ -126,6 +126,8 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function Register() {
   const theme = useTheme();
   const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
   const [showPassword, setShowPassword] = React.useState(false);
   const [values, setValues] = React.useState({
     email: '',
@@ -256,8 +258,15 @@ export default function Register() {
               </Alert>
             )}
 
-            <StyledButton type="submit" fullWidth variant="contained" size="large" sx={{ mt: 2, mb: 3 }}>
-              Create Account
+            <StyledButton
+              type="submit"
+              fullWidth
+              variant="contained"
+              size="large"
+              sx={{ mt: 2, mb: 3 }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating Account...' : 'Create Account'}
             </StyledButton>
 
             <LinksContainer>

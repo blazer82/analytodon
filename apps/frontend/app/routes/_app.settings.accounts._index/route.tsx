@@ -25,7 +25,7 @@ import {
   useTheme,
 } from '@mui/material';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { redirect, useActionData, useLoaderData, useNavigate, useSubmit } from '@remix-run/react';
+import { redirect, useActionData, useLoaderData, useNavigate, useNavigation, useSubmit } from '@remix-run/react';
 import AccountSetup from '~/components/AccountSetup';
 import AccountSetupComplete from '~/components/AccountSetupComplete';
 import { DataTablePaper } from '~/components/Layout/styles';
@@ -147,6 +147,8 @@ export default function AccountsPage() {
   const theme = useTheme();
   const navigate = useNavigate();
   const submit = useSubmit();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [accountToDelete, setAccountToDelete] = React.useState<AccountResponseDto | null>(null);
@@ -385,8 +387,13 @@ export default function AccountsPage() {
           <StyledButton variant="outlined" onClick={() => setReconnectDialogOpen(false)}>
             Cancel
           </StyledButton>
-          <StyledButton variant="contained" onClick={handleReconnect} color="primary">
-            Reconnect
+          <StyledButton
+            variant="contained"
+            onClick={handleReconnect}
+            color="primary"
+            disabled={isSubmitting && navigation.formData?.get('_action') === 'reconnect'}
+          >
+            {isSubmitting && navigation.formData?.get('_action') === 'reconnect' ? 'Reconnecting...' : 'Reconnect'}
           </StyledButton>
         </DialogActions>
       </Dialog>
@@ -434,10 +441,12 @@ export default function AccountsPage() {
           <StyledButton
             variant="contained"
             onClick={handleDeleteConfirm}
-            disabled={deleteConfirmText !== 'delete'}
+            disabled={
+              deleteConfirmText !== 'delete' || (isSubmitting && navigation.formData?.get('_action') === 'delete')
+            }
             color="error"
           >
-            Delete Account
+            {isSubmitting && navigation.formData?.get('_action') === 'delete' ? 'Deleting...' : 'Delete Account'}
           </StyledButton>
         </DialogActions>
       </Dialog>

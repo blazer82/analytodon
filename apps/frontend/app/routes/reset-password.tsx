@@ -4,7 +4,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Alert, Box, IconButton, InputAdornment, Link as MuiLink, Typography, useTheme } from '@mui/material';
 import { type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
-import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
+import { Form, Link, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
 import Footer from '~/components/Footer';
 import {
   FormCard,
@@ -143,6 +143,8 @@ export default function ResetPassword() {
   const theme = useTheme();
   const { token } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>() as ActionData | undefined;
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
@@ -291,8 +293,21 @@ export default function ResetPassword() {
                 </Alert>
               )}
 
-              <StyledButton type="submit" fullWidth variant="contained" size="large" sx={{ mt: 2, mb: 3 }}>
-                {isResetForm ? 'Reset Password' : 'Send Reset Link'}
+              <StyledButton
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                sx={{ mt: 2, mb: 3 }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? isResetForm
+                    ? 'Resetting Password...'
+                    : 'Sending Link...'
+                  : isResetForm
+                    ? 'Reset Password'
+                    : 'Send Reset Link'}
               </StyledButton>
 
               <LinksContainer>

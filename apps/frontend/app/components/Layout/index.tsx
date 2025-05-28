@@ -8,7 +8,7 @@ import { Avatar, Button, Container, Divider, Menu, MenuItem, Toolbar, Typography
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
-import { Form, useRouteLoaderData } from '@remix-run/react';
+import { Form, useNavigation, useRouteLoaderData } from '@remix-run/react';
 
 import AccountOwnerNavigation from '../AccountOwnerNavigation';
 import Footer from '../Footer';
@@ -28,6 +28,8 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username, avatarURL }) => {
   const theme = useTheme();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
   const [open, setOpen] = React.useState(true);
   const toggleDrawer = () => {
     setOpen(!open);
@@ -183,8 +185,17 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                               color: 'inherit',
                               fontWeight: 'inherit',
                             }}
+                            disabled={
+                              isSubmitting &&
+                              navigation.formAction === '/api/switch-account' &&
+                              navigation.formData?.get('accountId') === item.id
+                            }
                           >
-                            {item.accountName || item.name}
+                            {isSubmitting &&
+                            navigation.formAction === '/api/switch-account' &&
+                            navigation.formData?.get('accountId') === item.id
+                              ? 'Switching...'
+                              : item.accountName || item.name}
                           </Button>
                         </Form>
                       </MenuItem>
@@ -200,8 +211,9 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                         justifyContent: 'flex-start',
                         textTransform: 'none',
                       }}
+                      disabled={isSubmitting && navigation.formAction === '/logout'}
                     >
-                      Logout
+                      {isSubmitting && navigation.formAction === '/logout' ? 'Logging out...' : 'Logout'}
                     </Button>
                   </Form>
                 </MenuItem>
