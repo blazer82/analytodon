@@ -1,18 +1,18 @@
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # Analytodon cron jobs
 
-* * * * * analytodon /app/apps/cli/bin/run.js hello analytodon -f "the cron tab" > /tmp/cron_job_pipe 2>&1
+#* * * * * analytodon /app/apps/cli/bin/run.js hello analytodon -f "the cron tab" > /tmp/cron_job_pipe 2>&1
 
 # analytodon initial stats
-#* * * * * analytodon /app/apps/cli/bin/run.js fetch initialstats > /tmp/cron_job_pipe 2>&1
+* * * * * analytodon /app/apps/cli/bin/run.js fetch initialstats > /tmp/cron_job_pipe 2>&1
 
 # analytodon fetch
-#35 * * * * analytodon /app/apps/cli/bin/run.js fetch accountstats > /tmp/cron_job_pipe 2>&1
-#35 * * * * analytodon /app/apps/cli/bin/run.js fetch tootstats -a > /tmp/cron_job_pipe 2>&1
+35 * * * * analytodon /app/apps/cli/bin/run.js fetch accountstats > /tmp/cron_job_pipe 2>&1
+35 * * * * analytodon /app/apps/cli/bin/run.js fetch tootstats -a > /tmp/cron_job_pipe 2>&1
 
 # analytodon aggregate
-#5 * * * * analytodon /app/apps/cli/bin/run.js aggregate dailyaccountstats > /tmp/cron_job_pipe 2>&1
-#5 * * * * analytodon /app/apps/cli/bin/run.js aggregate dailytootstats > /tmp/cron_job_pipe 2>&1
+5 * * * * analytodon /app/apps/cli/bin/run.js aggregate dailyaccountstats > /tmp/cron_job_pipe 2>&1
+5 * * * * analytodon /app/apps/cli/bin/run.js aggregate dailytootstats > /tmp/cron_job_pipe 2>&1
 
 # analytodon weekly mail
 #0 19,20,21,22,23 * * 0 analytodon /app/apps/cli/bin/run.js mail weeklystats > /tmp/cron_job_pipe 2>&1

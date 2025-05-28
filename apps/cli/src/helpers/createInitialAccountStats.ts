@@ -3,7 +3,6 @@ import { Db, Document } from 'mongodb';
 
 import { decryptText } from './encryption';
 import { getDateInTimezone } from './getDateInTimezone';
-import { getDaysAgo } from './getDaysAgo';
 import { logger } from './logger';
 import { processInBatches } from './processInBatches';
 
@@ -41,13 +40,14 @@ export const createInitialAccountStats = async (db: Db, account: Document) => {
 
     const statsList: { day: Date; followersCount: number }[] = [];
 
-    const startDate = getDateInTimezone(new Date(userInfo.data.created_at), account.timezone);
-    const endDate = getDaysAgo(0, account.timezone);
+    const startDate = new Date(userInfo.data.created_at);
+    startDate.setDate(startDate.getDate() - 1);
+    const endDate = new Date();
 
     const day = new Date(endDate);
     while (day >= startDate) {
       statsList.push({
-        day: new Date(day),
+        day: getDateInTimezone(day, account.timezone),
         followersCount: day.getTime() === endDate.getTime() ? userInfo.data.followers_count : 0,
       });
       day.setDate(day.getDate() - 1);
@@ -86,6 +86,10 @@ export const createInitialAccountStats = async (db: Db, account: Document) => {
             const index = statsList.findIndex(({ day }) => day.getTime() === notificationDate.getTime());
             if (index >= 0) {
               statsList[index].followersCount += 1;
+            } else {
+              logger.warn(
+                `Create initial account stats: Notification date ${notificationDate.toISOString()} not found in stats list for account ${account.name}.`,
+              );
             }
             if (notificationDate.getTime() < actualStartDate.getTime()) {
               actualStartDate = new Date(notificationDate);

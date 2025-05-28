@@ -31,17 +31,25 @@ export const createInitialTootStats = async (db: Db, account: Document) => {
 
     const statsList: { day: Date; repliesCount: number; boostsCount: number; favouritesCount: number }[] = [];
 
-    const startDate = getDateInTimezone(new Date(userInfo.data.created_at), account.timezone);
-    const endDate = getDateInTimezone(new Date(account.createdAt), account.timezone);
-    endDate.setDate(endDate.getDate() - 1);
+    const startDate = new Date(userInfo.data.created_at);
+    startDate.setDate(startDate.getDate() - 1);
+    const endDate = new Date();
 
     const day = new Date(startDate);
     while (day <= endDate) {
-      statsList.push({ day: new Date(day), repliesCount: 0, boostsCount: 0, favouritesCount: 0 });
+      statsList.push({
+        day: getDateInTimezone(day, account.timezone),
+        repliesCount: 0,
+        boostsCount: 0,
+        favouritesCount: 0,
+      });
       day.setDate(day.getDate() + 1);
     }
 
     let actualStartDate = new Date(endDate);
+
+    const actualEndDate = getDateInTimezone(new Date(account.createdAt), account.timezone);
+    actualEndDate.setDate(actualEndDate.getDate() - 1);
 
     const runningTotal = {
       repliesCount: 0,
@@ -83,7 +91,9 @@ export const createInitialTootStats = async (db: Db, account: Document) => {
       }
     }
 
-    const croppedStatsList = statsList.filter(({ day }) => day.getTime() >= actualStartDate.getTime());
+    const croppedStatsList = statsList.filter(
+      ({ day }) => day.getTime() >= actualStartDate.getTime() && day.getTime() <= actualEndDate.getTime(),
+    );
 
     const calculatedStatsList = croppedStatsList.reduce(
       (carry, stats, index) => {
