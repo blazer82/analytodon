@@ -1,0 +1,35 @@
+/* Inter Normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900; /* Defines the range of weights this variable font supports */
+  font-display: swap; /* Improves perceived performance */
+  src: url('/fonts/Inter-VariableFont_opsz,wght.woff2') format('woff2-variations');
+}
+
+/* Inter Italic */
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 100 900; /* Defines the range of weights this variable font supports */
+  font-display: swap;
+  src: url('/fonts/Inter-Italic-VariableFont_opsz,wght.woff2') format('woff2-variations');
+}
+
+/* Roboto Normal (Fallback) */
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 100 900; /* Defines the range of weights this variable font supports */
+  font-display: swap;
+  src: url('/fonts/Roboto-VariableFont_wdth,wght.woff2') format('woff2-variations');
+}
+
+/* Roboto Italic (Fallback) */
+@font-face {
+  font-family: 'Roboto';
+  font-style: italic;
+  font-weight: 100 900; /* Defines the range of weights this variable font supports */
+  font-display: swap;
+  src: url('/fonts/Roboto-Italic-VariableFont_wdth,wght.woff2') format('woff2-variations');
+}
