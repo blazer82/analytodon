@@ -319,12 +319,12 @@ export default function RepliesPage() {
             )}
             {!hasTopTootsData && !isLoadingData && (
               <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>
-                No top toots data available for the selected timeframe.
+                No top posts data available for the selected timeframe.
               </Typography>
             )}
             {/* Optional: Loading state for top toots if it's separate or part of isLoadingData */}
             {isLoadingData && !hasTopTootsData && (
-              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>Loading top toots data...</Typography>
+              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>Loading top posts data...</Typography>
             )}
           </DataTablePaper>
         </Grid>
