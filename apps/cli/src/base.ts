@@ -5,6 +5,11 @@ export abstract class BaseCommand extends Command {
   // Create our own pino logger instance
   private pinoLogger = pino({
     level: process.env.LOG_LEVEL || 'info', // Default to 'info' unless overridden
+    formatters: {
+      level: (label) => {
+        return { level: label };
+      },
+    },
     transport:
       process.env.NODE_ENV === 'production'
         ? undefined

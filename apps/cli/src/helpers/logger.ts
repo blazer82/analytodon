@@ -4,6 +4,11 @@ import pino from 'pino';
 
 const pinoInstance = pino({
   level: process.env.LOG_LEVEL || 'info', // Default to 'info' unless overridden
+  formatters: {
+    level: (label) => {
+      return { level: label };
+    },
+  },
   transport:
     process.env.NODE_ENV === 'production'
       ? undefined
