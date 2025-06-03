@@ -40,7 +40,7 @@ export const EnhancedPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   display: 'flex',
   flexDirection: 'column',
-  borderRadius: theme.shape.borderRadius * 1.5,
+  borderRadius: (theme.shape.borderRadius as number) * 1.5,
   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
   position: 'relative',
   overflow: 'hidden',
