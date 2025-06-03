@@ -57,6 +57,8 @@ COPY --from=builder --chown=analytodon:analytodon /app/apps/cli/bin /app/apps/cl
 COPY --from=builder --chown=analytodon:analytodon /app/apps/cli/dist /app/apps/cli/dist
 COPY --from=builder --chown=analytodon:analytodon /app/apps/cli/oclif.manifest.json /app/apps/cli/oclif.manifest.json
 
+ENV NODE_ENV=production
+
 # RUN chown analytodon:analytodon /app
 
 # Entrypoint runs as root (default user) to set up /etc/environment, then execs CMD.
