@@ -4,9 +4,13 @@ import pino from 'pino';
 
 const pinoInstance = pino({
   level: process.env.LOG_LEVEL || 'info', // Default to 'info' unless overridden
-  transport: {
-    target: 'pino-pretty',
-  },
+  transport:
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          // Use pino-pretty for development environments
+          target: 'pino-pretty',
+        },
 });
 
 export const customLogger = (namespace: string): Interfaces.Logger => {
