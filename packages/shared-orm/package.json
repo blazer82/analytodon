@@ -18,16 +18,16 @@
   },
   "packageManager": "pnpm@10.5.2",
   "dependencies": {
-    "@mikro-orm/core": "^6.4.15",
-    "@mikro-orm/mongodb": "^6.4.15"
+    "@mikro-orm/core": "^6.4.16",
+    "@mikro-orm/mongodb": "^6.4.16"
   },
   "devDependencies": {
-    "@eslint/js": "^9.27.0",
-    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
-    "eslint": "^9.27.0",
+    "@eslint/js": "^9.28.0",
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.2",
+    "eslint": "^9.28.0",
     "prettier": "^3.5.3",
     "shx": "^0.4.0",
     "typescript": "^5.5.4",
-    "typescript-eslint": "^8.32.1"
+    "typescript-eslint": "^8.33.1"
   }
 }
