@@ -50,7 +50,7 @@ jobs:
         run: pnpm lint
 
       - name: Run typecheck
-        run: pnpm --filter @analytodon/frontend typecheck
+        run: pnpm --filter @analytodon/frontend --filter @analytodon/cli typecheck
 
       - name: Build dependencies
         run: pnpm --filter @analytodon/shared-orm build

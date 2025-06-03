@@ -87,7 +87,7 @@ export default class Tootstats extends BaseCommand {
     this.log(`Clean up tootstats: ${tootstats.length} toots to clean up.`);
 
     await processInBatches(BATCH_SIZE, tootstats, async (info) => {
-      this.log(`Clean up tootstats: Clean up for toot ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+      this.debug(`Clean up tootstats: Clean up for toot ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
 
       const cleanupFilter: Filter<Document> = {
         uri: info._id.uri,
@@ -99,10 +99,12 @@ export default class Tootstats extends BaseCommand {
 
       const count = await db.collection('tootstats').countDocuments(cleanupFilter);
 
-      this.log(`Clean up tootstats: Remove ${count} instances of ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+      if (count > 0) {
+        this.log(`Clean up tootstats: Remove ${count} instances of ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
 
-      if (!flags.dryRun) {
-        await db.collection('tootstats').deleteMany(cleanupFilter);
+        if (!flags.dryRun) {
+          await db.collection('tootstats').deleteMany(cleanupFilter);
+        }
       }
     });
 

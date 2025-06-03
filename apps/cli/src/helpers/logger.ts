@@ -3,6 +3,7 @@ import { Interfaces } from '@oclif/core';
 import pino from 'pino';
 
 const pinoInstance = pino({
+  level: process.env.LOG_LEVEL || 'info', // Default to 'info' unless overridden
   transport: {
     target: 'pino-pretty',
   },

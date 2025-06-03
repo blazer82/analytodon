@@ -4,6 +4,7 @@ import pino from 'pino';
 export abstract class BaseCommand extends Command {
   // Create our own pino logger instance
   private pinoLogger = pino({
+    level: process.env.LOG_LEVEL || 'info', // Default to 'info' unless overridden
     transport: {
       target: 'pino-pretty',
     },

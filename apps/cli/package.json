@@ -72,6 +72,7 @@
     "prettier:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "prettier:write": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "pnpm run lint",
     "prepack": "oclif manifest && oclif readme",
