@@ -4,10 +4,21 @@ import type { SessionUserDto } from '@analytodon/rest-client';
 import AccountIcon from '@mui/icons-material/AccountCircle';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MenuIcon from '@mui/icons-material/Menu';
-import { Avatar, Button, Container, Divider, Menu, MenuItem, Toolbar, Typography, useTheme } from '@mui/material';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
+import {
+  Avatar,
+  Box,
+  Button,
+  Container,
+  Divider,
+  IconButton,
+  LinearProgress,
+  List,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { Form, useNavigation, useRouteLoaderData } from '@remix-run/react';
 
 import AccountOwnerNavigation from '../AccountOwnerNavigation';
@@ -30,6 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
   const theme = useTheme();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
+  const isLoadingPage = navigation.state === 'loading';
   const [open, setOpen] = React.useState(true);
   const toggleDrawer = () => {
     setOpen(!open);
@@ -60,6 +72,17 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
 
   return (
     <Box sx={{ display: 'flex' }}>
+      {isLoadingPage && (
+        <LinearProgress
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            zIndex: (theme) => theme.zIndex.drawer + 2, // Ensure it's above AppBar
+          }}
+        />
+      )}
       <AppBar position="absolute" open={open} elevation={2}>
         <Toolbar>
           <AppBarContent>
