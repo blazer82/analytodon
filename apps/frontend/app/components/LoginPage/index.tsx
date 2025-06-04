@@ -21,7 +21,7 @@ import {
 const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
   const theme = useTheme();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
+  const isSubmitting = navigation.state === 'submitting' || navigation.state === 'loading';
 
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState('');

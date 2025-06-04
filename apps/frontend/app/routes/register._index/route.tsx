@@ -127,7 +127,7 @@ export default function Register() {
   const theme = useTheme();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
+  const isSubmitting = navigation.state === 'submitting' || navigation.state === 'loading';
   const [showPassword, setShowPassword] = React.useState(false);
   const [values, setValues] = React.useState({
     email: '',

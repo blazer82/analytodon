@@ -60,7 +60,9 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting' && navigation.formData?.get('_action') === 'connect';
+  const isSubmitting =
+    (navigation.state === 'submitting' || navigation.state === 'loading') &&
+    navigation.formData?.get('_action') === 'connect';
 
   const [values, setValues] = React.useState<AccountSetupFormData>({
     serverURL: initialServerURL,
