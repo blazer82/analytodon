@@ -1,0 +1,10 @@
+A new user just signed up to Analytodon
+
+{{ userEmail }}
+
+Best regards,
+{{ emailSenderName }}
+
+Email: {{ supportEmail }}
+Website: {{ marketingURL }}
+Mastodon: https://undefined.social/@analytodon

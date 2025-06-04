@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as path from 'path';
 
 import { AccountEntity, UserEntity } from '@analytodon/shared-orm';
@@ -26,6 +27,7 @@ describe('MailService', () => {
   let mailerService: jest.Mocked<MailerService>;
   let loggerLogSpy: jest.SpyInstance;
   let loggerErrorSpy: jest.SpyInstance;
+  let readFileSyncSpy: jest.SpyInstance;
 
   const mockUser = {
     id: 'user-id-123',
@@ -114,6 +116,7 @@ describe('MailService', () => {
     // Setup spies for logger methods
     loggerLogSpy = jest.spyOn(Logger.prototype, 'log');
     loggerErrorSpy = jest.spyOn(Logger.prototype, 'error');
+    readFileSyncSpy = jest.spyOn(fs, 'readFileSync');
   });
 
   it('should be defined', () => {
@@ -137,15 +140,20 @@ describe('MailService', () => {
   describe('sendPasswordResetEmail', () => {
     const token = 'reset-token-123';
     const subject = 'Reset your Analytodon password!';
+    const mockTextTemplate = 'Reset link: {{ resetLink }} by {{ emailSenderName }}';
+    const expectedTextBody = `Reset link: ${mockConfigValues.FRONTEND_URL}/reset-password?t=${token} by ${mockConfigValues.EMAIL_FROM_NAME}`;
 
     it('should send a password reset email successfully', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       mailerService.sendMail.mockResolvedValueOnce(undefined);
       await service.sendPasswordResetEmail(mockUser, token);
 
+      expect(readFileSyncSpy).toHaveBeenCalledWith(path.join(__dirname, 'templates', 'password-reset.txt'), 'utf-8');
       expect(mailerService.sendMail).toHaveBeenCalledWith({
         to: mockUser.email,
         subject,
         template: './password-reset',
+        text: expectedTextBody,
         attachments: [
           {
             filename: 'logo.png',
@@ -166,6 +174,7 @@ describe('MailService', () => {
     });
 
     it('should log an error and re-throw if sending fails', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       const error = new Error('Mail sending failed');
       mailerService.sendMail.mockRejectedValueOnce(error);
 
@@ -180,15 +189,23 @@ describe('MailService', () => {
   describe('sendEmailVerificationMail', () => {
     const verificationCode = 'verify-code-456';
     const subject = 'Welcome to Analytodon - Please verify your email address';
+    const mockTextTemplate = 'Verify here: {{ verificationLink }} from {{ emailSenderName }}';
+    const expectedTextBody = `Verify here: ${mockConfigValues.FRONTEND_URL}/register/verify?c=${verificationCode} from ${mockConfigValues.EMAIL_FROM_NAME}`;
 
     it('should send an email verification mail successfully', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       mailerService.sendMail.mockResolvedValueOnce(undefined);
       await service.sendEmailVerificationMail(mockUser, verificationCode);
 
+      expect(readFileSyncSpy).toHaveBeenCalledWith(
+        path.join(__dirname, 'templates', 'email-verification.txt'),
+        'utf-8',
+      );
       expect(mailerService.sendMail).toHaveBeenCalledWith({
         to: mockUser.email,
         subject,
         template: './email-verification',
+        text: expectedTextBody,
         attachments: [
           {
             filename: 'logo.png',
@@ -209,6 +226,7 @@ describe('MailService', () => {
     });
 
     it('should log an error and re-throw if sending fails', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       const error = new Error('Mail sending failed');
       mailerService.sendMail.mockRejectedValueOnce(error);
 
@@ -222,14 +240,23 @@ describe('MailService', () => {
 
   describe('sendOldAccountWarningMail', () => {
     const subject = "You haven't been on Analytodon in a while - we'll be deleting your data soon!";
+    const mockTextTemplate = 'Login at {{ appURL }} regards {{ emailSenderName }}';
+    const expectedTextBody = `Login at ${mockConfigValues.FRONTEND_URL} regards ${mockConfigValues.EMAIL_FROM_NAME}`;
+
     it('should send an old account warning mail successfully', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       mailerService.sendMail.mockResolvedValueOnce(undefined);
       await service.sendOldAccountWarningMail(mockUser);
 
+      expect(readFileSyncSpy).toHaveBeenCalledWith(
+        path.join(__dirname, 'templates', 'old-account-warning.txt'),
+        'utf-8',
+      );
       expect(mailerService.sendMail).toHaveBeenCalledWith({
         to: mockUser.email,
         subject,
         template: './old-account-warning',
+        text: expectedTextBody,
         attachments: [
           {
             filename: 'logo.png',
@@ -249,6 +276,7 @@ describe('MailService', () => {
     });
 
     it('should log an error and re-throw if sending fails', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       const error = new Error('Mail sending failed');
       mailerService.sendMail.mockRejectedValueOnce(error);
 
@@ -262,14 +290,23 @@ describe('MailService', () => {
 
   describe('sendFirstStatsAvailableMail', () => {
     const subject = 'Your Mastodon analytics data is ready on Analytodon! 🎉';
+    const mockTextTemplate = 'Stats for {{ accountName }} at {{ appURL }} by {{ emailSenderName }}';
+    const expectedTextBody = `Stats for ${mockAccount.accountName} at ${mockConfigValues.FRONTEND_URL} by ${mockConfigValues.EMAIL_FROM_NAME}`;
+
     it('should send a first stats available mail successfully', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       mailerService.sendMail.mockResolvedValueOnce(undefined);
       await service.sendFirstStatsAvailableMail(mockUser, mockAccount);
 
+      expect(readFileSyncSpy).toHaveBeenCalledWith(
+        path.join(__dirname, 'templates', 'first-stats-available.txt'),
+        'utf-8',
+      );
       expect(mailerService.sendMail).toHaveBeenCalledWith({
         to: mockUser.email,
         subject,
         template: './first-stats-available',
+        text: expectedTextBody,
         attachments: [
           {
             filename: 'logo.png',
@@ -291,13 +328,16 @@ describe('MailService', () => {
       );
     });
 
-    it('should use account.name if account.accountName is not available', async () => {
+    it('should use account.name if account.accountName is not available for text body', async () => {
       const accountWithoutAccountName = { ...mockAccount, accountName: undefined } as AccountEntity;
+      const expectedTextBodyFallback = `Stats for ${mockAccount.name} at ${mockConfigValues.FRONTEND_URL} by ${mockConfigValues.EMAIL_FROM_NAME}`;
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       mailerService.sendMail.mockResolvedValueOnce(undefined);
       await service.sendFirstStatsAvailableMail(mockUser, accountWithoutAccountName);
 
       expect(mailerService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
+          text: expectedTextBodyFallback,
           context: expect.objectContaining({
             accountName: mockAccount.name, // Fallback to name
           }),
@@ -306,6 +346,7 @@ describe('MailService', () => {
     });
 
     it('should log an error and re-throw if sending fails', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       const error = new Error('Mail sending failed');
       mailerService.sendMail.mockRejectedValueOnce(error);
 
@@ -319,14 +360,23 @@ describe('MailService', () => {
 
   describe('sendSignupNotificationMail', () => {
     const subject = 'Analytodon: New Sign Up';
+    const mockTextTemplate = 'New user: {{ userEmail }} from {{ emailSenderName }}';
+    const expectedTextBody = `New user: ${mockUser.email} from ${mockConfigValues.EMAIL_FROM_NAME}`;
+
     it('should send a signup notification mail to admin successfully', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       mailerService.sendMail.mockResolvedValueOnce(undefined);
       await service.sendSignupNotificationMail(mockUser);
 
+      expect(readFileSyncSpy).toHaveBeenCalledWith(
+        path.join(__dirname, 'templates', 'signup-notification.txt'),
+        'utf-8',
+      );
       expect(mailerService.sendMail).toHaveBeenCalledWith({
         to: mockConfigValues.EMAIL_FROM_ADDRESS, // Admin email
         subject,
         template: './signup-notification',
+        text: expectedTextBody,
         attachments: [
           {
             filename: 'logo.png',
@@ -347,6 +397,7 @@ describe('MailService', () => {
     });
 
     it('should log an error and re-throw if sending fails', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
       const error = new Error('Mail sending failed');
       mailerService.sendMail.mockRejectedValueOnce(error);
 

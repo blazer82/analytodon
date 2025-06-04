@@ -1,0 +1,12 @@
+Hi and welcome to Analytodon
+
+To complete your signup, please verify your email address by clicking on the link below:
+
+{{ verificationLink }}
+
+Best regards,
+{{ emailSenderName }}
+
+Email: {{ supportEmail }}
+Website: {{ marketingURL }}
+Mastodon: https://undefined.social/@analytodon

@@ -1,9 +1,11 @@
+import * as fs from 'fs';
 import * as path from 'path';
 
 import { AccountEntity, UserEntity } from '@analytodon/shared-orm';
 import { MailerService } from '@nestjs-modules/mailer';
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as handlebars from 'handlebars';
 
 import { BoostsService } from '../boosts/boosts.service';
 import { FavoritesService } from '../favorites/favorites.service';
@@ -98,12 +100,23 @@ export class MailService {
   async sendPasswordResetEmail(user: UserEntity, token: string) {
     const resetLink = `${this.frontendURL}/reset-password?t=${token}`; // Legacy used 't', frontend might expect 'token'
     const subject = 'Reset your Analytodon password!';
+    const context = {
+      ...this.getCommonContext(),
+      resetLink,
+      subject,
+    };
+
+    const textTemplatePath = path.join(__dirname, 'templates', 'password-reset.txt');
+    const textTemplateSource = fs.readFileSync(textTemplatePath, 'utf-8');
+    const compiledTextTemplate = handlebars.compile(textTemplateSource, { noEscape: true });
+    const textBody = compiledTextTemplate(context);
 
     try {
       await this.mailerService.sendMail({
         to: user.email,
         subject,
-        template: './password-reset',
+        template: './password-reset', // HTML template
+        text: textBody, // Plain text version
         attachments: [
           {
             filename: 'logo.png',
@@ -111,11 +124,7 @@ export class MailService {
             cid: 'logo@analytodon.com',
           },
         ],
-        context: {
-          ...this.getCommonContext(),
-          resetLink,
-          subject,
-        },
+        context, // Context for HTML template
       });
       this.logger.log(`Password reset email sent to ${user.email}`);
     } catch (error) {
@@ -134,12 +143,23 @@ export class MailService {
   async sendEmailVerificationMail(user: UserEntity, verificationCode: string) {
     const verificationLink = `${this.frontendURL}/register/verify?c=${verificationCode}`;
     const subject = 'Welcome to Analytodon - Please verify your email address';
+    const context = {
+      ...this.getCommonContext(),
+      verificationLink,
+      subject,
+    };
+
+    const textTemplatePath = path.join(__dirname, 'templates', 'email-verification.txt');
+    const textTemplateSource = fs.readFileSync(textTemplatePath, 'utf-8');
+    const compiledTextTemplate = handlebars.compile(textTemplateSource, { noEscape: true });
+    const textBody = compiledTextTemplate(context);
 
     try {
       await this.mailerService.sendMail({
         to: user.email,
         subject,
-        template: './email-verification',
+        template: './email-verification', // HTML template
+        text: textBody, // Plain text version
         attachments: [
           {
             filename: 'logo.png',
@@ -147,11 +167,7 @@ export class MailService {
             cid: 'logo@analytodon.com',
           },
         ],
-        context: {
-          ...this.getCommonContext(),
-          verificationLink,
-          subject,
-        },
+        context, // Context for HTML template
       });
       this.logger.log(`Email verification mail sent to ${user.email}`);
     } catch (error) {
@@ -168,11 +184,22 @@ export class MailService {
    */
   async sendOldAccountWarningMail(user: UserEntity) {
     const subject = "You haven't been on Analytodon in a while - we'll be deleting your data soon!";
+    const context = {
+      ...this.getCommonContext(),
+      subject,
+    };
+
+    const textTemplatePath = path.join(__dirname, 'templates', 'old-account-warning.txt');
+    const textTemplateSource = fs.readFileSync(textTemplatePath, 'utf-8');
+    const compiledTextTemplate = handlebars.compile(textTemplateSource, { noEscape: true });
+    const textBody = compiledTextTemplate(context);
+
     try {
       await this.mailerService.sendMail({
         to: user.email,
         subject,
-        template: './old-account-warning',
+        template: './old-account-warning', // HTML template
+        text: textBody, // Plain text version
         attachments: [
           {
             filename: 'logo.png',
@@ -180,10 +207,7 @@ export class MailService {
             cid: 'logo@analytodon.com',
           },
         ],
-        context: {
-          ...this.getCommonContext(),
-          subject,
-        },
+        context, // Context for HTML template
       });
       this.logger.log(`Old account warning mail sent to ${user.email}`);
     } catch (error) {
@@ -201,11 +225,23 @@ export class MailService {
    */
   async sendFirstStatsAvailableMail(user: UserEntity, account: AccountEntity) {
     const subject = 'Your Mastodon analytics data is ready on Analytodon! 🎉';
+    const context = {
+      ...this.getCommonContext(),
+      accountName: account.accountName || account.name,
+      subject,
+    };
+
+    const textTemplatePath = path.join(__dirname, 'templates', 'first-stats-available.txt');
+    const textTemplateSource = fs.readFileSync(textTemplatePath, 'utf-8');
+    const compiledTextTemplate = handlebars.compile(textTemplateSource, { noEscape: true });
+    const textBody = compiledTextTemplate(context);
+
     try {
       await this.mailerService.sendMail({
         to: user.email,
         subject,
-        template: './first-stats-available',
+        template: './first-stats-available', // HTML template
+        text: textBody, // Plain text version
         attachments: [
           {
             filename: 'logo.png',
@@ -213,11 +249,7 @@ export class MailService {
             cid: 'logo@analytodon.com',
           },
         ],
-        context: {
-          ...this.getCommonContext(),
-          accountName: account.accountName || account.name,
-          subject,
-        },
+        context, // Context for HTML template
       });
       this.logger.log(
         `First stats available mail sent to ${user.email} for account ${account.accountName || account.name}`,
@@ -236,11 +268,23 @@ export class MailService {
    */
   async sendSignupNotificationMail(newUser: UserEntity) {
     const subject = 'Analytodon: New Sign Up';
+    const context = {
+      ...this.getCommonContext(),
+      userEmail: newUser.email,
+      subject,
+    };
+
+    const textTemplatePath = path.join(__dirname, 'templates', 'signup-notification.txt');
+    const textTemplateSource = fs.readFileSync(textTemplatePath, 'utf-8');
+    const compiledTextTemplate = handlebars.compile(textTemplateSource, { noEscape: true });
+    const textBody = compiledTextTemplate(context);
+
     try {
       await this.mailerService.sendMail({
         to: this.supportEmail, // Send to admin/support email
         subject,
-        template: './signup-notification',
+        template: './signup-notification', // HTML template
+        text: textBody, // Plain text version
         attachments: [
           {
             filename: 'logo.png',
@@ -248,11 +292,7 @@ export class MailService {
             cid: 'logo@analytodon.com',
           },
         ],
-        context: {
-          ...this.getCommonContext(),
-          userEmail: newUser.email,
-          subject,
-        },
+        context, // Context for HTML template
       });
       this.logger.log(`Sign up notification mail sent to admin for user ${newUser.email}`);
     } catch (error) {
