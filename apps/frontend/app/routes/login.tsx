@@ -2,13 +2,13 @@ import { type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } f
 import { useActionData } from '@remix-run/react';
 import LoginPage from '~/components/LoginPage';
 import { createAuthApi } from '~/services/api.server';
-import { createUserSession, getUser } from '~/utils/session.server';
+import { createUserSession, getUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Sign in to Analytodon' }];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // Check if user is already authenticated and redirect to dashboard if so
   const user = await getUser(request);
   if (user) {
@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
   }
   return null;
-}
+});
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();

@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { redirect } from '@remix-run/node';
-import { getUser } from '~/utils/session.server';
+import { getUser, withSessionHandling } from '~/utils/session.server';
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // Check if user is logged in
   const user = await getUser(request);
 
@@ -13,7 +13,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // If not logged in, redirect to login page
   return redirect('/login');
-}
+});
 
 // This component will never be rendered because the loader always redirects
 export default function Index() {

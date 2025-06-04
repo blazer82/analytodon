@@ -27,21 +27,21 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
-import { createUserSession, getUser } from '~/utils/session.server';
+import { createUserSession, getUser, withSessionHandling } from '~/utils/session.server';
 import timezones from '~/utils/timezones.json';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Sign up for Analytodon' }];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // Check if user is already authenticated and redirect to dashboard if so
   const user = await getUser(request);
   if (user) {
     return redirect('/');
   }
   return null;
-}
+});
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();

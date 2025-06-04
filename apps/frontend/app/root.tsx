@@ -2,9 +2,9 @@ import { useContext, useEffect, useLayoutEffect } from 'react';
 
 import { CacheProvider, withEmotionCache } from '@emotion/react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
-import type { LinksFunction } from '@remix-run/node';
+import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
-import { getUser } from '~/utils/session.server';
+import { getUser, withSessionHandling } from '~/utils/session.server';
 
 import { AuthProvider } from './utils/auth.context';
 import { ClientStyleContext } from './utils/client-style-context';
@@ -17,7 +17,7 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export async function loader({ request }: { request: Request }) {
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // Get the user from the session
   const user = await getUser(request);
 
@@ -28,7 +28,7 @@ export async function loader({ request }: { request: Request }) {
       SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || 'support@analytodon.com',
     },
   };
-}
+});
 
 interface DocumentProps {
   children: React.ReactNode;
