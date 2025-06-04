@@ -1,5 +1,5 @@
-import { UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
-import { EntityRepository } from '@mikro-orm/mongodb';
+import { RefreshTokenEntity, UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
+import { EntityManager, EntityRepository } from '@mikro-orm/mongodb';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   ConflictException,
@@ -10,12 +10,14 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
 import { v4 as uuidv4 } from 'uuid';
 
 import { MailService } from '../mail/mail.service';
+import { authConstants } from '../shared/constants/auth.constants';
 import { UsersService } from '../users/users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
@@ -35,11 +37,15 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
     @InjectRepository(UserEntity)
     private readonly userRepository: EntityRepository<UserEntity>,
     @InjectRepository(UserCredentialsEntity)
     private readonly userCredentialsRepository: EntityRepository<UserCredentialsEntity>,
+    @InjectRepository(RefreshTokenEntity)
+    private readonly refreshTokenRepository: EntityRepository<RefreshTokenEntity>,
     @Inject(forwardRef(() => MailService)) private readonly mailService: MailService,
+    private readonly em: EntityManager,
   ) {}
 
   /**
@@ -99,23 +105,35 @@ export class AuthService {
     };
 
     const token = this.jwtService.sign(payload);
-    const refreshToken = uuidv4();
+    const refreshTokenString = uuidv4();
 
-    // Ensure user.credentials is loaded. It should be if populated in validateUser.
-    if (!user.credentials) {
-      // This would be an unexpected state if validateUser worked correctly.
-      // So, we can throw an error or handle it gracefully.
-      this.logger.error(`User credentials not loaded for user ${user.email} (ID: ${user.id}) during login.`);
-      throw new UnauthorizedException('User credentials not found.');
+    // Create and store the new refresh token
+    const refreshTokenExpiresIn = this.configService.get<string>(
+      authConstants.JWT_REFRESH_TOKEN_EXPIRES_IN_KEY,
+      authConstants.JWT_DEFAULT_REFRESH_TOKEN_EXPIRES_IN,
+    );
+    const expiresAt = new Date();
+    // Simple parsing for '7d' format, more robust parsing might be needed for other formats
+    const daysMatch = refreshTokenExpiresIn.match(/^(\d+)d$/);
+    if (daysMatch) {
+      expiresAt.setDate(expiresAt.getDate() + parseInt(daysMatch[1], 10));
+    } else {
+      // Default to 7 days if format is unrecognized
+      this.logger.warn(`Unrecognized refresh token expiry format: ${refreshTokenExpiresIn}. Defaulting to 7 days.`);
+      expiresAt.setDate(expiresAt.getDate() + 7);
     }
 
-    user.credentials.refreshToken = refreshToken;
-    await this.userCredentialsRepository.getEntityManager().persistAndFlush(user.credentials);
+    const newRefreshToken = this.refreshTokenRepository.create({
+      token: refreshTokenString,
+      user,
+      expiresAt,
+    });
+    await this.refreshTokenRepository.getEntityManager().persistAndFlush(newRefreshToken);
 
     // User entity is returned directly; SessionUserDto construction is moved to controller
     return {
       token,
-      refreshToken,
+      refreshToken: refreshTokenString,
       user,
     };
   }
@@ -124,33 +142,35 @@ export class AuthService {
    * Refreshes access and refresh tokens using a valid refresh token.
    * @param token - The refresh token.
    * @returns A promise that resolves to an object containing new tokens and the user entity.
-   * @throws UnauthorizedException if the refresh token is invalid or the user is not found/active.
+   * @throws UnauthorizedException if the refresh token is invalid, expired, or the user is not found/active.
    */
   async refreshTokens(token: string): Promise<AuthOperationResult> {
-    const userCredentials = await this.userCredentialsRepository.findOne(
-      { refreshToken: token },
-      { populate: ['user'] }, // Ensure user is populated
+    const refreshTokenEntity = await this.refreshTokenRepository.findOne(
+      { token },
+      { populate: ['user', 'user.accounts'] },
     );
 
-    if (!userCredentials || !userCredentials.user) {
+    if (!refreshTokenEntity) {
+      this.logger.warn(`Refresh token not found: ${token}`);
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
-    const user = await this.userRepository.findOne(
-      {
-        id: userCredentials.user.id,
-        isActive: true,
-      },
-      { populate: ['accounts'] },
-    );
+    if (refreshTokenEntity.expiresAt < new Date()) {
+      this.logger.warn(`Expired refresh token used: ${token} by user ${refreshTokenEntity.user.id}`);
+      await this.refreshTokenRepository.getEntityManager().removeAndFlush(refreshTokenEntity);
+      throw new UnauthorizedException('Refresh token expired.');
+    }
 
-    if (!user) {
-      throw new UnauthorizedException('User not found or not active.');
+    const user = refreshTokenEntity.user;
+    if (!user.isActive) {
+      this.logger.warn(`User ${user.id} is inactive, token refresh denied.`);
+      throw new UnauthorizedException('User not active.');
     }
 
     // User state update
     if (user.oldAccountDeletionNoticeSent) {
       user.oldAccountDeletionNoticeSent = false;
+      // Note: user is already populated from refreshTokenEntity, so direct save is fine.
       await this.usersService.save(user);
     }
 
@@ -160,16 +180,37 @@ export class AuthService {
       role: user.role,
     };
 
-    const newToken = this.jwtService.sign(payload);
-    const newRefreshToken = uuidv4();
+    const newAccessToken = this.jwtService.sign(payload);
+    const newRefreshTokenString = uuidv4();
 
-    userCredentials.refreshToken = newRefreshToken; // Or await bcrypt.hash(newRefreshToken, 10);
-    await this.userCredentialsRepository.getEntityManager().persistAndFlush(userCredentials);
+    // Remove old refresh token
+    await this.refreshTokenRepository.getEntityManager().removeAndFlush(refreshTokenEntity);
+
+    // Create and store the new refresh token
+    const refreshTokenExpiresIn = this.configService.get<string>(
+      authConstants.JWT_REFRESH_TOKEN_EXPIRES_IN_KEY,
+      authConstants.JWT_DEFAULT_REFRESH_TOKEN_EXPIRES_IN,
+    );
+    const expiresAt = new Date();
+    const daysMatch = refreshTokenExpiresIn.match(/^(\d+)d$/);
+    if (daysMatch) {
+      expiresAt.setDate(expiresAt.getDate() + parseInt(daysMatch[1], 10));
+    } else {
+      this.logger.warn(`Unrecognized refresh token expiry format: ${refreshTokenExpiresIn}. Defaulting to 7 days.`);
+      expiresAt.setDate(expiresAt.getDate() + 7);
+    }
+
+    const newRefreshTokenEntity = this.refreshTokenRepository.create({
+      token: newRefreshTokenString,
+      user,
+      expiresAt,
+    });
+    await this.refreshTokenRepository.getEntityManager().persistAndFlush(newRefreshTokenEntity);
 
     // User entity is returned directly
     return {
-      token: newToken,
-      refreshToken: newRefreshToken,
+      token: newAccessToken,
+      refreshToken: newRefreshTokenString,
       user,
     };
   }
@@ -181,18 +222,35 @@ export class AuthService {
    */
   async logout(userId: string): Promise<void> {
     if (!ObjectId.isValid(userId)) {
-      // Optionally handle invalid ObjectId string, e.g., log or throw, or just return
+      this.logger.warn(`Logout attempt with invalid userId format: ${userId}`);
       return;
     }
-    const userCredentials = await this.userCredentialsRepository.findOne({
-      user: new ObjectId(userId),
-    });
-    if (userCredentials) {
-      userCredentials.refreshToken = undefined; // Or null
-      await this.userCredentialsRepository.getEntityManager().persistAndFlush(userCredentials);
+    // Invalidate all refresh tokens for the user
+    const user = await this.userRepository.findOne(userId, { populate: ['refreshTokens'] });
+    if (user && user.refreshTokens.isInitialized()) {
+      const tokensToRemove = user.refreshTokens.getItems();
+      if (tokensToRemove.length > 0) {
+        this.logger.log(`Logging out user ${userId}, removing ${tokensToRemove.length} refresh tokens.`);
+        for (const token of tokensToRemove) {
+          this.em.remove(token);
+        }
+        await this.em.flush();
+      }
+    } else if (user) {
+      // If refreshTokens collection is not initialized, load it and then remove.
+      // This path might be less common if user object from GetUser decorator already has it.
+      await user.refreshTokens.init();
+      const tokensToRemove = user.refreshTokens.getItems();
+      if (tokensToRemove.length > 0) {
+        this.logger.log(`Logging out user ${userId}, removing ${tokensToRemove.length} refresh tokens (post-init).`);
+        for (const token of tokensToRemove) {
+          this.em.remove(token);
+        }
+        await this.em.flush();
+      }
+    } else {
+      this.logger.log(`Logout attempt for user ${userId}, but user not found. No action taken.`);
     }
-    // If userCredentials are not found, it might mean the user is already effectively logged out
-    // or there's no refresh token to invalidate. No error needs to be thrown.
   }
 
   /**

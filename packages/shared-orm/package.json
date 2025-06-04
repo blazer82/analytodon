@@ -12,6 +12,7 @@
     "prettier:check": "prettier --check \"src/**/*.ts\"",
     "prettier:write": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "clean": "shx rm -rf dist tsconfig.tsbuildinfo",
     "build": "pnpm run clean && tsc -b",
     "prepublishOnly": "pnpm run build"

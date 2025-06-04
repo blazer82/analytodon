@@ -1,3 +1,5 @@
+import { RefreshTokenEntity } from '@analytodon/shared-orm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -14,6 +16,9 @@ import { LocalStrategy } from './strategies/local.strategy';
 @Module({
   imports: [
     UsersModule,
+    MikroOrmModule.forFeature({
+      entities: [RefreshTokenEntity],
+    }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     forwardRef(() => MailModule),
     JwtModule.registerAsync({

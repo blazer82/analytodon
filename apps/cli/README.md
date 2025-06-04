@@ -20,7 +20,7 @@ $ npm install -g @analytodon/cli
 $ analytodon-cli COMMAND
 running command...
 $ analytodon-cli (--version)
-@analytodon/cli/0.0.0 darwin-arm64 node-v23.11.0
+@analytodon/cli/0.0.0 darwin-arm64 node-v22.16.0
 $ analytodon-cli --help [COMMAND]
 USAGE
   $ analytodon-cli COMMAND
@@ -34,6 +34,7 @@ USAGE
 * [`analytodon-cli cleanup accountdata`](#analytodon-cli-cleanup-accountdata)
 * [`analytodon-cli cleanup accounts`](#analytodon-cli-cleanup-accounts)
 * [`analytodon-cli cleanup oldaccounts`](#analytodon-cli-cleanup-oldaccounts)
+* [`analytodon-cli cleanup refreshtokens`](#analytodon-cli-cleanup-refreshtokens)
 * [`analytodon-cli cleanup tootstats`](#analytodon-cli-cleanup-tootstats)
 * [`analytodon-cli cleanup usercredentials`](#analytodon-cli-cleanup-usercredentials)
 * [`analytodon-cli cleanup users`](#analytodon-cli-cleanup-users)
@@ -169,6 +170,28 @@ EXAMPLES
 ```
 
 _See code: [src/commands/cleanup/oldaccounts.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/cleanup/oldaccounts.ts)_
+
+## `analytodon-cli cleanup refreshtokens`
+
+Clean up expired refresh tokens.
+
+```
+USAGE
+  $ analytodon-cli cleanup refreshtokens [-c <value>] [-d <value>] [-x]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -x, --dryRun                    Dry run, no actual changes made
+
+DESCRIPTION
+  Clean up expired refresh tokens.
+
+EXAMPLES
+  $ analytodon-cli cleanup refreshtokens
+```
+
+_See code: [src/commands/cleanup/refreshtokens.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/cleanup/refreshtokens.ts)_
 
 ## `analytodon-cli cleanup tootstats`
 

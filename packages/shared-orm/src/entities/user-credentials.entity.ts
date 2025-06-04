@@ -13,7 +13,4 @@ export class UserCredentialsEntity extends BaseEntity {
 
   @Property()
   passwordHash!: string;
-
-  @Property({ nullable: true })
-  refreshToken?: string;
 }

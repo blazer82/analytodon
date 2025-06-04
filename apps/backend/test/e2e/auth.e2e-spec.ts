@@ -1,4 +1,4 @@
-import { AccountEntity, UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
+import { AccountEntity, RefreshTokenEntity, UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm'; // Added RefreshTokenEntity
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -71,7 +71,7 @@ describe('AuthController (e2e)', () => {
   const clearDatabase = async () => {
     // Order matters due to foreign key constraints if they were enforced at DB level
     // or for logical cleanup. MikroORM handles this well, but explicit order is safer.
-    // Delete entities that might have foreign keys to UserEntity or AccountEntity first.
+    await entityManager.nativeDelete(RefreshTokenEntity, {}); // RefreshTokens reference Users
     await entityManager.nativeDelete(AccountEntity, {}); // Accounts might reference Users
     await entityManager.nativeDelete(UserCredentialsEntity, {}); // UserCredentials reference Users
     await entityManager.nativeDelete(UserEntity, {});
@@ -127,9 +127,10 @@ describe('AuthController (e2e)', () => {
       expect(dbUser?.serverURLOnSignUp).toBe(testUser.serverURLOnSignUp);
       expect(dbUser?.timezone).toBe(testUser.timezone);
 
-      const dbCredentials = await entityManager.findOne(UserCredentialsEntity, { user: dbUser?.id });
-      expect(dbCredentials).not.toBeNull();
-      expect(dbCredentials?.refreshToken).toBe(response.body.refreshToken);
+      const dbRefreshToken = await entityManager.findOne(RefreshTokenEntity, { user: dbUser?.id });
+      expect(dbRefreshToken).not.toBeNull();
+      expect(dbRefreshToken?.token).toBe(response.body.refreshToken);
+      expect(dbRefreshToken?.expiresAt).toBeInstanceOf(Date);
     });
 
     it('should fail to register if email already exists', async () => {
@@ -182,8 +183,13 @@ describe('AuthController (e2e)', () => {
       expect(accountDto.timezone).toBe(testAccount.timezone);
       expect(accountDto.utcOffset).toBe(testAccount.utcOffset);
 
-      const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email }, { populate: ['credentials'] });
-      expect(dbUser?.credentials?.refreshToken).toBe(response.body.refreshToken);
+      const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email });
+      const dbRefreshToken = await entityManager.findOne(RefreshTokenEntity, {
+        user: dbUser?.id,
+        token: response.body.refreshToken,
+      });
+      expect(dbRefreshToken).not.toBeNull();
+      expect(dbRefreshToken?.expiresAt).toBeInstanceOf(Date);
     });
 
     it('should log in and not include accounts that are not setupComplete', async () => {
@@ -255,8 +261,20 @@ describe('AuthController (e2e)', () => {
       expect(accountDto.timezone).toBe(testAccount.timezone);
       expect(accountDto.utcOffset).toBe(testAccount.utcOffset);
 
-      const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email }, { populate: ['credentials'] });
-      expect(dbUser?.credentials?.refreshToken).toBe(response.body.refreshToken);
+      // Check that the new refresh token is in the database and the old one is gone
+      const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email });
+      const newDbRefreshToken = await entityManager.findOne(RefreshTokenEntity, {
+        user: dbUser?.id,
+        token: response.body.refreshToken,
+      });
+      expect(newDbRefreshToken).not.toBeNull();
+      expect(newDbRefreshToken?.expiresAt).toBeInstanceOf(Date);
+
+      const oldDbRefreshToken = await entityManager.findOne(RefreshTokenEntity, {
+        user: dbUser?.id,
+        token: refreshToken,
+      });
+      expect(oldDbRefreshToken).toBeNull();
     });
 
     it('should fail to refresh with an invalid refresh token', async () => {
@@ -377,14 +395,15 @@ describe('AuthController (e2e)', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .expect(HttpStatus.NO_CONTENT);
 
-      const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email }, { populate: ['credentials'] });
-      expect(dbUser?.credentials?.refreshToken).toBeUndefined();
+      const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email });
+      const refreshTokensCount = await entityManager.count(RefreshTokenEntity, { user: dbUser?.id });
+      expect(refreshTokensCount).toBe(0);
 
       // Attempt to use the old refresh token should fail
       await request(app.getHttpServer())
         .post('/auth/refresh')
         .send({ refreshToken: initialRefreshToken })
-        .expect(HttpStatus.UNAUTHORIZED);
+        .expect(HttpStatus.UNAUTHORIZED); // Because it was deleted
     });
 
     it('should require authentication to logout', async () => {

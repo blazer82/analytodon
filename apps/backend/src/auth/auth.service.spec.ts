@@ -1,6 +1,8 @@
-import { UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
+import { RefreshTokenEntity, UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm'; // Added RefreshTokenEntity
+import { EntityManager } from '@mikro-orm/mongodb'; // Added EntityManager
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config'; // Added ConfigService
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
@@ -53,6 +55,31 @@ const mockUserCredentialsRepository = {
   getEntityManager: jest.fn().mockReturnValue(mockUserCredentialsRepositoryEntityManager),
 };
 
+const mockRefreshTokenRepositoryEntityManager = {
+  persistAndFlush: jest.fn(),
+  removeAndFlush: jest.fn(),
+};
+const mockRefreshTokenRepository = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+  getEntityManager: jest.fn().mockReturnValue(mockRefreshTokenRepositoryEntityManager),
+  nativeDelete: jest.fn(), // For logout or cleanup
+};
+
+const mockEntityManager = {
+  remove: jest.fn(),
+  flush: jest.fn(),
+};
+
+const mockConfigService = {
+  get: jest.fn((key: string, defaultValue?: unknown) => {
+    if (key === 'JWT_REFRESH_TOKEN_EXPIRES_IN') {
+      return '7d'; // Default mock value
+    }
+    return defaultValue;
+  }),
+};
+
 describe('AuthService', () => {
   let service: AuthService;
 
@@ -70,6 +97,8 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: mockUsersService },
         { provide: JwtService, useValue: mockJwtService },
         { provide: MailService, useValue: mockMailService },
+        { provide: ConfigService, useValue: mockConfigService },
+        { provide: EntityManager, useValue: mockEntityManager },
         {
           provide: getRepositoryToken(UserEntity),
           useValue: mockUserRepository,
@@ -77,6 +106,10 @@ describe('AuthService', () => {
         {
           provide: getRepositoryToken(UserCredentialsEntity),
           useValue: mockUserCredentialsRepository,
+        },
+        {
+          provide: getRepositoryToken(RefreshTokenEntity), // Added RefreshTokenRepository
+          useValue: mockRefreshTokenRepository,
         },
       ],
     }).compile();
@@ -134,6 +167,7 @@ describe('AuthService', () => {
 
   describe('login', () => {
     let mockUser: UserEntity;
+    let mockRefreshToken: RefreshTokenEntity;
 
     beforeEach(() => {
       mockUser = {
@@ -141,25 +175,44 @@ describe('AuthService', () => {
         email: 'test@example.com',
         role: UserRole.AccountOwner,
         oldAccountDeletionNoticeSent: false,
-        credentials: { id: 'cred1', refreshToken: null } as UserCredentialsEntity,
+        // credentials are not directly used by login for token generation anymore
       } as UserEntity;
       mockJwtService.sign.mockReturnValue('accessToken');
-      (uuidv4 as jest.Mock).mockReturnValue('newRefreshToken');
+      (uuidv4 as jest.Mock).mockReturnValue('newRefreshTokenString'); // This will be the token string
+
+      mockRefreshToken = {
+        token: 'newRefreshTokenString',
+        user: mockUser,
+        expiresAt: expect.any(Date), // We'll check this more specifically
+      } as RefreshTokenEntity;
+      mockRefreshTokenRepository.create.mockReturnValue(mockRefreshToken);
     });
 
-    it('should return access and refresh tokens', async () => {
+    it('should return access and refresh tokens and save refresh token', async () => {
       const result = await service.login(mockUser);
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         sub: mockUser.id,
         email: mockUser.email,
         role: mockUser.role,
       });
-      expect(mockUserCredentialsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(
-        expect.objectContaining({ refreshToken: 'newRefreshToken' }),
+      expect(mockConfigService.get).toHaveBeenCalledWith('JWT_REFRESH_TOKEN_EXPIRES_IN', '7d');
+      expect(mockRefreshTokenRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          token: 'newRefreshTokenString',
+          user: mockUser,
+          // expiresAt will be set based on config
+        }),
       );
+      expect(mockRefreshTokenRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(mockRefreshToken);
       expect(result.token).toBe('accessToken');
-      expect(result.refreshToken).toBe('newRefreshToken');
+      expect(result.refreshToken).toBe('newRefreshTokenString');
       expect(result.user).toBe(mockUser);
+
+      // Check expiresAt logic (assuming 7d default from mockConfigService)
+      const createdToken = mockRefreshTokenRepository.create.mock.calls[0][0] as RefreshTokenEntity;
+      const expectedExpiry = new Date();
+      expectedExpiry.setDate(expectedExpiry.getDate() + 7);
+      expect(createdToken.expiresAt.toDateString()).toBe(expectedExpiry.toDateString());
     });
 
     it('should update oldAccountDeletionNoticeSent if true', async () => {
@@ -170,10 +223,11 @@ describe('AuthService', () => {
       );
     });
 
-    it('should throw UnauthorizedException if credentials not loaded', async () => {
-      mockUser.credentials = undefined;
-      await expect(service.login(mockUser)).rejects.toThrow(UnauthorizedException);
-    });
+    // No longer relevant as credentials are not directly checked in login for refresh token
+    // it('should throw UnauthorizedException if credentials not loaded', async () => {
+    //   mockUser.credentials = undefined;
+    //   await expect(service.login(mockUser)).rejects.toThrow(UnauthorizedException);
+    // });
   });
 
   describe('registerUser', () => {
@@ -211,9 +265,15 @@ describe('AuthService', () => {
 
       // Mock the login part of registerUser
       mockJwtService.sign.mockReturnValue('accessToken');
-      (uuidv4 as jest.Mock).mockReturnValue('mocked-uuid');
-      // Ensure the created user has credentials for the login call
-      mockCreatedUser.credentials = mockCreatedCredentials;
+      (uuidv4 as jest.Mock).mockReturnValue('mocked-uuid'); // For emailVerificationCode and refreshTokenString
+
+      // Mock for the login part within registerUser
+      const mockLoginRefreshToken = {
+        token: 'mocked-uuid', // as uuidv4 is mocked to return this
+        user: mockCreatedUser,
+        expiresAt: expect.any(Date),
+      } as RefreshTokenEntity;
+      mockRefreshTokenRepository.create.mockReturnValue(mockLoginRefreshToken);
     });
 
     it('should register a new user and return tokens', async () => {
@@ -242,6 +302,10 @@ describe('AuthService', () => {
       expect(mockMailService.sendEmailVerificationMail).toHaveBeenCalledWith(mockCreatedUser, 'mocked-uuid');
       expect(mockMailService.sendSignupNotificationMail).toHaveBeenCalledWith(mockCreatedUser);
 
+      // login() part
+      expect(mockRefreshTokenRepository.create).toHaveBeenCalledWith(expect.objectContaining({ token: 'mocked-uuid' }));
+      expect(mockRefreshTokenRepository.getEntityManager().persistAndFlush).toHaveBeenCalled();
+
       expect(result.token).toBe('accessToken');
       expect(result.refreshToken).toBe('mocked-uuid'); // This comes from the login call within registerUser
       expect(result.user).toBe(mockCreatedUser);
@@ -267,9 +331,10 @@ describe('AuthService', () => {
   });
 
   describe('refreshTokens', () => {
-    const refreshToken = 'validRefreshToken';
-    let mockUserCredentials: UserCredentialsEntity;
+    const oldRefreshTokenString = 'validOldRefreshToken';
+    let mockOldRefreshTokenEntity: RefreshTokenEntity;
     let mockUser: UserEntity;
+    let mockNewRefreshTokenEntity: RefreshTokenEntity;
 
     beforeEach(() => {
       mockUser = {
@@ -278,56 +343,86 @@ describe('AuthService', () => {
         role: UserRole.AccountOwner,
         isActive: true,
         oldAccountDeletionNoticeSent: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        accounts: { isInitialized: () => true, getItems: () => [] } as any, // Mock accounts collection
       } as UserEntity;
-      mockUserCredentials = {
-        id: 'cred1',
-        refreshToken,
-        user: mockUser,
-      } as UserCredentialsEntity;
 
-      mockUserCredentialsRepository.findOne.mockResolvedValue(mockUserCredentials);
-      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockOldRefreshTokenEntity = {
+        id: 'rt1',
+        token: oldRefreshTokenString,
+        user: mockUser,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // Expires tomorrow
+      } as RefreshTokenEntity;
+
+      mockNewRefreshTokenEntity = {
+        id: 'rt2',
+        token: 'newRefreshTokenUuid',
+        user: mockUser,
+        expiresAt: expect.any(Date),
+      } as RefreshTokenEntity;
+
+      mockRefreshTokenRepository.findOne.mockResolvedValue(mockOldRefreshTokenEntity);
       mockJwtService.sign.mockReturnValue('newAccessToken');
       (uuidv4 as jest.Mock).mockReturnValue('newRefreshTokenUuid');
+      mockRefreshTokenRepository.create.mockReturnValue(mockNewRefreshTokenEntity);
     });
 
-    it('should return new access and refresh tokens', async () => {
-      const result = await service.refreshTokens(refreshToken);
-      expect(mockUserCredentialsRepository.findOne).toHaveBeenCalledWith({ refreshToken }, { populate: ['user'] });
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith(
-        {
-          id: mockUser.id,
-          isActive: true,
-        },
-        { populate: ['accounts'] },
+    it('should return new access and refresh tokens, remove old, save new', async () => {
+      const result = await service.refreshTokens(oldRefreshTokenString);
+
+      expect(mockRefreshTokenRepository.findOne).toHaveBeenCalledWith(
+        { token: oldRefreshTokenString },
+        { populate: ['user', 'user.accounts'] },
       );
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         sub: mockUser.id,
         email: mockUser.email,
         role: mockUser.role,
       });
-      expect(mockUserCredentialsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(
-        expect.objectContaining({ refreshToken: 'newRefreshTokenUuid' }),
+      expect(mockRefreshTokenRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(
+        mockOldRefreshTokenEntity,
       );
+      expect(mockRefreshTokenRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ token: 'newRefreshTokenUuid', user: mockUser }),
+      );
+      expect(mockRefreshTokenRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(
+        mockNewRefreshTokenEntity,
+      );
+
       expect(result.token).toBe('newAccessToken');
       expect(result.refreshToken).toBe('newRefreshTokenUuid');
       expect(result.user).toBe(mockUser);
     });
 
-    it('should throw UnauthorizedException if token is invalid', async () => {
-      mockUserCredentialsRepository.findOne.mockResolvedValue(null);
-      await expect(service.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
+    it('should throw UnauthorizedException if token is not found', async () => {
+      mockRefreshTokenRepository.findOne.mockResolvedValue(null);
+      await expect(service.refreshTokens(oldRefreshTokenString)).rejects.toThrow(
+        new UnauthorizedException('Invalid refresh token.'),
+      );
     });
 
-    it('should throw UnauthorizedException if user not found or inactive', async () => {
-      mockUserRepository.findOne.mockResolvedValue(null);
-      await expect(service.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
+    it('should throw UnauthorizedException if token is expired and remove it', async () => {
+      mockOldRefreshTokenEntity.expiresAt = new Date(Date.now() - 10000); // Expired
+      mockRefreshTokenRepository.findOne.mockResolvedValue(mockOldRefreshTokenEntity);
+      await expect(service.refreshTokens(oldRefreshTokenString)).rejects.toThrow(
+        new UnauthorizedException('Refresh token expired.'),
+      );
+      expect(mockRefreshTokenRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(
+        mockOldRefreshTokenEntity,
+      );
+    });
+
+    it('should throw UnauthorizedException if user is not active', async () => {
+      mockUser.isActive = false;
+      mockRefreshTokenRepository.findOne.mockResolvedValue(mockOldRefreshTokenEntity);
+      await expect(service.refreshTokens(oldRefreshTokenString)).rejects.toThrow(
+        new UnauthorizedException('User not active.'),
+      );
     });
 
     it('should update oldAccountDeletionNoticeSent if true', async () => {
       mockUser.oldAccountDeletionNoticeSent = true;
-      mockUserRepository.findOne.mockResolvedValue(mockUser); // ensure this user is returned
-      await service.refreshTokens(refreshToken);
+      await service.refreshTokens(oldRefreshTokenString);
       expect(mockUsersService.save).toHaveBeenCalledWith(
         expect.objectContaining({ oldAccountDeletionNoticeSent: false }),
       );
@@ -336,34 +431,57 @@ describe('AuthService', () => {
 
   describe('logout', () => {
     const userId = new ObjectId().toHexString();
-    let mockUserCredentials: UserCredentialsEntity;
+    let mockUserWithTokens: UserEntity;
+    let mockToken1: RefreshTokenEntity;
+    let mockToken2: RefreshTokenEntity;
 
     beforeEach(() => {
-      mockUserCredentials = {
-        id: 'cred1',
-        refreshToken: 'someToken',
-        user: { id: userId } as UserEntity,
-      } as UserCredentialsEntity;
+      mockToken1 = { id: 't1', token: 'token1' } as RefreshTokenEntity;
+      mockToken2 = { id: 't2', token: 'token2' } as RefreshTokenEntity;
+      mockUserWithTokens = {
+        id: userId,
+        refreshTokens: {
+          isInitialized: jest.fn().mockReturnValue(true),
+          getItems: jest.fn().mockReturnValue([mockToken1, mockToken2]),
+          init: jest.fn().mockResolvedValue(undefined), // For the else if branch
+        },
+      } as unknown as UserEntity;
     });
 
-    it('should clear refresh token for valid user ID', async () => {
-      mockUserCredentialsRepository.findOne.mockResolvedValue(mockUserCredentials);
+    it('should remove all refresh tokens for a valid user ID if tokens are initialized', async () => {
+      mockUserRepository.findOne.mockResolvedValue(mockUserWithTokens);
       await service.logout(userId);
-      expect(mockUserCredentialsRepository.findOne).toHaveBeenCalledWith({ user: new ObjectId(userId) });
-      expect(mockUserCredentialsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(
-        expect.objectContaining({ refreshToken: undefined }),
-      );
+
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith(userId, { populate: ['refreshTokens'] });
+      expect(mockUserWithTokens.refreshTokens.getItems).toHaveBeenCalled();
+      expect(mockEntityManager.remove).toHaveBeenCalledWith(mockToken1);
+      expect(mockEntityManager.remove).toHaveBeenCalledWith(mockToken2);
+      expect(mockEntityManager.flush).toHaveBeenCalled();
     });
 
-    it('should do nothing if user credentials not found', async () => {
-      mockUserCredentialsRepository.findOne.mockResolvedValue(null);
+    it('should initialize and remove tokens if not initialized', async () => {
+      (mockUserWithTokens.refreshTokens.isInitialized as jest.Mock).mockReturnValue(false);
+      mockUserRepository.findOne.mockResolvedValue(mockUserWithTokens);
+
       await service.logout(userId);
-      expect(mockUserCredentialsRepository.getEntityManager().persistAndFlush).not.toHaveBeenCalled();
+
+      expect(mockUserWithTokens.refreshTokens.init).toHaveBeenCalled();
+      expect(mockUserWithTokens.refreshTokens.getItems).toHaveBeenCalled();
+      expect(mockEntityManager.remove).toHaveBeenCalledWith(mockToken1);
+      expect(mockEntityManager.remove).toHaveBeenCalledWith(mockToken2);
+      expect(mockEntityManager.flush).toHaveBeenCalled();
+    });
+
+    it('should do nothing if user not found', async () => {
+      mockUserRepository.findOne.mockResolvedValue(null);
+      await service.logout(userId);
+      expect(mockEntityManager.remove).not.toHaveBeenCalled();
+      expect(mockEntityManager.flush).not.toHaveBeenCalled();
     });
 
     it('should do nothing for invalid user ID string', async () => {
       await service.logout('invalid-id');
-      expect(mockUserCredentialsRepository.findOne).not.toHaveBeenCalled();
+      expect(mockUserRepository.findOne).not.toHaveBeenCalled();
     });
   });
 

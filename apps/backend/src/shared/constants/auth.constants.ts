@@ -3,4 +3,8 @@ export const authConstants = {
   JWT_EXPIRES_IN_KEY: 'JWT_EXPIRES_IN',
   JWT_DEFAULT_SECRET: 'THIS_IS_A_DEFAULT_SECRET_CHANGE_IT', // For development only
   JWT_DEFAULT_EXPIRES_IN: '3600s', // 1 hour
+
+  // Refresh Token Configuration
+  JWT_REFRESH_TOKEN_EXPIRES_IN_KEY: 'JWT_REFRESH_TOKEN_EXPIRES_IN',
+  JWT_DEFAULT_REFRESH_TOKEN_EXPIRES_IN: '7d', // 7 days
 };

@@ -1,7 +1,8 @@
-import { Collection, Entity, Enum, Index, OneToMany, OneToOne, Property, Rel } from '@mikro-orm/core';
+import { Cascade, Collection, Entity, Enum, Index, OneToMany, OneToOne, Property, Rel } from '@mikro-orm/core';
 
 import { AccountEntity } from './account.entity';
 import { BaseEntity } from './base.entity';
+import { RefreshTokenEntity } from './refresh-token.entity';
 import { UserCredentialsEntity } from './user-credentials.entity';
 
 export enum UserRole {
@@ -57,4 +58,7 @@ export class UserEntity extends BaseEntity {
 
   @Property({ nullable: true })
   oldAccountDeletionNoticeSent?: boolean;
+
+  @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.user, { cascade: [Cascade.ALL] })
+  refreshTokens = new Collection<RefreshTokenEntity>(this);
 }
