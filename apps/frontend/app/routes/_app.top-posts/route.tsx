@@ -8,6 +8,7 @@ import { DataTablePaper } from '~/components/Layout/styles';
 import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
 import TopToots, { type Toot } from '~/components/TopToots';
 import { createTootsApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -69,7 +70,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       accountId,
     };
   } catch (error) {
-    console.error('Failed to load top posts data:', error);
+    logger.error('Failed to load top posts data:', error);
     return {
       top: [],
       topByReplies: [],

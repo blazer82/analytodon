@@ -2,6 +2,7 @@ import type { AuthResponseDto, SessionUserDto } from '@analytodon/rest-client';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { createCookieSessionStorage, redirect } from '@remix-run/node';
 import { createAuthApi } from '~/services/api.server';
+import logger from '~/services/logger.server';
 
 // Define the session storage
 export const sessionStorage = createCookieSessionStorage({
@@ -82,7 +83,7 @@ export async function getUser(request: Request): Promise<SessionUserDto | null> 
     // This condition might need adjustment based on how your API client surfaces errors.
     const error = e as { response?: { status: number } };
     if (error && error.response && error.response.status === 401 && refreshToken) {
-      console.log('Access token expired in getUser, attempting refresh...');
+      logger.info('Access token expired in getUser, attempting refresh...');
       const newAuthResponse = await refreshAccessToken(refreshToken);
 
       if (newAuthResponse) {
@@ -97,7 +98,7 @@ export async function getUser(request: Request): Promise<SessionUserDto | null> 
         } else {
           // This case is less ideal, as direct session commit here is complex.
           // For now, we log and proceed, hoping HOF handles it.
-          console.warn(
+          logger.warn(
             'Session object not found on request in getUser after token refresh. Session might not be committed.',
           );
         }
@@ -108,19 +109,19 @@ export async function getUser(request: Request): Promise<SessionUserDto | null> 
           const userProfile = await refreshedAuthApi.authControllerGetProfile();
           return userProfile;
         } catch (retryError) {
-          console.error('Failed to fetch profile after token refresh in getUser:', retryError);
+          logger.error('Failed to fetch profile after token refresh in getUser:', retryError);
           // Potentially trigger logout or redirect if this is critical
           return null; // Or throw, leading to error handling upstream
         }
       } else {
         // Refresh token failed
-        console.error('Token refresh failed in getUser.');
+        logger.error('Token refresh failed in getUser.');
         // Consider redirecting to logout or returning null to trigger auth protection
         return null;
       }
     }
     // For other errors or if no refresh token was available for the 401
-    console.error('Failed to get user profile in getUser:', error);
+    logger.error('Failed to get user profile in getUser:', error);
     return null;
   }
 }
@@ -178,7 +179,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<AuthResp
 
     return response;
   } catch (error) {
-    console.error('Failed to refresh token:', error);
+    logger.error('Failed to refresh token:', error);
     return null;
   }
 }
@@ -253,7 +254,7 @@ export function withSessionHandling(originalLoaderOrAction: OriginalLoaderOrActi
       // If an error was caught, re-throw it. The session commit attempt was made.
       // Consider if a generic error response with the cookie should be returned instead.
       // For now, re-throwing preserves original error handling.
-      console.error('Error in wrapped loader/action, session commit attempted:', errorOccurred);
+      logger.error('Error in wrapped loader/action, session commit attempted:', errorOccurred);
       throw errorOccurred;
     }
 

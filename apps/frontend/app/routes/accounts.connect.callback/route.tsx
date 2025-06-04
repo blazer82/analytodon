@@ -12,6 +12,7 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAccountsApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { refreshAccessToken, requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -75,7 +76,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       // Re-throw redirects, HOF will handle cookie
       throw error;
     }
-    console.error('Error in OAuth callback:', error);
+    logger.error('Error in OAuth callback:', error, { connectionToken, code });
 
     // If there's an error, redirect back to the connect page. HOF will handle cookie.
     throw redirect('/accounts/connect?error=connection_failed');

@@ -6,6 +6,7 @@ import { Form, Link as RemixLink, useActionData, useLoaderData, useNavigation } 
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import Title from '~/components/Title';
 import { createAccountsApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 import { stripSchema } from '~/utils/url';
 
@@ -26,7 +27,7 @@ export const loader = withSessionHandling(async ({ request, params }: LoaderFunc
     const account = await accountsApi.accountsControllerFindOne({ accountId });
     return { account };
   } catch (error) {
-    console.error('Failed to load account:', error);
+    logger.error('Failed to load account:', error, { accountId });
     throw redirect('/settings/accounts');
   }
 });
@@ -53,7 +54,7 @@ export const action = withSessionHandling(async ({ request, params }: ActionFunc
 
     return json({ success: true });
   } catch (error) {
-    console.error('Failed to update account:', error);
+    logger.error('Failed to update account:', error, { accountId });
     return json({ error: 'Failed to update account. Please try again.' }, { status: 500 });
   }
 });

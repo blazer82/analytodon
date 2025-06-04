@@ -15,6 +15,7 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { refreshAccessToken, requireUser, withSessionHandling } from '~/utils/session.server'; // Import withSessionHandling
 
 export const meta: MetaFunction = () => {
@@ -73,7 +74,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
         // Re-throw redirects, HOF will handle cookie
         throw error;
       }
-      console.error('Email verification error:', error);
+      logger.error('Email verification error:', error, { verificationCode });
       verificationStatus = {
         success: false,
         message: 'Failed to verify your email. The verification code may be invalid or expired.',

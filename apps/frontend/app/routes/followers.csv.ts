@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { createFollowersApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
@@ -43,7 +44,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       headers: headers,
     });
   } catch (error) {
-    console.error('Failed to export CSV:', error);
+    logger.error('Failed to export CSV:', error, { accountId, timeframe });
     return new Response('Failed to export CSV data.', { status: 500 });
   }
 });

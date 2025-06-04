@@ -2,6 +2,7 @@ import { type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } f
 import { useActionData } from '@remix-run/react';
 import LoginPage from '~/components/LoginPage';
 import { createAuthApi } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { createUserSession, getUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -45,7 +46,7 @@ export async function action({ request }: ActionFunctionArgs) {
     // Create a session and redirect to the dashboard
     return createUserSession(authResponse, '/');
   } catch (error: unknown) {
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
 
     // Handle API errors
     const apiError = error as { response?: { status: number } };

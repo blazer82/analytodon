@@ -11,6 +11,7 @@ import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
 import type { EntryContext } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
+import logger from '~/services/logger.server';
 import { isbot } from 'isbot';
 
 import { createEmotionCache } from './utils/createEmotionCache';
@@ -82,7 +83,7 @@ function handleBotRequest(
           // errors encountered during initial shell rendering since they'll
           // reject and get logged in handleDocumentRequest.
           if (shellRendered) {
-            console.error(error);
+            logger.error('Shell error during bot request streaming:', error);
           }
         },
       },
@@ -146,7 +147,7 @@ function handleBrowserRequest(
           // errors encountered during initial shell rendering since they'll
           // reject and get logged in handleDocumentRequest.
           if (shellRendered) {
-            console.error(error);
+            logger.error('Shell error during browser request streaming:', error);
           }
         },
       },

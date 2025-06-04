@@ -9,6 +9,7 @@ import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/s
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -77,7 +78,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     if (error instanceof Response) {
       throw error;
     }
-    console.error('Failed to load dashboard data:', error);
+    logger.error('Failed to load dashboard data:', error);
     return {
       total: null,
       chart: [],

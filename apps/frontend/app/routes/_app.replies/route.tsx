@@ -12,6 +12,7 @@ import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
 import { createRepliesApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { getKPITrend } from '~/utils/getKPITrend';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
@@ -94,7 +95,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     if (error instanceof Response) {
       throw error;
     }
-    console.error('Failed to load replies data:', error);
+    logger.error('Failed to load replies data:', error);
     return {
       weeklyKPI: null,
       monthlyKPI: null,

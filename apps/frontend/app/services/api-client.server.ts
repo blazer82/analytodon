@@ -1,5 +1,6 @@
 import { Configuration } from '@analytodon/rest-client';
 import { redirect } from '@remix-run/node';
+import logger from '~/services/logger.server';
 import { refreshAccessToken } from '~/utils/session.server';
 
 // Base URL for the API
@@ -14,7 +15,7 @@ export async function createApiClientWithAuth(request: Request) {
 
   if (!session) {
     // This should ideally not happen if loaders are correctly wrapped.
-    console.error('Session not found on request. Ensure loader is wrapped with withSessionHandling.');
+    logger.error('Session not found on request. Ensure loader is wrapped with withSessionHandling.');
     throw redirect('/login'); // Or a more specific error
   }
 
@@ -143,7 +144,7 @@ export async function createApiClientWithAuth(request: Request) {
         throw error;
       }
       // Log other errors and re-throw
-      console.error('API request failed in customFetch:', error);
+      logger.error('API request failed in customFetch:', error);
       throw error;
     }
   };

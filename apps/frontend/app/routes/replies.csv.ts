@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { createRepliesApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
@@ -50,7 +51,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       headers: headers,
     });
   } catch (error) {
-    console.error('Failed to export replies CSV:', error);
+    logger.error('Failed to export replies CSV:', error);
     // Check if error is a Response object (e.g., from API client redirect/error handling)
     if (error instanceof Response) {
       throw error;

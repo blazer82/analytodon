@@ -27,6 +27,7 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { createUserSession, getUser, withSessionHandling } from '~/utils/session.server';
 import timezones from '~/utils/timezones.json';
 
@@ -83,7 +84,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return createUserSession(authResponse, '/');
   } catch (error: unknown) {
-    console.error('Registration error:', error);
+    logger.error('Registration error:', error);
 
     const apiError = error as { response?: { status: number; json: () => Promise<{ message?: string | string[] }> } };
     if (apiError.response) {

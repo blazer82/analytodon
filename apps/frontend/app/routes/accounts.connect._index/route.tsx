@@ -13,6 +13,7 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAccountsApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -74,7 +75,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
       // Redirect the user to the Mastodon authorization URL
       return redirect(connectionResponse.redirectUrl);
     } catch (error) {
-      console.error('Error connecting account:', error);
+      logger.error('Error connecting account:', error, { serverURL, timezone });
       return new Response(
         JSON.stringify({
           error: 'Failed to connect to Mastodon server. Please check the server URL and try again.',

@@ -18,6 +18,7 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
+import logger from '~/services/logger.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Reset your Analytodon password' }];
@@ -66,7 +67,7 @@ export async function action({ request }: ActionFunctionArgs) {
         success: 'If an account with this email exists, a password reset link has been sent.',
       };
     } catch (error) {
-      console.error('Password reset request error:', error);
+      logger.error('Password reset request error:', error, { email });
       // For security reasons, always return success even if email doesn't exist
       return {
         success: 'If an account with this email exists, a password reset link has been sent.',
@@ -117,7 +118,7 @@ export async function action({ request }: ActionFunctionArgs) {
         completed: true,
       };
     } catch (error: unknown) {
-      console.error('Password reset error:', error);
+      logger.error('Password reset error:', error, { tokenProvided: !!token });
 
       // Handle API errors
       const apiError = error as { response?: { status: number } };

@@ -2,6 +2,7 @@ import { MongoDriver } from '@mikro-orm/mongodb';
 import { MikroOrmModule, MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LoggerModule } from 'nestjs-pino';
 
 import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
@@ -18,6 +19,18 @@ import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        formatters: {
+          level: (label) => {
+            return { level: label };
+          },
+        },
+        transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+        level: process.env.LOG_LEVEL || 'info',
+        autoLogging: true,
+      },
+    }),
     ConfigModule.forRoot({
       isGlobal: true, // Makes ConfigService available throughout the app
       envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],

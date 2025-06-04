@@ -1,4 +1,5 @@
 import { redirect, type ActionFunctionArgs } from '@remix-run/node';
+import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const action = withSessionHandling(async ({ request }: ActionFunctionArgs) => {
@@ -9,7 +10,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
   const referrer = request.headers.get('Referer') || '/dashboard';
 
   if (!accountId) {
-    console.error('Account ID missing in switch account request');
+    logger.error('Account ID missing in switch account request');
     // Redirect back to where the user came from, possibly with an error indicator if UI supports it.
     // For now, just redirecting to referrer.
     throw redirect(referrer);

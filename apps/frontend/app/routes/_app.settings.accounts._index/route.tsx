@@ -32,6 +32,7 @@ import { DataTablePaper } from '~/components/Layout/styles';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import Title from '~/components/Title';
 import { createAccountsApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { formatDate } from '~/utils/formatters';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 import { stripSchema } from '~/utils/url';
@@ -56,7 +57,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       showSetupCompleteDialog: setupComplete,
     };
   } catch (error) {
-    console.error('Failed to load accounts:', error);
+    logger.error('Failed to load accounts:', error);
     return {
       accounts: [],
       user,
@@ -101,7 +102,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
         // Re-throw redirects to be handled by withSessionHandling
         throw error;
       }
-      console.error('Error connecting account:', error);
+      logger.error('Error connecting account in settings:', error, { serverURL, timezone });
       return {
         error: 'Failed to connect to Mastodon server. Please check the server URL and try again.',
       };
@@ -135,7 +136,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
         // Re-throw redirects to be handled by withSessionHandling
         throw error;
       }
-      console.error(`Failed to ${formAction} account:`, error);
+      logger.error(`Failed to ${formAction} account:`, error, { accountId });
       return { error: `Failed to ${formAction} account. Please try again.` };
     }
   }
