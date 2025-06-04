@@ -68,6 +68,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      handlebars:
+        specifier: ^4.7.8
+        version: 4.7.8
       megalodon:
         specifier: ^10.1.1
         version: 10.1.1
@@ -13829,7 +13832,6 @@ snapshots:
       wordwrap: 1.0.0
     optionalDependencies:
       uglify-js: 3.19.3
-    optional: true
 
   has-bigints@1.1.0: {}
 
