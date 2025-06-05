@@ -106,12 +106,20 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
 
             <AppBarTitle>
               <Typography component="h1" variant="h6" color="inherit" noWrap>
-                {title} for {accountName || 'Your Account'}
+                {title}
+                <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
+                  &nbsp;for {accountName || 'Your Account'}
+                </Box>
               </Typography>
             </AppBarTitle>
 
             <UserInfo>
-              <Typography variant="body2" color="inherit" noWrap sx={{ opacity: 0.9 }}>
+              <Typography
+                variant="body2"
+                color="inherit"
+                noWrap
+                sx={{ opacity: 0.9, display: { xs: 'none', md: 'block' } }}
+              >
                 {username || 'Username'}
               </Typography>
               <IconButton
