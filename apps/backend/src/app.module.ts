@@ -29,6 +29,7 @@ import { UsersModule } from './users/users.module';
         transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
         level: process.env.LOG_LEVEL || 'info',
         autoLogging: true,
+        redact: ['req.headers.authorization'],
       },
     }),
     ConfigModule.forRoot({
