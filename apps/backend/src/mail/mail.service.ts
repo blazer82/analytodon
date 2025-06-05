@@ -17,7 +17,7 @@ import { OldAccountMailDto } from './dto/old-account-mail.dto';
 import { WeeklyStatsMailDto } from './dto/weekly-stats-mail.dto';
 
 interface FormattedKpi {
-  value: number;
+  value: string;
   change: string; // e.g., "(+5)", "(-2)", "(no change)"
 }
 
@@ -75,19 +75,22 @@ export class MailService {
   private formatKpiForEmail(kpiData: { currentPeriod?: number; previousPeriod?: number }): FormattedKpi {
     const currentValue = kpiData.currentPeriod ?? 0;
     const previousValue = kpiData.previousPeriod ?? 0;
-    const diff = currentValue - previousValue;
+    const formattedValue = new Intl.NumberFormat('en-US').format(currentValue);
+
+    let trend: number | null = null;
+    if (kpiData.currentPeriod !== undefined && kpiData.previousPeriod !== undefined && previousValue !== 0) {
+      trend = (currentValue - previousValue) / previousValue;
+    }
 
     let changeString = '';
-    if (kpiData.currentPeriod === undefined || kpiData.previousPeriod === undefined) {
-      changeString = ''; // Or '(data pending)'
-    } else if (diff > 0) {
-      changeString = `(+${diff})`;
-    } else if (diff < 0) {
-      changeString = `(${diff})`;
-    } else {
-      changeString = '(no change)';
+    if (trend) {
+      const trendPercentage = (trend * 100).toFixed(0);
+      const color = trend > 0 ? 'green' : 'red';
+      const sign = trend > 0 ? '+' : '';
+      changeString = ` <span style="font-size: 24px; color: ${color};"> (${sign}${trendPercentage}%)</span>`;
     }
-    return { value: currentValue, change: changeString };
+
+    return { value: formattedValue, change: changeString };
   }
 
   /**
@@ -424,7 +427,7 @@ export class MailService {
         const favoritesKpiData = await this.favoritesService.getWeeklyKpi(account);
 
         statsForEmail.push({
-          accountName: account.accountName || account.name || new URL(account.serverURL).hostname,
+          accountName: account.name || account.accountName || new URL(account.serverURL).hostname,
           followers: this.formatKpiForEmail(followersKpiData),
           replies: this.formatKpiForEmail(repliesKpiData),
           boosts: this.formatKpiForEmail(boostsKpiData),

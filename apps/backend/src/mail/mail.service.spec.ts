@@ -414,10 +414,10 @@ describe('MailService', () => {
     const mockStats = [
       {
         accountName: 'Account1',
-        followers: { value: 10, change: '+2' },
-        replies: { value: 5, change: '-1' },
-        boosts: { value: 20, change: '+5' },
-        favorites: { value: 15, change: '0' },
+        followers: { value: '10', change: ' <span style="font-size: 24px; color: green;"> (+25%)</span>' },
+        replies: { value: '5', change: ' <span style="font-size: 24px; color: red;"> (-17%)</span>' },
+        boosts: { value: '20', change: ' <span style="font-size: 24px; color: green;"> (+33%)</span>' },
+        favorites: { value: '15', change: '' },
       },
     ];
 
@@ -491,42 +491,55 @@ describe('MailService', () => {
       const kpiData = { currentPeriod: 10, previousPeriod: 5 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
-      expect(formatted).toEqual({ value: 10, change: '(+5)' });
+      expect(formatted).toEqual({
+        value: '10',
+        change: ' <span style="font-size: 24px; color: green;"> (+100%)</span>',
+      });
     });
 
     it('should format KPI data with negative change', () => {
       const kpiData = { currentPeriod: 3, previousPeriod: 5 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
-      expect(formatted).toEqual({ value: 3, change: '(-2)' });
+      expect(formatted).toEqual({ value: '3', change: ' <span style="font-size: 24px; color: red;"> (-40%)</span>' });
     });
 
     it('should format KPI data with no change', () => {
       const kpiData = { currentPeriod: 5, previousPeriod: 5 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
-      expect(formatted).toEqual({ value: 5, change: '(no change)' });
+      expect(formatted).toEqual({ value: '5', change: '' });
     });
 
     it('should handle undefined currentPeriod', () => {
       const kpiData = { previousPeriod: 5 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
-      expect(formatted).toEqual({ value: 0, change: '' });
+      expect(formatted).toEqual({ value: '0', change: '' });
     });
 
     it('should handle undefined previousPeriod', () => {
       const kpiData = { currentPeriod: 10 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
-      expect(formatted).toEqual({ value: 10, change: '' });
+      expect(formatted).toEqual({ value: '10', change: '' });
     });
 
     it('should handle both undefined periods', () => {
       const kpiData = {};
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
-      expect(formatted).toEqual({ value: 0, change: '' });
+      expect(formatted).toEqual({ value: '0', change: '' });
+    });
+
+    it('should format large numbers with thousand separators', () => {
+      const kpiData = { currentPeriod: 1234, previousPeriod: 1000 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formatted = (service as any).formatKpiForEmail(kpiData);
+      expect(formatted).toEqual({
+        value: '1,234',
+        change: ' <span style="font-size: 24px; color: green;"> (+23%)</span>',
+      });
     });
   });
 
@@ -658,7 +671,10 @@ describe('MailService', () => {
       expect(sendMailArgs[1].length).toBe(2); // stats array
       expect(sendMailArgs[1][0].accountName).toBe(account1.accountName);
       expect(sendMailArgs[1][1].accountName).toBe(account2.name); // Fallback
-      expect(sendMailArgs[1][0].followers).toEqual({ value: 10, change: '(+5)' });
+      expect(sendMailArgs[1][0].followers).toEqual({
+        value: '10',
+        change: ' <span style="font-size: 24px; color: green;"> (+100%)</span>',
+      });
       expect(sendMailArgs[2]).toBeUndefined(); // rerouteToEmail
     });
 
