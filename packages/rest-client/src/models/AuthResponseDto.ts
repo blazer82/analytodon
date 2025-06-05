@@ -40,6 +40,12 @@ export interface AuthResponseDto {
      */
     refreshToken: string;
     /**
+     * Access Token expiration in seconds
+     * @type {number}
+     * @memberof AuthResponseDto
+     */
+    expiresIn: number;
+    /**
      * User session information
      * @type {SessionUserDto}
      * @memberof AuthResponseDto
@@ -53,6 +59,7 @@ export interface AuthResponseDto {
 export function instanceOfAuthResponseDto(value: object): value is AuthResponseDto {
     if (!('token' in value) || value['token'] === undefined) return false;
     if (!('refreshToken' in value) || value['refreshToken'] === undefined) return false;
+    if (!('expiresIn' in value) || value['expiresIn'] === undefined) return false;
     if (!('user' in value) || value['user'] === undefined) return false;
     return true;
 }
@@ -69,6 +76,7 @@ export function AuthResponseDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
         
         'token': json['token'],
         'refreshToken': json['refreshToken'],
+        'expiresIn': json['expiresIn'],
         'user': SessionUserDtoFromJSON(json['user']),
     };
 }
@@ -86,6 +94,7 @@ export function AuthResponseDtoToJSONTyped(value?: AuthResponseDto | null, ignor
         
         'token': value['token'],
         'refreshToken': value['refreshToken'],
+        'expiresIn': value['expiresIn'],
         'user': SessionUserDtoToJSON(value['user']),
     };
 }

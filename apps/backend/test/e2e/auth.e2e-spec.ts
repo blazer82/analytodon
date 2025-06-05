@@ -115,6 +115,8 @@ describe('AuthController (e2e)', () => {
 
       expect(response.body).toHaveProperty('token');
       expect(response.body).toHaveProperty('refreshToken');
+      expect(response.body).toHaveProperty('expiresIn');
+      expect(response.body.expiresIn).toBe(3600); // Default 1h
       expect(response.body).toHaveProperty('user');
       expect(response.body.user.email).toBe(testUser.email);
 
@@ -167,6 +169,8 @@ describe('AuthController (e2e)', () => {
 
       expect(response.body).toHaveProperty('token');
       expect(response.body).toHaveProperty('refreshToken');
+      expect(response.body).toHaveProperty('expiresIn');
+      expect(response.body.expiresIn).toBe(3600); // Default 1h
       expect(response.body).toHaveProperty('user');
       expect(response.body.user.email).toBe(testUser.email);
       expect(response.body.user.accounts).toBeInstanceOf(Array);
@@ -243,6 +247,8 @@ describe('AuthController (e2e)', () => {
 
       expect(response.body).toHaveProperty('token');
       expect(response.body).toHaveProperty('refreshToken');
+      expect(response.body).toHaveProperty('expiresIn');
+      expect(response.body.expiresIn).toBe(3600); // Default 1h
       expect(response.body).toHaveProperty('user');
       expect(response.body.user.email).toBe(testUser.email);
       expect(response.body.refreshToken).not.toBe(refreshToken); // New refresh token should be issued

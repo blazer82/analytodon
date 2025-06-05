@@ -73,9 +73,16 @@ const mockEntityManager = {
 
 const mockConfigService = {
   get: jest.fn((key: string, defaultValue?: unknown) => {
-    if (key === 'JWT_REFRESH_TOKEN_EXPIRES_IN') {
-      return '7d'; // Default mock value
+    if (key === 'JWT_REFRESH_TOKEN_EXPIRES_IN_KEY') {
+      // Corrected key name
+      return '7d';
     }
+    if (key === 'JWT_EXPIRES_IN_KEY') {
+      return '1h'; // Mock value for access token expiry
+    }
+    // For JWT_DEFAULT_EXPIRES_IN_SECONDS, the service uses authConstants directly if ms fails.
+    // We can assume authConstants.JWT_DEFAULT_EXPIRES_IN_SECONDS is available.
+    // If the service logic were to fetch JWT_DEFAULT_EXPIRES_IN_SECONDS via config, we'd add it here.
     return defaultValue;
   }),
 };
@@ -207,6 +214,7 @@ describe('AuthService', () => {
       expect(result.token).toBe('accessToken');
       expect(result.refreshToken).toBe('newRefreshTokenString');
       expect(result.user).toBe(mockUser);
+      expect(result.expiresIn).toBe(3600); // 1h = 3600s
 
       // Check expiresAt logic (assuming 7d default from mockConfigService)
       const createdToken = mockRefreshTokenRepository.create.mock.calls[0][0] as RefreshTokenEntity;
@@ -309,6 +317,7 @@ describe('AuthService', () => {
       expect(result.token).toBe('accessToken');
       expect(result.refreshToken).toBe('mocked-uuid'); // This comes from the login call within registerUser
       expect(result.user).toBe(mockCreatedUser);
+      expect(result.expiresIn).toBe(3600); // 1h = 3600s
     });
 
     it('should throw ConflictException if user already exists', async () => {
@@ -392,6 +401,7 @@ describe('AuthService', () => {
       expect(result.token).toBe('newAccessToken');
       expect(result.refreshToken).toBe('newRefreshTokenUuid');
       expect(result.user).toBe(mockUser);
+      expect(result.expiresIn).toBe(3600); // 1h = 3600s
     });
 
     it('should throw UnauthorizedException if token is not found', async () => {

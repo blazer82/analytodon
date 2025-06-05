@@ -44,6 +44,7 @@ export class AuthController {
     return {
       token: result.token,
       refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
       user: sessionUser,
     };
   }
@@ -74,6 +75,7 @@ export class AuthController {
     return {
       token: result.token,
       refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
       user: sessionUser,
     };
   }
@@ -129,6 +131,7 @@ export class AuthController {
     return {
       token: result.token,
       refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
       user: sessionUser,
     };
   }

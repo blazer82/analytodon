@@ -8,6 +8,7 @@ src/apis/BoostsApi.ts
 src/apis/FavoritesApi.ts
 src/apis/FollowersApi.ts
 src/apis/HelloWorldApi.ts
+src/apis/MailInternalApi.ts
 src/apis/RepliesApi.ts
 src/apis/TootsApi.ts
 src/apis/UsersApi.ts
@@ -24,9 +25,11 @@ src/models/CreateAccountDto.ts
 src/models/CreateUserDto.ts
 src/models/FavoritedTootDto.ts
 src/models/FavoritesKpiDto.ts
+src/models/FirstStatsMailDto.ts
 src/models/FollowersKpiDto.ts
 src/models/LoginDto.ts
 src/models/ManageSubscriptionDto.ts
+src/models/OldAccountMailDto.ts
 src/models/RankedTootDto.ts
 src/models/RefreshTokenDto.ts
 src/models/RegisterUserDto.ts
@@ -42,6 +45,7 @@ src/models/TotalSnapshotDto.ts
 src/models/UpdateAccountDto.ts
 src/models/UpdateUserDto.ts
 src/models/UserResponseDto.ts
+src/models/WeeklyStatsMailDto.ts
 src/models/index.ts
 src/runtime.ts
 tsconfig.esm.json

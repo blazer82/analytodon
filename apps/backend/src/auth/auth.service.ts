@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ObjectId } from 'bson';
+import ms from 'ms';
 import { v4 as uuidv4 } from 'uuid';
 
 import { MailService } from '../mail/mail.service';
@@ -28,6 +29,7 @@ export interface AuthOperationResult {
   token: string;
   refreshToken: string;
   user: UserEntity;
+  expiresIn: number;
 }
 
 @Injectable()
@@ -107,6 +109,25 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
     const refreshTokenString = uuidv4();
 
+    const expiresInSeconds = this.configService.get<string>(
+      authConstants.JWT_EXPIRES_IN_KEY,
+      authConstants.JWT_DEFAULT_EXPIRES_IN,
+    );
+    let expiresInNumeric: number;
+    if (typeof expiresInSeconds === 'string') {
+      try {
+        expiresInNumeric = ms(expiresInSeconds) / 1000;
+      } catch (_e) {
+        this.logger.warn(`Invalid JWT_EXPIRES_IN format: ${expiresInSeconds}. Falling back to default.`);
+        expiresInNumeric = authConstants.JWT_DEFAULT_EXPIRES_IN_SECONDS;
+      }
+    } else if (typeof expiresInSeconds === 'number') {
+      // Assuming if it's a number, it's already in seconds as per previous logic/constants
+      expiresInNumeric = expiresInSeconds;
+    } else {
+      expiresInNumeric = authConstants.JWT_DEFAULT_EXPIRES_IN_SECONDS;
+    }
+
     // Create and store the new refresh token
     const refreshTokenExpiresIn = this.configService.get<string>(
       authConstants.JWT_REFRESH_TOKEN_EXPIRES_IN_KEY,
@@ -135,6 +156,7 @@ export class AuthService {
       token,
       refreshToken: refreshTokenString,
       user,
+      expiresIn: expiresInNumeric,
     };
   }
 
@@ -183,6 +205,24 @@ export class AuthService {
     const newAccessToken = this.jwtService.sign(payload);
     const newRefreshTokenString = uuidv4();
 
+    const expiresInSeconds = this.configService.get<string>(
+      authConstants.JWT_EXPIRES_IN_KEY,
+      authConstants.JWT_DEFAULT_EXPIRES_IN,
+    );
+    let expiresInNumeric: number;
+    if (typeof expiresInSeconds === 'string') {
+      try {
+        expiresInNumeric = ms(expiresInSeconds) / 1000;
+      } catch (_e) {
+        this.logger.warn(`Invalid JWT_EXPIRES_IN format: ${expiresInSeconds}. Falling back to default.`);
+        expiresInNumeric = authConstants.JWT_DEFAULT_EXPIRES_IN_SECONDS;
+      }
+    } else if (typeof expiresInSeconds === 'number') {
+      expiresInNumeric = expiresInSeconds;
+    } else {
+      expiresInNumeric = authConstants.JWT_DEFAULT_EXPIRES_IN_SECONDS;
+    }
+
     // Remove old refresh token
     await this.refreshTokenRepository.getEntityManager().removeAndFlush(refreshTokenEntity);
 
@@ -212,6 +252,7 @@ export class AuthService {
       token: newAccessToken,
       refreshToken: newRefreshTokenString,
       user,
+      expiresIn: expiresInNumeric,
     };
   }
 

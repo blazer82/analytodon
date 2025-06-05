@@ -74,6 +74,9 @@ importers:
       megalodon:
         specifier: ^10.1.1
         version: 10.1.1
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
       nestjs-pino:
         specifier: ^4.4.0
         version: 4.4.0(@nestjs/common@11.1.2(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@10.5.0)(pino@9.7.0)(rxjs@7.8.2)
