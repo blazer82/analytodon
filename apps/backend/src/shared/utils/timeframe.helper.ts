@@ -266,7 +266,7 @@ export async function getPeriodKPI(
     // If periodFunction(timezone, periodModifier + 1) is e.g. -7 (for a week), then daysInPeriodIdeal = 7
     // daysPassed = daysToPeriodBeginning - 0 (if period ends today)
     const daysPassed = daysToPeriodBeginning - 0; // Assuming period ends "now" or "end of yesterday"
-    results.currentPeriodProgress = daysInPeriodIdeal > 0 ? Math.min(1, daysPassed / daysInPeriodIdeal) : 1;
+    results.currentPeriodProgress = daysPassed / daysInPeriodIdeal;
     results.isLastPeriod = periodModifier !== 0;
   }
 

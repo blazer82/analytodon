@@ -265,7 +265,8 @@ describe('TimeframeHelper', () => {
       expect(result.currentPeriod).toBe(50);
       // Previous period: May 1 (100) - April 1 (50) = 50
       expect(result.previousPeriod).toBe(50);
-      expect(result.currentPeriodProgress).toBeCloseTo(0.5, 1); // Mid-month
+      // On May 15, 14 days of the 31-day month of May have passed.
+      expect(result.currentPeriodProgress).toBe(14 / 31);
     });
 
     it('should handle missing data gracefully', async () => {
