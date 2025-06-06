@@ -14,7 +14,7 @@
     "axios": "^1.9.0",
     "dotenv": "^16.5.0",
     "megalodon": "^10.1.1",
-    "mongodb": "^6.16.0",
+    "mongodb": "^6.17.0",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
     "timezone-support": "^3.1.0"
