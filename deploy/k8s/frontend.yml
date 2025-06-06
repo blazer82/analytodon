@@ -82,10 +82,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - beta.analytodon.com
+        - app.analytodon.com
       secretName: letsencrypt-analytodon-tls
   rules:
-    - host: beta.analytodon.com
+    - host: app.analytodon.com
       http:
         paths:
           - pathType: Prefix
