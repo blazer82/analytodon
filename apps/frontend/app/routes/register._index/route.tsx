@@ -13,7 +13,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
-import { Form, Link, useActionData, useNavigation } from '@remix-run/react';
+import { Form, Link, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
 import Footer from '~/components/Footer';
 import {
   FormCard,
@@ -41,7 +41,19 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   if (user) {
     return redirect('/');
   }
-  return null;
+
+  const url = new URL(request.url);
+  const username = url.searchParams.get('username');
+  let serverURL = '';
+
+  if (username) {
+    const atIndex = username.lastIndexOf('@');
+    if (atIndex !== -1 && atIndex < username.length - 1) {
+      serverURL = username.substring(atIndex + 1);
+    }
+  }
+
+  return { serverURL };
 });
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -125,6 +137,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Register() {
+  const { serverURL: initialServerURL } = useLoaderData<typeof loader>();
   const theme = useTheme();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -133,7 +146,7 @@ export default function Register() {
   const [values, setValues] = React.useState({
     email: '',
     password: '',
-    serverURL: '',
+    serverURL: initialServerURL || '',
     timezone: '',
   });
 
