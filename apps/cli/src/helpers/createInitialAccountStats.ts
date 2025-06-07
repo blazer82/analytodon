@@ -66,10 +66,25 @@ export const createInitialAccountStats = async (db: Db, account: Document) => {
         await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
       }
 
-      const notificationsResponse: Response<Array<Entity.Notification>> = await mastodon.getNotifications({
-        limit: QUERY_LIMIT,
-        max_id: pagingCursor,
-      });
+      let notificationsResponse: Response<Array<Entity.Notification>>;
+      try {
+        notificationsResponse = await mastodon.getNotifications({
+          limit: QUERY_LIMIT,
+          max_id: pagingCursor,
+        });
+      } catch (error: any) {
+        if (error.statusCode === 429) {
+          logger.warn(`Create initial account stats: Received 429 for ${account.name}. Pausing for 90 seconds.`);
+          await new Promise((resolve) => setTimeout(resolve, 90000));
+          logger.info(`Create initial account stats: Retrying for ${account.name}.`);
+          notificationsResponse = await mastodon.getNotifications({
+            limit: QUERY_LIMIT,
+            max_id: pagingCursor,
+          });
+        } else {
+          throw error;
+        }
+      }
 
       const unfilteredNotificationsList = notificationsResponse.data ?? [];
       if (unfilteredNotificationsList.length > 0) {
