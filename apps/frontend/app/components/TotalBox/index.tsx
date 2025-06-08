@@ -5,12 +5,7 @@ import { Box, Link } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import { Link as RemixLink, useRouteLoaderData } from '@remix-run/react';
 import Title from '~/components/Title';
-import { formatDate } from '~/utils/formatters';
-
-// TODO: Import proper formatting utilities
-const formatNumber = (num: number): string => {
-  return new Intl.NumberFormat().format(num);
-};
+import { formatDate, formatNumber } from '~/utils/formatters';
 
 const TotalBox: React.FunctionComponent<{
   title: string;

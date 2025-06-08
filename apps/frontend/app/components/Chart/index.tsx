@@ -36,7 +36,7 @@ const Chart: React.FunctionComponent<{
   const isBarChart = React.useMemo(() => type === 'bar', [type]);
   const isAreaChart = React.useMemo(() => type === 'area', [type]);
 
-  const gradientId = React.useMemo(() => `chart-gradient-${Math.random().toString(36).substring(2, 9)}`, []);
+  const gradientId = React.useId();
 
   const commonXAxisProps = {
     dataKey: 'time',
