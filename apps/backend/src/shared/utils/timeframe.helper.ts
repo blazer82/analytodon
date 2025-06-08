@@ -303,7 +303,7 @@ export const getKPITrend = (kpi: KpiDto): number | null => {
 
   // At this point, all kpi values (previousPeriod, currentPeriod, currentPeriodProgress) are defined and non-zero.
   const projectedCurrentPeriod = kpi.currentPeriod / kpi.currentPeriodProgress;
-  return (projectedCurrentPeriod - kpi.previousPeriod) / kpi.previousPeriod;
+  return (projectedCurrentPeriod - kpi.previousPeriod) / Math.abs(kpi.previousPeriod);
 };
 
 export const formatDateISO = (date: Date | string | undefined, timezone?: string): string | null => {

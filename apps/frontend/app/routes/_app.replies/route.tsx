@@ -13,7 +13,6 @@ import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
 import { createRepliesApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
-import { getKPITrend } from '~/utils/getKPITrend';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -170,7 +169,7 @@ export default function RepliesPage() {
                 title={weeklyKPI.isLastPeriod ? 'Last Week' : 'This Week'}
                 subtitle="replies"
                 amount={weeklyKPI.currentPeriod ?? 0}
-                trend={getKPITrend(weeklyKPI)}
+                trend={weeklyKPI.trend}
               />
             ) : (
               <Typography sx={{ textAlign: 'center', pt: 4 }}>No weekly data.</Typography>
@@ -184,7 +183,7 @@ export default function RepliesPage() {
                 title={monthlyKPI.isLastPeriod ? 'Last Month' : 'This Month'}
                 subtitle="replies"
                 amount={monthlyKPI.currentPeriod ?? 0}
-                trend={getKPITrend(monthlyKPI)}
+                trend={monthlyKPI.trend}
               />
             ) : (
               <Typography sx={{ textAlign: 'center', pt: 4 }}>No monthly data.</Typography>
@@ -198,7 +197,7 @@ export default function RepliesPage() {
                 title={yearlyKPI.isLastPeriod ? 'Last Year' : 'This Year'}
                 subtitle="replies"
                 amount={yearlyKPI.currentPeriod ?? 0}
-                trend={getKPITrend(yearlyKPI)}
+                trend={yearlyKPI.trend}
               />
             ) : (
               <Typography sx={{ textAlign: 'center', pt: 4 }}>No yearly data.</Typography>

@@ -312,6 +312,32 @@ describe('TimeframeHelper', () => {
       expect(trend).toBe(-0.2);
     });
 
+    it('should handle negative previous period correctly, resulting in a positive trend', () => {
+      const kpi = {
+        currentPeriod: 4,
+        previousPeriod: -1,
+        currentPeriodProgress: 0.8571428571428571,
+      };
+
+      // Projected current period is ~4.67
+      // Trend = (4.67 - (-1)) / |-1| = 5.67 / 1 = 5.67
+      const trend = getKPITrend(kpi);
+      expect(trend).toBeCloseTo(5.666666666666667);
+    });
+
+    it('should handle negative previous period correctly, resulting in a negative trend', () => {
+      const kpi = {
+        currentPeriod: -4,
+        previousPeriod: -1,
+        currentPeriodProgress: 0.5,
+      };
+
+      // Projected current period is -8
+      // Trend = (-8 - (-1)) / |-1| = -7 / 1 = -7
+      const trend = getKPITrend(kpi);
+      expect(trend).toBe(-7);
+    });
+
     it('should handle zero previous period', () => {
       const kpi = {
         currentPeriod: 50,

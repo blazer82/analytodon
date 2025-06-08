@@ -19,7 +19,7 @@ const TrendBox: React.FunctionComponent<{
   title: string;
   subtitle: string;
   amount: number;
-  trend?: number;
+  trend?: number | null;
   isLoading?: boolean;
 }> = ({ title, subtitle, amount, trend, isLoading }) => {
   if (isLoading) {
@@ -40,7 +40,7 @@ const TrendBox: React.FunctionComponent<{
       <Title>{title}</Title>
       <Typography component="p" variant="h4">
         {formatNumber(amount)}
-        {trend != null && isFinite(trend) && <Trend amount={trend} />}
+        {trend !== null && trend !== undefined && isFinite(trend) && <Trend amount={trend} />}
       </Typography>
       <Typography color="text.secondary" sx={{ flex: 1 }}>
         {subtitle}
