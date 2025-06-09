@@ -488,7 +488,7 @@ describe('MailService', () => {
 
   describe('formatKpiForEmail', () => {
     it('should format KPI data with positive change', () => {
-      const kpiData = { currentPeriod: 10, previousPeriod: 5 };
+      const kpiData = { currentPeriod: 10, trend: 1 }; // +100%
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
       expect(formatted).toEqual({
@@ -498,34 +498,37 @@ describe('MailService', () => {
     });
 
     it('should format KPI data with negative change', () => {
-      const kpiData = { currentPeriod: 3, previousPeriod: 5 };
+      const kpiData = { currentPeriod: 3, trend: -0.4 }; // -40%
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
       expect(formatted).toEqual({ value: '3', change: ' <span style="font-size: 24px; color: red;"> (-40%)</span>' });
     });
 
     it('should format KPI data with no change', () => {
-      const kpiData = { currentPeriod: 5, previousPeriod: 5 };
+      const kpiData = { currentPeriod: 5, trend: 0 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
       expect(formatted).toEqual({ value: '5', change: '' });
     });
 
     it('should handle undefined currentPeriod', () => {
-      const kpiData = { previousPeriod: 5 };
+      const kpiData = { trend: 0.5 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
-      expect(formatted).toEqual({ value: '0', change: '' });
+      expect(formatted).toEqual({
+        value: '0',
+        change: ' <span style="font-size: 24px; color: green;"> (+50%)</span>',
+      });
     });
 
-    it('should handle undefined previousPeriod', () => {
+    it('should handle undefined trend', () => {
       const kpiData = { currentPeriod: 10 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
       expect(formatted).toEqual({ value: '10', change: '' });
     });
 
-    it('should handle both undefined periods', () => {
+    it('should handle both undefined', () => {
       const kpiData = {};
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
@@ -533,7 +536,7 @@ describe('MailService', () => {
     });
 
     it('should format large numbers with thousand separators', () => {
-      const kpiData = { currentPeriod: 1234, previousPeriod: 1000 };
+      const kpiData = { currentPeriod: 1234, trend: 0.234 };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
       expect(formatted).toEqual({
@@ -647,7 +650,7 @@ describe('MailService', () => {
       },
     } as unknown as UserEntity;
 
-    const kpiResponse = { currentPeriod: 10, previousPeriod: 5 }; // Example KPI data
+    const kpiResponse = { currentPeriod: 10, previousPeriod: 5, trend: 1 }; // Example KPI data
 
     beforeEach(() => {
       followersService.getWeeklyKpi.mockResolvedValue(kpiResponse);

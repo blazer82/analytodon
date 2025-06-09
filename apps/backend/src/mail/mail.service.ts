@@ -29,8 +29,6 @@ interface WeeklyStatItem {
   favorites: FormattedKpi;
 }
 
-// TODO: Check and replace URLs in mails !!!
-
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -72,15 +70,11 @@ export class MailService {
     };
   }
 
-  private formatKpiForEmail(kpiData: { currentPeriod?: number; previousPeriod?: number }): FormattedKpi {
+  private formatKpiForEmail(kpiData: { currentPeriod?: number; trend?: number }): FormattedKpi {
     const currentValue = kpiData.currentPeriod ?? 0;
-    const previousValue = kpiData.previousPeriod ?? 0;
     const formattedValue = new Intl.NumberFormat('en-US').format(currentValue);
 
-    let trend: number | null = null;
-    if (kpiData.currentPeriod !== undefined && kpiData.previousPeriod !== undefined && previousValue !== 0) {
-      trend = (currentValue - previousValue) / previousValue;
-    }
+    const trend = kpiData.trend;
 
     let changeString = '';
     if (trend) {
