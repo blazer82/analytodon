@@ -70,7 +70,7 @@ export default class Accountdata extends BaseCommand {
 
       this.log('Clean up account data: Done');
     } else {
-      this.warn('Clean up account data: Something went wrong, no changes made.');
+      this.logWarning('Clean up account data: Something went wrong, no changes made.');
     }
 
     await connection.close();

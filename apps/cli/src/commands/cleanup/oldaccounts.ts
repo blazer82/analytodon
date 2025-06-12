@@ -76,13 +76,13 @@ export default class OldAccounts extends BaseCommand {
             this.log(`Cleanup old accounts: Delete user ${userID} (DRY RUN)`);
           }
         } catch (error: any) {
-          this.error(`Cleanup old accounts: Failed for user ${userID} with error ${error?.message}`);
+          this.logError(`Cleanup old accounts: Failed for user ${userID} with error ${error?.message}`);
         }
       }
 
       await connection.close();
     } catch (error: any) {
-      this.error(`Cleanup old accounts: Failed with error ${error?.message}`);
+      this.logError(`Cleanup old accounts: Failed with error ${error?.message}`);
     }
 
     this.log('Cleanup old accounts done.');

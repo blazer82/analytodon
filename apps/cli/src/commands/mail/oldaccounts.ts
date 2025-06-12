@@ -105,13 +105,13 @@ export default class OldAccounts extends BaseCommand {
             this.log(`Send old accounts: Trigger mail for user ${userID} (DRY RUN)`);
           }
         } catch (error: any) {
-          this.error(`Send old accounts: Failed for user ${userID} with error ${error?.message}`);
+          this.logError(`Send old accounts: Failed for user ${userID} with error ${error?.message}`);
         }
       }
 
       await connection.close();
     } catch (error: any) {
-      this.error(`Send old accounts: Failed with error ${error?.message}`);
+      this.logError(`Send old accounts: Failed with error ${error?.message}`);
     }
 
     this.log('Send old accounts email to users done.');

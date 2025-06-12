@@ -74,7 +74,7 @@ export default class EncryptAccountCredentials extends BaseCommand {
               needsDatabaseUpdate = true;
               this.log(`Credential ID ${doc._id}: accessToken successfully prepared for encryption.`);
             } else {
-              this.warn(`Credential ID ${doc._id}: Failed to encrypt accessToken. Skipping this field.`);
+              this.logWarning(`Credential ID ${doc._id}: Failed to encrypt accessToken. Skipping this field.`);
               errorsEncountered++;
             }
           }
@@ -90,7 +90,7 @@ export default class EncryptAccountCredentials extends BaseCommand {
               needsDatabaseUpdate = true;
               this.log(`Credential ID ${doc._id}: clientSecret successfully prepared for encryption.`);
             } else {
-              this.warn(`Credential ID ${doc._id}: Failed to encrypt clientSecret. Skipping this field.`);
+              this.logWarning(`Credential ID ${doc._id}: Failed to encrypt clientSecret. Skipping this field.`);
               errorsEncountered++;
             }
           }
@@ -104,16 +104,14 @@ export default class EncryptAccountCredentials extends BaseCommand {
                 this.log(`Credential ID ${doc._id}: Successfully updated with encrypted values.`);
                 updatedCount++;
               } else if (result.matchedCount > 0 && result.modifiedCount === 0) {
-                this.warn(
+                this.logWarning(
                   `Credential ID ${doc._id}: Document matched but was not modified. This might mean the data was already in the target state or an issue occurred.`,
                 );
               } else {
-                this.warn(`Credential ID ${doc._id}: Update operation did not find or modify the document.`);
+                this.logWarning(`Credential ID ${doc._id}: Update operation did not find or modify the document.`);
               }
             } catch (dbError: any) {
-              this.error(`Credential ID ${doc._id}: Failed to update document in database: ${dbError.message}`, {
-                exit: false,
-              });
+              this.logError(`Credential ID ${doc._id}: Failed to update document in database: ${dbError.message}`);
               errorsEncountered++;
             }
           } else {

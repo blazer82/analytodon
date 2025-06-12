@@ -57,13 +57,13 @@ export default class AccountStats extends BaseCommand {
       const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
 
       if (!credentials?.accessToken) {
-        this.warn(`Fetching account stats: Access token not found for ${account.name}`);
+        this.logWarning(`Fetching account stats: Access token not found for ${account.name}`);
         continue;
       }
 
       const decryptedAccessToken = decryptText(credentials.accessToken);
       if (!decryptedAccessToken) {
-        this.warn(`Fetching account stats: Failed to decrypt access token for ${account.name}. Skipping.`);
+        this.logWarning(`Fetching account stats: Failed to decrypt access token for ${account.name}. Skipping.`);
         continue;
       }
 
@@ -86,7 +86,7 @@ export default class AccountStats extends BaseCommand {
 
         this.log(`Fetching account stats: Done for ${account.name}`);
       } catch (error: any) {
-        this.error(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
+        this.logError(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
       }
     }
 

@@ -41,7 +41,7 @@ export default class RebuildDailyTootStats extends BaseCommand {
     const { flags } = await this.parse(RebuildDailyTootStats);
 
     if (!flags.account && !flags.all) {
-      this.warn('Rebuild daily toot stats: Either flag -a or -m must be set');
+      this.logWarning('Rebuild daily toot stats: Either flag -a or -m must be set');
       return;
     }
 
@@ -87,7 +87,7 @@ export default class RebuildDailyTootStats extends BaseCommand {
             upsert: true,
           });
         } catch (error: any) {
-          this.error(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
+          this.logError(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
         }
       }
     }

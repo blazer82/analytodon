@@ -121,7 +121,7 @@ export default class DailyAccountStats extends BaseCommand {
         await Promise.all(dbPromises);
         this.log(`Daily account stats: Done for ${account.name}`);
       } catch (error: any) {
-        this.error(`Daily account stats: Failed for ${account.name}: ${error?.message}`);
+        this.logError(`Daily account stats: Failed for ${account.name}: ${error?.message}`);
       }
     }
 

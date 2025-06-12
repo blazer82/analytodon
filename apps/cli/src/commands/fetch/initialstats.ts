@@ -69,7 +69,7 @@ export default class InitialStats extends BaseCommand {
       // Check if credentials exist for this account
       const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
       if (!credentials) {
-        this.warn(
+        this.logWarning(
           `Fetching initial stats: No credentials found for account ${account.name} (ID: ${account._id}). Skipping.`,
         );
         await connection.close();
@@ -77,7 +77,7 @@ export default class InitialStats extends BaseCommand {
       }
 
       if (!account.owner) {
-        this.warn(
+        this.logWarning(
           `Fetching initial stats: Account ${account._id} (${account.name}) does not have an owner field. Skipping.`,
         );
         await connection.close();
@@ -110,10 +110,10 @@ export default class InitialStats extends BaseCommand {
             },
           );
         } catch (error) {
-          this.error(`Fetching initial stats: Failed to send email notification for user ${user._id}: ${error}`);
+          this.logError(`Fetching initial stats: Failed to send email notification for user ${user._id}: ${error}`);
         }
       } else {
-        this.warn(`Fetching initial stats: Owner of account ${account._id} not found.`);
+        this.logWarning(`Fetching initial stats: Owner of account ${account._id} not found.`);
       }
     } else {
       this.log('Fetching initial stats: Nothing to do.');

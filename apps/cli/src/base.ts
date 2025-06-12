@@ -24,16 +24,22 @@ export abstract class BaseCommand extends Command {
     this.pinoLogger.info(message, ...args);
   }
 
-  // Override `warn` to use our pino logger
-  // Must match the base class signature: `warn(input: string | Error): string | Error;`
-  warn(input: string | Error): string | Error {
+  // Add custom `warn` method because oclif has a different signature
+  logWarning(input: string | Error): void {
     if (typeof input === 'string') {
       this.pinoLogger.warn(input);
-      return input;
     }
     // If it's an error object
     this.pinoLogger.warn(input);
-    return input;
+  }
+
+  // Add custom `error` method because oclif was exiting on any error
+  logError(input: string | Error): void {
+    if (typeof input === 'string') {
+      this.pinoLogger.warn(input);
+    }
+    // If it's an error object
+    this.pinoLogger.error(input);
   }
 
   // Override `error` to use our pino logger and preserve oclif's exit behavior

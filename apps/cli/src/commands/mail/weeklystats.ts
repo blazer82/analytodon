@@ -112,13 +112,13 @@ export default class WeeklyStats extends BaseCommand {
             this.log(`Send weekly stats: Skipping user ${owner}`);
           }
         } catch (error: any) {
-          this.error(`Send weekly stats: Failed for user ${owner} with error ${error?.message}`);
+          this.logError(`Send weekly stats: Failed for user ${owner} with error ${error?.message}`);
         }
       }
 
       await connection.close();
     } catch (error: any) {
-      this.error(`Send weekly stats: Failed with error ${error?.message}`);
+      this.logError(`Send weekly stats: Failed with error ${error?.message}`);
     }
   }
 }

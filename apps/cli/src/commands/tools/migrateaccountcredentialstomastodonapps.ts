@@ -133,7 +133,7 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
         // Fetch credentials using the accountId by querying the 'account' field in 'accountcredentials'
         const credentialDoc = await accountCredentialsCollection.findOne({ account: accountId });
         if (!credentialDoc) {
-          this.warn(
+          this.logWarning(
             `Could not find AccountCredentials document for Account ID ${accountId} (serverURL: ${serverURL}). Cannot create Mastodon App.`,
           );
           errorsEncounteredCount++;
@@ -144,7 +144,7 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
         const legacyClientSecret = credentialDoc.clientSecret as string | undefined;
 
         if (!legacyClientID) {
-          this.warn(
+          this.logWarning(
             `Account ID ${accountId} (serverURL: ${serverURL}): 'clientID' is missing in credentials document ${credentialDoc._id}. Cannot create Mastodon App.`,
           );
           errorsEncounteredCount++;
@@ -152,7 +152,7 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
         }
 
         if (!legacyClientSecret) {
-          this.warn(
+          this.logWarning(
             `Account ID ${accountId} (serverURL: ${serverURL}): 'clientSecret' is missing in credentials document ${credentialDoc._id}. Cannot create Mastodon App.`,
           );
           errorsEncounteredCount++;
@@ -166,7 +166,7 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
             : legacyClientSecret;
           if (!encryptedClientSecret) {
             // This case implies legacyClientSecret was empty or null, or encryptText had an internal issue not throwing.
-            this.warn(
+            this.logWarning(
               `Encryption of 'legacyClientSecret' for serverURL ${serverURL} (Account ID ${accountId}) resulted in a null value. Cannot create Mastodon App.`,
             );
             errorsEncounteredCount++;
@@ -174,7 +174,7 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
           }
         } catch (encError: any) {
           // This catches errors from getKey() if ENCRYPTION_KEY is problematic during the encryptText call.
-          this.warn(
+          this.logWarning(
             `Encryption failed for 'legacyClientSecret' for serverURL ${serverURL} (Account ID ${accountId}): ${encError.message}. Cannot create Mastodon App.`,
           );
           errorsEncounteredCount++;
@@ -199,9 +199,8 @@ export default class MigrateAccountCredentialsToMastodonApps extends BaseCommand
             );
             mastodonAppsCreatedCount++;
           } catch (dbError: any) {
-            this.error(
+            this.logError(
               `Failed to insert Mastodon App entry for serverURL ${serverURL} (Account ID ${accountId}): ${dbError.message}`,
-              { exit: false }, // Continue processing other accounts
             );
             errorsEncounteredCount++;
           }

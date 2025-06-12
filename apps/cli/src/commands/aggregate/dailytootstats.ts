@@ -54,7 +54,7 @@ export default class DailyTootStats extends BaseCommand {
       try {
         await generateDailyTootstats(db, account);
       } catch (error: any) {
-        this.error(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
+        this.logError(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
       }
     }
 
