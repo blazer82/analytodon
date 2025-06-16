@@ -11,16 +11,16 @@
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^5",
-    "axios": "^1.9.0",
+    "axios": "^1.10.0",
     "dotenv": "^16.5.0",
-    "megalodon": "^10.1.1",
+    "megalodon": "^10.1.2",
     "mongodb": "^6.17.0",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
     "timezone-support": "^3.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.28.0",
+    "@eslint/js": "^9.29.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.4.2",
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
@@ -35,7 +35,7 @@
     "shx": "^0.4.0",
     "ts-node": "^10",
     "typescript": "^5",
-    "typescript-eslint": "^8.33.1"
+    "typescript-eslint": "^8.34.0"
   },
   "engines": {
     "node": ">=18.0.0"
