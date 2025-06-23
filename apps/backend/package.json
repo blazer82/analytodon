@@ -69,7 +69,7 @@
     "@types/supertest": "^6.0.3",
     "eslint": "9.29.0",
     "jest": "^29.7.0",
-    "prettier": "^3.5.3",
+    "prettier": "^3.6.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.1.1",
     "ts-jest": "^29.4.0",
@@ -77,7 +77,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.34.0"
+    "typescript-eslint": "^8.34.1"
   },
   "jest": {
     "moduleFileExtensions": [
