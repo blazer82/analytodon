@@ -11,7 +11,6 @@ const PAUSE_INTERVAL = 9;
 const PAUSE_MS = 2000;
 const QUERY_LIMIT = 80;
 const BATCH_SIZE = 5;
-const TOO_MANY_REQUESTS_PAUSE = 90000;
 
 export const createInitialAccountStats = async (db: Db, account: Document) => {
   logger.info(`Create initial account stats: Processing account ${account.name}`);
@@ -68,22 +67,28 @@ export const createInitialAccountStats = async (db: Db, account: Document) => {
       }
 
       let notificationsResponse: Response<Array<Entity.Notification>>;
-      try {
-        notificationsResponse = await mastodon.getNotifications({
-          limit: QUERY_LIMIT,
-          max_id: pagingCursor,
-        });
-      } catch (error: any) {
-        if (error.response?.status === 429) {
-          logger.warn(`Create initial account stats: Received 429 for ${account.name}. Pausing for 90 seconds.`);
-          await new Promise((resolve) => setTimeout(resolve, TOO_MANY_REQUESTS_PAUSE));
-          logger.info(`Create initial account stats: Retrying for ${account.name}.`);
+      let retries = 0;
+      const maxRetries = 5;
+      while (true) {
+        try {
           notificationsResponse = await mastodon.getNotifications({
             limit: QUERY_LIMIT,
             max_id: pagingCursor,
           });
-        } else {
-          throw error;
+          break;
+        } catch (error: any) {
+          if (error.response?.status === 429 && retries < maxRetries) {
+            retries++;
+            const delay = Math.pow(2, retries) * 15000;
+            logger.warn(
+              `Create initial account stats: Received 429 for ${account.name}. Retrying in ${
+                delay / 1000
+              } seconds (attempt ${retries}/${maxRetries}).`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          } else {
+            throw error;
+          }
         }
       }
 

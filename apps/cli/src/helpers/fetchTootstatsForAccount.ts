@@ -9,7 +9,6 @@ const MAX_AGE = 5184000000; // 60 days
 const PAUSE_INTERVAL = 9;
 const PAUSE_MS = 2000;
 const QUERY_LIMIT = 50;
-const TOO_MANY_REQUESTS_PAUSE = 90000;
 
 export const fetchTootstatsForAccount = async (db: Db, account: Document) => {
   logger.info(`Fetching toot stats: Processing account ${account.name}`);
@@ -46,24 +45,29 @@ export const fetchTootstatsForAccount = async (db: Db, account: Document) => {
       }
 
       let statusesResponse: Response<Array<Entity.Status>>;
-      try {
-        statusesResponse = await mastodon.getAccountStatuses(userInfo.data.id, {
-          limit: QUERY_LIMIT,
-          exclude_reblogs: true,
-          max_id: pagingCursor,
-        });
-      } catch (error: any) {
-        if (error.response?.status === 429) {
-          logger.warn(`Fetching toot stats: Received 429 for ${account.name}. Pausing for 90 seconds.`);
-          await new Promise((resolve) => setTimeout(resolve, TOO_MANY_REQUESTS_PAUSE));
-          logger.info(`Fetching toot stats: Retrying for ${account.name}.`);
+      let retries = 0;
+      const maxRetries = 5;
+      while (true) {
+        try {
           statusesResponse = await mastodon.getAccountStatuses(userInfo.data.id, {
             limit: QUERY_LIMIT,
             exclude_reblogs: true,
             max_id: pagingCursor,
           });
-        } else {
-          throw error;
+          break;
+        } catch (error: any) {
+          if (error.response?.status === 429 && retries < maxRetries) {
+            retries++;
+            const delay = Math.pow(2, retries) * 15000;
+            logger.warn(
+              `Fetching toot stats: Received 429 for ${account.name}. Retrying in ${
+                delay / 1000
+              } seconds (attempt ${retries}/${maxRetries}).`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          } else {
+            throw error;
+          }
         }
       }
 
