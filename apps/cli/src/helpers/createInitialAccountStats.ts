@@ -11,6 +11,7 @@ const PAUSE_INTERVAL = 9;
 const PAUSE_MS = 2000;
 const QUERY_LIMIT = 80;
 const BATCH_SIZE = 5;
+const TOO_MANY_REQUESTS_PAUSE = 90000;
 
 export const createInitialAccountStats = async (db: Db, account: Document) => {
   logger.info(`Create initial account stats: Processing account ${account.name}`);
@@ -73,9 +74,9 @@ export const createInitialAccountStats = async (db: Db, account: Document) => {
           max_id: pagingCursor,
         });
       } catch (error: any) {
-        if (error.statusCode === 429) {
+        if (error.response?.status === 429) {
           logger.warn(`Create initial account stats: Received 429 for ${account.name}. Pausing for 90 seconds.`);
-          await new Promise((resolve) => setTimeout(resolve, 90000));
+          await new Promise((resolve) => setTimeout(resolve, TOO_MANY_REQUESTS_PAUSE));
           logger.info(`Create initial account stats: Retrying for ${account.name}.`);
           notificationsResponse = await mastodon.getNotifications({
             limit: QUERY_LIMIT,
