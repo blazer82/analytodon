@@ -19,7 +19,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 0 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 * * 1 analytodon /app/apps/cli/bin/run.js mail weeklystats > /tmp/cron_job_pipe 2>&1
 
 # analytodon old accounts mail
-0 18 * * * analytodon /app/apps/cli/bin/run.js mail oldaccounts > /tmp/cron_job_pipe 2>&1
+# disable old accounts cleanup for now because it is not working properly (login does not update account credentials anymore)
+# 0 18 * * * analytodon /app/apps/cli/bin/run.js mail oldaccounts > /tmp/cron_job_pipe 2>&1
 
 # analytodon cleanup
 45 11 * * * analytodon /app/apps/cli/bin/run.js cleanup users > /tmp/cron_job_pipe 2>&1
@@ -27,7 +28,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 47 11 * * * analytodon /app/apps/cli/bin/run.js cleanup accounts > /tmp/cron_job_pipe 2>&1
 48 11 * * * analytodon /app/apps/cli/bin/run.js cleanup accountdata > /tmp/cron_job_pipe 2>&1
 40 2 * * * analytodon /app/apps/cli/bin/run.js cleanup tootstats > /tmp/cron_job_pipe 2>&1
-5 17 * * * analytodon /app/apps/cli/bin/run.js cleanup oldaccounts > /tmp/cron_job_pipe 2>&1
+# disable old accounts cleanup for now because it is not working properly (login does not update account credentials anymore)
+# 5 17 * * * analytodon /app/apps/cli/bin/run.js cleanup oldaccounts > /tmp/cron_job_pipe 2>&1
 7 17 * * * analytodon /app/apps/cli/bin/run.js cleanup refreshtokens > /tmp/cron_job_pipe 2>&1
 
 # An empty line is required at the end of this file for a valid cron file.
