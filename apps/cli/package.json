@@ -15,13 +15,13 @@
     "dotenv": "^16.6.1",
     "megalodon": "^10.1.3",
     "mongodb": "^6.18.0",
-    "pino": "^9.7.0",
+    "pino": "^9.9.0",
     "pino-pretty": "^13.1.1",
     "timezone-support": "^3.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.32.0",
-    "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
+    "@eslint/js": "^9.33.0",
+    "@ianvs/prettier-plugin-sort-imports": "^4.6.2",
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
     "@types/chai": "^4",
@@ -35,7 +35,7 @@
     "shx": "^0.4.0",
     "ts-node": "^10",
     "typescript": "^5",
-    "typescript-eslint": "^8.38.0"
+    "typescript-eslint": "^8.40.0"
   },
   "engines": {
     "node": ">=18.0.0"
