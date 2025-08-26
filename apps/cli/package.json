@@ -20,7 +20,7 @@
     "timezone-support": "^3.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.33.0",
+    "@eslint/js": "^9.34.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.6.2",
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
@@ -35,7 +35,7 @@
     "shx": "^0.4.0",
     "ts-node": "^10",
     "typescript": "^5",
-    "typescript-eslint": "^8.40.0"
+    "typescript-eslint": "^8.41.0"
   },
   "engines": {
     "node": ">=18.0.0"
