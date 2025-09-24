@@ -18,7 +18,13 @@ import {
   LoginContainer,
 } from './styles';
 
-const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
+interface LoginPageProps {
+  error?: string;
+  message?: string | null;
+  isRegistrationDisabled?: boolean;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ error, message, isRegistrationDisabled = false }) => {
   const theme = useTheme();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting' || navigation.state === 'loading';
@@ -117,6 +123,12 @@ const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
               </Alert>
             )}
 
+            {message && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                {message}
+              </Alert>
+            )}
+
             <StyledButton
               type="submit"
               fullWidth
@@ -129,11 +141,17 @@ const LoginPage: React.FC<{ error?: string }> = ({ error }) => {
             </StyledButton>
 
             <LinksContainer>
-              <Typography variant="body2" align="center">
-                <MuiLink component={Link} to="/register" underline="hover">
-                  New to Analytodon? Create an account
-                </MuiLink>
-              </Typography>
+              {!isRegistrationDisabled ? (
+                <Typography variant="body2" align="center">
+                  <MuiLink component={Link} to="/register" underline="hover">
+                    New to Analytodon? Create an account
+                  </MuiLink>
+                </Typography>
+              ) : (
+                <Typography variant="body2" align="center" color="textSecondary">
+                  New registrations are currently closed
+                </Typography>
+              )}
               <Typography variant="body2" align="center">
                 <MuiLink component={Link} to="/reset-password" underline="hover">
                   Forgot your password?

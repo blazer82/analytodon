@@ -3,6 +3,7 @@ import { EntityManager, EntityRepository } from '@mikro-orm/mongodb';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   ConflictException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -299,8 +300,14 @@ export class AuthService {
    * @param registerUserDto - DTO containing user registration information.
    * @returns A promise that resolves to an object containing tokens and the new user entity.
    * @throws ConflictException if a user with the given email already exists.
+   * @throws ForbiddenException if new registrations are disabled.
    */
   async registerUser(registerUserDto: RegisterUserDto): Promise<AuthOperationResult> {
+    const isRegistrationDisabled = this.configService.get<string>('DISABLE_NEW_REGISTRATIONS') === 'true';
+    if (isRegistrationDisabled) {
+      throw new ForbiddenException('New registrations are currently disabled.');
+    }
+
     const { email, password, serverURLOnSignUp, timezone } = registerUserDto;
 
     const existingUser = await this.userRepository.findOne({ email });

@@ -1,5 +1,5 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
-import { useActionData } from '@remix-run/react';
+import { useActionData, useLoaderData } from '@remix-run/react';
 import LoginPage from '~/components/LoginPage';
 import { createAuthApi } from '~/services/api.server';
 import logger from '~/services/logger.server';
@@ -20,7 +20,15 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       },
     });
   }
-  return null;
+
+  // Check if registrations are disabled
+  const isRegistrationDisabled = process.env.DISABLE_NEW_REGISTRATIONS === 'true';
+
+  // Get any message from query parameters
+  const url = new URL(request.url);
+  const message = url.searchParams.get('message');
+
+  return { isRegistrationDisabled, message };
 });
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -75,5 +83,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Login() {
   const actionData = useActionData<typeof action>();
-  return <LoginPage error={actionData?.error} />;
+  const loaderData = useLoaderData<typeof loader>();
+  return (
+    <LoginPage
+      error={actionData?.error}
+      message={loaderData?.message}
+      isRegistrationDisabled={loaderData?.isRegistrationDisabled || false}
+    />
+  );
 }

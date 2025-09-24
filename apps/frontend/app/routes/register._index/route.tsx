@@ -42,6 +42,12 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     return redirect('/');
   }
 
+  // Check if registrations are disabled
+  const isRegistrationDisabled = process.env.DISABLE_NEW_REGISTRATIONS === 'true';
+  if (isRegistrationDisabled) {
+    return redirect('/login?message=New registrations are currently disabled');
+  }
+
   const url = new URL(request.url);
   const username = url.searchParams.get('username');
   let serverURL = '';
@@ -57,6 +63,15 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 });
 
 export async function action({ request }: ActionFunctionArgs) {
+  // Check if registrations are disabled
+  const isRegistrationDisabled = process.env.DISABLE_NEW_REGISTRATIONS === 'true';
+  if (isRegistrationDisabled) {
+    return new Response(JSON.stringify({ error: 'New registrations are currently disabled' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;

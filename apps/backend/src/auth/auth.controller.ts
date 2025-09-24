@@ -1,5 +1,17 @@
 import { UserEntity } from '@analytodon/shared-orm';
-import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
@@ -19,7 +31,10 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -32,7 +47,13 @@ export class AuthController {
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email already exists.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'New registrations are currently disabled.' })
   async register(@Body() registerUserDto: RegisterUserDto): Promise<AuthResponseDto> {
+    const isRegistrationDisabled = this.configService.get<string>('DISABLE_NEW_REGISTRATIONS') === 'true';
+    if (isRegistrationDisabled) {
+      throw new ForbiddenException('New registrations are currently disabled.');
+    }
+
     this.logger.log(`Registering user with email: ${registerUserDto.email}`);
     const result = await this.authService.registerUser(registerUserDto);
     await result.user.accounts.init(); // Ensure accounts are loaded for SessionUserDto
