@@ -4,6 +4,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import type { StringValue } from 'ms';
 
 import { MailModule } from '../mail/mail.module';
 import { authConstants } from '../shared/constants/auth.constants';
@@ -25,7 +26,10 @@ import { LocalStrategy } from './strategies/local.strategy';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>(authConstants.JWT_SECRET_KEY, authConstants.JWT_DEFAULT_SECRET),
         signOptions: {
-          expiresIn: configService.get<string>(authConstants.JWT_EXPIRES_IN_KEY, authConstants.JWT_DEFAULT_EXPIRES_IN),
+          expiresIn: configService.get<StringValue>(
+            authConstants.JWT_EXPIRES_IN_KEY,
+            authConstants.JWT_DEFAULT_EXPIRES_IN,
+          ),
         },
       }),
       inject: [ConfigService],
