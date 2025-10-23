@@ -51,7 +51,6 @@ export default class TootStats extends BaseCommand {
 
     const accountFilter: Filter<Document> = {
       isActive: true,
-      credentials: { $exists: true },
     };
 
     if (flags.account) {
