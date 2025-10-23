@@ -25,7 +25,7 @@ export default class InitialStats extends BaseCommand {
     }),
     account: Flags.string({
       char: 'a',
-      description: 'Only process specific account',
+      description: 'Only process specific account (ignores initialStatsFetched flag)',
     }),
     host: Flags.string({
       char: 'h',
@@ -36,6 +36,21 @@ export default class InitialStats extends BaseCommand {
       char: 't',
       description: 'Authorization header',
       default: process.env.EMAIL_API_KEY || 'no-key',
+    }),
+    skipEmail: Flags.boolean({
+      char: 's',
+      description: 'Skip sending email notification',
+      default: false,
+    }),
+    accountStats: Flags.boolean({
+      description: 'Fetch account stats (followers)',
+      default: true,
+      allowNo: true,
+    }),
+    tootStats: Flags.boolean({
+      description: 'Fetch toot stats (replies, boosts, favorites)',
+      default: true,
+      allowNo: true,
     }),
   };
 
@@ -52,13 +67,15 @@ export default class InitialStats extends BaseCommand {
 
     const accountQuery: Filter<Document> = {
       isActive: true,
-      initialStatsFetched: { $ne: true },
       requestedScope: { $all: ['read:accounts', 'read:statuses', 'read:notifications'] },
     };
 
     if (flags.account) {
       this.log(`Fetching initial stats: Only process account ${flags.account}`);
       accountQuery['_id'] = new ObjectId(flags.account);
+    } else {
+      // Only check initialStatsFetched when no specific account is provided
+      accountQuery['initialStatsFetched'] = { $ne: true };
     }
 
     const account = await db.collection('accounts').findOne(accountQuery);
@@ -89,28 +106,41 @@ export default class InitialStats extends BaseCommand {
         this.log(`Fetching initial stats: Found owner ${user._id} for account ${account.name}`);
         await db.collection('accounts').updateOne({ _id: account._id }, { $set: { initialStatsFetched: true } });
 
-        this.log(`Fetching initial stats: Fetch toot history for account ${account.name}`);
-        await fetchTootstatsForAccount(db, account);
+        if (flags.tootStats) {
+          this.log(`Fetching initial stats: Fetch toot history for account ${account.name}`);
+          await fetchTootstatsForAccount(db, account);
 
-        this.log(`Fetching initial stats: Create initial account stats for account ${account.name}`);
-        await createInitialAccountStats(db, account);
+          this.log(`Fetching initial stats: Create initial toot stats for account ${account.name}`);
+          await createInitialTootStats(db, account);
+        } else {
+          this.log(`Fetching initial stats: Skipping toot stats (--no-toot-stats flag)`);
+        }
 
-        this.log(`Fetching initial stats: Create initial toot stats for account ${account.name}`);
-        await createInitialTootStats(db, account);
+        if (flags.accountStats) {
+          this.log(`Fetching initial stats: Create initial account stats for account ${account.name}`);
+          await createInitialAccountStats(db, account);
+        } else {
+          this.log(`Fetching initial stats: Skipping account stats (--no-account-stats flag)`);
+        }
 
-        try {
-          await axios.post(
-            `${flags.host}/mail/first-stats`,
-            { userID: `${user._id}`, accounts: [account._id] },
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: flags.authorization,
+        if (!flags.skipEmail) {
+          try {
+            await axios.post(
+              `${flags.host}/mail/first-stats`,
+              { userID: `${user._id}`, accounts: [account._id] },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: flags.authorization,
+                },
               },
-            },
-          );
-        } catch (error) {
-          this.logError(`Fetching initial stats: Failed to send email notification for user ${user._id}: ${error}`);
+            );
+            this.log(`Fetching initial stats: Email notification sent to user ${user._id}`);
+          } catch (error) {
+            this.logError(`Fetching initial stats: Failed to send email notification for user ${user._id}: ${error}`);
+          }
+        } else {
+          this.log(`Fetching initial stats: Skipping email notification (--skip-email flag)`);
         }
       } else {
         this.logWarning(`Fetching initial stats: Owner of account ${account._id} not found.`);
