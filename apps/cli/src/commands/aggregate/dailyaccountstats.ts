@@ -125,6 +125,8 @@ export default class DailyAccountStats extends BaseCommand {
       }
     }
 
+    this.log('Daily account stats: Aggregation done.');
+
     await connection.close();
   }
 }

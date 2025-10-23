@@ -32,7 +32,7 @@ export default class DailyTootStats extends BaseCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(DailyTootStats);
 
-    this.log('Daily toot stats: Aggregation started');
+    this.log('Daily toot stats: Aggregation started.');
 
     const timezones = flags.timezone ? [flags.timezone] : getTimezones([0]); // run at 00:00
 
@@ -57,6 +57,8 @@ export default class DailyTootStats extends BaseCommand {
         this.logError(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
       }
     }
+
+    this.log('Daily toot stats: Aggregation done.');
 
     await connection.close();
   }

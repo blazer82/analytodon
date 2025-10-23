@@ -64,9 +64,19 @@ export default class TootStats extends BaseCommand {
 
     const accounts = await db.collection('accounts').find(accountFilter).toArray();
 
+    this.log(`Fetching toot stats: Found ${accounts.length} accounts to process`);
+
     for (const account of accounts) {
-      await fetchTootstatsForAccount(db, account);
+      try {
+        await fetchTootstatsForAccount(db, account);
+      } catch (error: any) {
+        this.error(
+          `Fetching toot stats: Failed to process account ${account.name} (${account._id}): ${error?.message || error}`,
+        );
+      }
     }
+
+    this.log('Fetching toot stats: Done');
 
     await connection.close();
   }
