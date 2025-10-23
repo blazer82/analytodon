@@ -59,6 +59,9 @@ export class UserEntity extends BaseEntity {
   @Property({ nullable: true })
   oldAccountDeletionNoticeSent?: boolean;
 
+  @Property({ nullable: true })
+  lastLoginAt?: Date;
+
   @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.user, { cascade: [Cascade.ALL] })
   refreshTokens = new Collection<RefreshTokenEntity>(this);
 }

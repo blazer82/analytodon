@@ -231,6 +231,18 @@ describe('AuthService', () => {
       );
     });
 
+    it('should set lastLoginAt to current date', async () => {
+      const beforeLogin = new Date();
+      await service.login(mockUser);
+      expect(mockUsersService.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lastLoginAt: expect.any(Date),
+        }),
+      );
+      const savedUser = mockUsersService.save.mock.calls[0][0] as UserEntity;
+      expect(savedUser.lastLoginAt.getTime()).toBeGreaterThanOrEqual(beforeLogin.getTime());
+    });
+
     // No longer relevant as credentials are not directly checked in login for refresh token
     // it('should throw UnauthorizedException if credentials not loaded', async () => {
     //   mockUser.credentials = undefined;
@@ -436,6 +448,18 @@ describe('AuthService', () => {
       expect(mockUsersService.save).toHaveBeenCalledWith(
         expect.objectContaining({ oldAccountDeletionNoticeSent: false }),
       );
+    });
+
+    it('should set lastLoginAt to current date', async () => {
+      const beforeRefresh = new Date();
+      await service.refreshTokens(oldRefreshTokenString);
+      expect(mockUsersService.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lastLoginAt: expect.any(Date),
+        }),
+      );
+      const savedUser = mockUsersService.save.mock.calls[0][0] as UserEntity;
+      expect(savedUser.lastLoginAt.getTime()).toBeGreaterThanOrEqual(beforeRefresh.getTime());
     });
   });
 

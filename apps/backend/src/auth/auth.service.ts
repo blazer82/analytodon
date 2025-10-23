@@ -98,8 +98,12 @@ export class AuthService {
     // User state update (e.g., clearing flags on successful login)
     if (user.oldAccountDeletionNoticeSent) {
       user.oldAccountDeletionNoticeSent = false;
-      await this.usersService.save(user);
     }
+
+    // Update last login timestamp
+    user.lastLoginAt = new Date();
+
+    await this.usersService.save(user);
 
     const payload: JwtPayload = {
       sub: user.id,
@@ -193,9 +197,13 @@ export class AuthService {
     // User state update
     if (user.oldAccountDeletionNoticeSent) {
       user.oldAccountDeletionNoticeSent = false;
-      // Note: user is already populated from refreshTokenEntity, so direct save is fine.
-      await this.usersService.save(user);
     }
+
+    // Update last login timestamp
+    user.lastLoginAt = new Date();
+
+    // Note: user is already populated from refreshTokenEntity, so direct save is fine.
+    await this.usersService.save(user);
 
     const payload: JwtPayload = {
       sub: user.id,

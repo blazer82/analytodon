@@ -6,7 +6,7 @@ import { BaseCommand } from '../../base';
 
 export default class OldAccounts extends BaseCommand {
   static args = {};
-  static description = 'Send deletion reminder email to users with old accounts';
+  static description = 'Send deletion reminder email to users who have not logged in for 90+ days';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
 
@@ -61,21 +61,9 @@ export default class OldAccounts extends BaseCommand {
         this.log(`Send old accounts: Only process user ${flags.user}`);
         usersQuery['_id'] = new ObjectId(flags.user);
       } else {
-        const credentialsQuery: Filter<Document> = {
-          updatedAt: {
-            $lt: cutoffDate,
-          },
-        };
-
-        const credentialList = await db
-          .collection('usercredentials')
-          .find(credentialsQuery)
-          .project({ user: 1 })
-          .toArray();
-        const credentialSet = new Set(credentialList.map(({ user }) => user));
-
-        usersQuery['_id'] = {
-          $in: Array.from(credentialSet),
+        // Find users who haven't logged in for 90+ days
+        usersQuery['lastLoginAt'] = {
+          $lt: cutoffDate,
         };
         usersQuery['isActive'] = true;
         usersQuery['emailVerified'] = true;
