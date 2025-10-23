@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ObjectId } from 'bson';
+import type { StringValue } from 'ms';
 import * as request from 'supertest';
 
 import { AccountsService } from '../../src/accounts/accounts.service';
@@ -77,7 +78,7 @@ describe('BoostsController (e2e)', () => {
     const payload = { sub: testUser.id, email: testUser.email, role: testUser.role };
     testUserAccessToken = jwtService.sign(payload, {
       secret: configService.get<string>(authConstants.JWT_SECRET_KEY, authConstants.JWT_DEFAULT_SECRET),
-      expiresIn: configService.get<string>(authConstants.JWT_EXPIRES_IN_KEY, authConstants.JWT_DEFAULT_EXPIRES_IN),
+      expiresIn: configService.get<StringValue>(authConstants.JWT_EXPIRES_IN_KEY, authConstants.JWT_DEFAULT_EXPIRES_IN),
     });
 
     // Create a test account for the user
