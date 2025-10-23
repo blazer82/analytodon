@@ -5,7 +5,7 @@ import { BaseCommand } from '../../base';
 
 export default class OldAccounts extends BaseCommand {
   static args = {};
-  static description = 'Delete users with old accounts';
+  static description = 'Delete users who have not logged in for 120+ days and were already notified';
 
   static examples = [`<%= config.bin %> <%= command.id %>`];
 
@@ -45,21 +45,11 @@ export default class OldAccounts extends BaseCommand {
       const connection = await new MongoClient(flags.connectionString).connect();
       const db = connection.db(flags.database);
 
-      const credentialsQuery: Filter<Document> = {
-        updatedAt: {
+      // Find users who haven't logged in for 120+ days AND were already sent deletion notice
+      const usersQuery: Filter<Document> = {
+        lastLoginAt: {
           $lt: cutoffDate,
         },
-      };
-
-      const credentialList = await db
-        .collection('usercredentials')
-        .find(credentialsQuery)
-        .project({ user: 1 })
-        .toArray();
-      const credentialSet = new Set(credentialList.map(({ user }) => user));
-
-      const usersQuery: Filter<Document> = {
-        _id: { $in: Array.from(credentialSet) },
         oldAccountDeletionNoticeSent: true,
       };
 
