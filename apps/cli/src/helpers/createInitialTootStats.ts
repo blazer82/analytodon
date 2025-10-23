@@ -48,7 +48,7 @@ export const createInitialTootStats = async (db: Db, account: Document) => {
 
     let actualStartDate = new Date(endDate);
 
-    const actualEndDate = getDateInTimezone(new Date(account.createdAt), account.timezone);
+    const actualEndDate = getDateInTimezone(new Date(), account.timezone);
     actualEndDate.setDate(actualEndDate.getDate() - 1);
 
     const runningTotal = {
