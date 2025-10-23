@@ -26,6 +26,18 @@ export function createAuthApi(accessToken?: string): AuthenticationApi {
 }
 
 /**
+ * Creates an instance of the Users API client (without authentication)
+ * Used for public endpoints like unsubscribe
+ */
+export function createUsersApi(): UsersApi {
+  const config = new Configuration({
+    basePath: API_BASE_URL,
+  });
+
+  return new UsersApi(config);
+}
+
+/**
  * Creates an authenticated instance of the Authentication API client with token refresh
  */
 export async function createAuthApiWithAuth(request: Request): Promise<AuthenticationApi> {
