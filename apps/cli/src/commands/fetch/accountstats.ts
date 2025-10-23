@@ -54,20 +54,19 @@ export default class AccountStats extends BaseCommand {
     for (const account of accounts) {
       this.log(`Fetching account stats: Processing account ${account.name}`);
 
-      const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
-
-      if (!credentials?.accessToken) {
-        this.logWarning(`Fetching account stats: Access token not found for ${account.name}`);
-        continue;
-      }
-
-      const decryptedAccessToken = decryptText(credentials.accessToken);
-      if (!decryptedAccessToken) {
-        this.logWarning(`Fetching account stats: Failed to decrypt access token for ${account.name}. Skipping.`);
-        continue;
-      }
-
       try {
+        const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
+
+        if (!credentials?.accessToken) {
+          this.logWarning(`Fetching account stats: Access token not found for ${account.name}`);
+          continue;
+        }
+
+        const decryptedAccessToken = decryptText(credentials.accessToken);
+        if (!decryptedAccessToken) {
+          this.logWarning(`Fetching account stats: Failed to decrypt access token for ${account.name}. Skipping.`);
+          continue;
+        }
         const mastodon = generator('mastodon', account.serverURL, decryptedAccessToken);
 
         const userInfo = await mastodon.verifyAccountCredentials();
@@ -89,6 +88,8 @@ export default class AccountStats extends BaseCommand {
         this.logError(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
       }
     }
+
+    this.log('Fetching account stats: Done');
 
     await connection.close();
   }
