@@ -22,6 +22,10 @@ const Footer: FunctionComponent = () => {
       <Link color="inherit" href={`mailto:${supportEmail}?subject=Support`}>
         Get Support
       </Link>
+      {' | '}
+      <Link color="inherit" href="https://ko-fi.com/analytodon" target="_blank" rel="noopener noreferrer">
+        Donate
+      </Link>
     </Typography>
   );
 };
