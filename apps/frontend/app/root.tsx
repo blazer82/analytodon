@@ -47,15 +47,28 @@ const Document = withEmotionCache(({ children, title }: DocumentProps, emotionCa
     // Re-link sheet container
     emotionCache.sheet.container = document.head;
 
-    // Re-inject tags
+    // Re-inject tags with error handling per tag
     const tags = emotionCache.sheet.tags;
     emotionCache.sheet.flush();
+
+    let hasInsertionError = false;
     tags.forEach((tag) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (emotionCache.sheet as any)._insertTag(tag);
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (emotionCache.sheet as any)._insertTag(tag);
+      } catch (error) {
+        // Log the error once, but continue processing other tags
+        if (!hasInsertionError) {
+          hasInsertionError = true;
+          console.warn(
+            'Failed to re-inject some Emotion style tags. This may be due to browser extensions or ad blockers. Styles will be regenerated.',
+            error,
+          );
+        }
+      }
     });
 
-    // Reset cache to reapply global styles
+    // Reset cache to reapply global styles (always do this, even if some tags failed)
     clientStyleData.reset();
   }, []);
 
