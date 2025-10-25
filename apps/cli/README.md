@@ -46,6 +46,7 @@ USAGE
 * [`analytodon-cli help [COMMAND]`](#analytodon-cli-help-command)
 * [`analytodon-cli mail oldaccounts`](#analytodon-cli-mail-oldaccounts)
 * [`analytodon-cli mail weeklystats`](#analytodon-cli-mail-weeklystats)
+* [`analytodon-cli maintenance rebuildtootstats`](#analytodon-cli-maintenance-rebuildtootstats)
 * [`analytodon-cli plugins`](#analytodon-cli-plugins)
 * [`analytodon-cli plugins add PLUGIN`](#analytodon-cli-plugins-add-plugin)
 * [`analytodon-cli plugins:inspect PLUGIN...`](#analytodon-cli-pluginsinspect-plugin)
@@ -150,7 +151,7 @@ _See code: [src/commands/cleanup/accounts.ts](https://github.com/blazer82/analyt
 
 ## `analytodon-cli cleanup oldaccounts`
 
-Delete users with old accounts
+Delete users who have not logged in for 120+ days and were already notified
 
 ```
 USAGE
@@ -163,7 +164,7 @@ FLAGS
   -x, --dryRun                    Dry run, no actual changes made
 
 DESCRIPTION
-  Delete users with old accounts
+  Delete users who have not logged in for 120+ days and were already notified
 
 EXAMPLES
   $ analytodon-cli cleanup oldaccounts
@@ -288,14 +289,18 @@ Gather initial stats for all accounts (only 1 per call)
 
 ```
 USAGE
-  $ analytodon-cli fetch initialstats [-c <value>] [-d <value>] [-a <value>] [-h <value>] [-t <value>]
+  $ analytodon-cli fetch initialstats [-c <value>] [-d <value>] [-a <value>] [-h <value>] [-t <value>] [-s]
+    [--accountStats] [--tootStats]
 
 FLAGS
-  -a, --account=<value>           Only process specific account
+  -a, --account=<value>           Only process specific account (ignores initialStatsFetched flag)
   -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
   -d, --database=<value>          [default: analytodon] Source database name
   -h, --host=<value>              [default: http://localhost:3000] App host URL
+  -s, --skipEmail                 Skip sending email notification
   -t, --authorization=<value>     [default: no-key] Authorization header
+      --[no-]accountStats         Fetch account stats (followers)
+      --[no-]tootStats            Fetch toot stats (replies, boosts, favorites)
 
 DESCRIPTION
   Gather initial stats for all accounts (only 1 per call)
@@ -381,7 +386,7 @@ USAGE
   $ analytodon-cli help [COMMAND...] [-n]
 
 ARGUMENTS
-  COMMAND...  Command to show help for.
+  [COMMAND...]  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
@@ -390,11 +395,11 @@ DESCRIPTION
   Display help for analytodon-cli.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.28/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.33/src/commands/help.ts)_
 
 ## `analytodon-cli mail oldaccounts`
 
-Send deletion reminder email to users with old accounts
+Send deletion reminder email to users who have not logged in for 90+ days
 
 ```
 USAGE
@@ -409,7 +414,7 @@ FLAGS
   -x, --dryRun                    Dry run, no actual changes made
 
 DESCRIPTION
-  Send deletion reminder email to users with old accounts
+  Send deletion reminder email to users who have not logged in for 90+ days
 
 EXAMPLES
   $ analytodon-cli mail oldaccounts
@@ -442,6 +447,30 @@ EXAMPLES
 
 _See code: [src/commands/mail/weeklystats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/mail/weeklystats.ts)_
 
+## `analytodon-cli maintenance rebuildtootstats`
+
+Rebuild toot stats for a specific account by clearing existing data and re-fetching
+
+```
+USAGE
+  $ analytodon-cli maintenance rebuildtootstats -a <value> [-c <value>] [-d <value>]
+
+FLAGS
+  -a, --account=<value>           (required) Account ID to rebuild stats for
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+
+DESCRIPTION
+  Rebuild toot stats for a specific account by clearing existing data and re-fetching
+
+EXAMPLES
+  $ analytodon-cli maintenance rebuildtootstats -a 507f1f77bcf86cd799439011
+
+  $ analytodon-cli maintenance rebuildtootstats --account 507f1f77bcf86cd799439011 -c mongodb://localhost:27017
+```
+
+_See code: [src/commands/maintenance/rebuildtootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/maintenance/rebuildtootstats.ts)_
+
 ## `analytodon-cli plugins`
 
 List installed plugins.
@@ -463,7 +492,7 @@ EXAMPLES
   $ analytodon-cli plugins
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/index.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.50/src/commands/plugins/index.ts)_
 
 ## `analytodon-cli plugins add PLUGIN`
 
@@ -537,7 +566,7 @@ EXAMPLES
   $ analytodon-cli plugins inspect myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/inspect.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.50/src/commands/plugins/inspect.ts)_
 
 ## `analytodon-cli plugins install PLUGIN`
 
@@ -586,7 +615,7 @@ EXAMPLES
     $ analytodon-cli plugins install someuser/someplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/install.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.50/src/commands/plugins/install.ts)_
 
 ## `analytodon-cli plugins link PATH`
 
@@ -617,7 +646,7 @@ EXAMPLES
   $ analytodon-cli plugins link myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/link.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.50/src/commands/plugins/link.ts)_
 
 ## `analytodon-cli plugins remove [PLUGIN]`
 
@@ -628,7 +657,7 @@ USAGE
   $ analytodon-cli plugins remove [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
-  PLUGIN...  plugin to uninstall
+  [PLUGIN...]  plugin to uninstall
 
 FLAGS
   -h, --help     Show CLI help.
@@ -658,7 +687,7 @@ FLAGS
   --reinstall  Reinstall all plugins after uninstalling.
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/reset.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.50/src/commands/plugins/reset.ts)_
 
 ## `analytodon-cli plugins uninstall [PLUGIN]`
 
@@ -669,7 +698,7 @@ USAGE
   $ analytodon-cli plugins uninstall [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
-  PLUGIN...  plugin to uninstall
+  [PLUGIN...]  plugin to uninstall
 
 FLAGS
   -h, --help     Show CLI help.
@@ -686,7 +715,7 @@ EXAMPLES
   $ analytodon-cli plugins uninstall myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/uninstall.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.50/src/commands/plugins/uninstall.ts)_
 
 ## `analytodon-cli plugins unlink [PLUGIN]`
 
@@ -697,7 +726,7 @@ USAGE
   $ analytodon-cli plugins unlink [PLUGIN...] [-h] [-v]
 
 ARGUMENTS
-  PLUGIN...  plugin to uninstall
+  [PLUGIN...]  plugin to uninstall
 
 FLAGS
   -h, --help     Show CLI help.
@@ -730,7 +759,7 @@ DESCRIPTION
   Update installed plugins.
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.38/src/commands/plugins/update.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v5.4.50/src/commands/plugins/update.ts)_
 
 ## `analytodon-cli tools encryptaccountcredentials`
 
