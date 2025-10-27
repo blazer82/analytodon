@@ -35,7 +35,7 @@
     "shx": "^0.4.0",
     "ts-node": "^10",
     "typescript": "^5",
-    "typescript-eslint": "^8.46.1"
+    "typescript-eslint": "^8.46.2"
   },
   "engines": {
     "node": ">=18.0.0"
