@@ -46,7 +46,6 @@ USAGE
 * [`analytodon-cli help [COMMAND]`](#analytodon-cli-help-command)
 * [`analytodon-cli mail oldaccounts`](#analytodon-cli-mail-oldaccounts)
 * [`analytodon-cli mail weeklystats`](#analytodon-cli-mail-weeklystats)
-* [`analytodon-cli maintenance rebuildtootstats`](#analytodon-cli-maintenance-rebuildtootstats)
 * [`analytodon-cli plugins`](#analytodon-cli-plugins)
 * [`analytodon-cli plugins add PLUGIN`](#analytodon-cli-plugins-add-plugin)
 * [`analytodon-cli plugins:inspect PLUGIN...`](#analytodon-cli-pluginsinspect-plugin)
@@ -60,6 +59,7 @@ USAGE
 * [`analytodon-cli tools encryptaccountcredentials`](#analytodon-cli-tools-encryptaccountcredentials)
 * [`analytodon-cli tools migrateaccountcredentialstomastodonapps`](#analytodon-cli-tools-migrateaccountcredentialstomastodonapps)
 * [`analytodon-cli tools rebuilddailytootstats`](#analytodon-cli-tools-rebuilddailytootstats)
+* [`analytodon-cli tools resetandrebuildtootstats`](#analytodon-cli-tools-resetandrebuildtootstats)
 
 ## `analytodon-cli aggregate dailyaccountstats`
 
@@ -447,30 +447,6 @@ EXAMPLES
 
 _See code: [src/commands/mail/weeklystats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/mail/weeklystats.ts)_
 
-## `analytodon-cli maintenance rebuildtootstats`
-
-Rebuild toot stats for a specific account by clearing existing data and re-fetching
-
-```
-USAGE
-  $ analytodon-cli maintenance rebuildtootstats -a <value> [-c <value>] [-d <value>]
-
-FLAGS
-  -a, --account=<value>           (required) Account ID to rebuild stats for
-  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
-  -d, --database=<value>          [default: analytodon] Source database name
-
-DESCRIPTION
-  Rebuild toot stats for a specific account by clearing existing data and re-fetching
-
-EXAMPLES
-  $ analytodon-cli maintenance rebuildtootstats -a 507f1f77bcf86cd799439011
-
-  $ analytodon-cli maintenance rebuildtootstats --account 507f1f77bcf86cd799439011 -c mongodb://localhost:27017
-```
-
-_See code: [src/commands/maintenance/rebuildtootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/maintenance/rebuildtootstats.ts)_
-
 ## `analytodon-cli plugins`
 
 List installed plugins.
@@ -836,4 +812,28 @@ EXAMPLES
 ```
 
 _See code: [src/commands/tools/rebuilddailytootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/tools/rebuilddailytootstats.ts)_
+
+## `analytodon-cli tools resetandrebuildtootstats`
+
+Rebuild toot stats for a specific account by clearing existing data and re-fetching
+
+```
+USAGE
+  $ analytodon-cli tools resetandrebuildtootstats -a <value> [-c <value>] [-d <value>]
+
+FLAGS
+  -a, --account=<value>           (required) Account ID to rebuild stats for
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+
+DESCRIPTION
+  Rebuild toot stats for a specific account by clearing existing data and re-fetching
+
+EXAMPLES
+  $ analytodon-cli tools resetandrebuildtootstats -a 507f1f77bcf86cd799439011
+
+  $ analytodon-cli tools resetandrebuildtootstats --account 507f1f77bcf86cd799439011 -c mongodb://localhost:27017
+```
+
+_See code: [src/commands/tools/resetandrebuildtootstats.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/tools/resetandrebuildtootstats.ts)_
 <!-- commandsstop -->

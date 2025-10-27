@@ -3,7 +3,7 @@ import { MongoClient, ObjectId } from 'mongodb';
 
 import { BaseCommand } from '../../base';
 
-export default class RebuildTootStats extends BaseCommand {
+export default class ResetAndRebuildTootStats extends BaseCommand {
   static description = 'Rebuild toot stats for a specific account by clearing existing data and re-fetching';
 
   static examples = [
@@ -32,7 +32,7 @@ export default class RebuildTootStats extends BaseCommand {
   static args = {};
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(RebuildTootStats);
+    const { flags } = await this.parse(ResetAndRebuildTootStats);
 
     this.log(`Rebuild toot stats: Started for account ${flags.account}`);
 
