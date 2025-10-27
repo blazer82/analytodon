@@ -25,16 +25,16 @@
   },
   "dependencies": {
     "@analytodon/shared-orm": "workspace:*",
-    "@mikro-orm/core": "^6.5.8",
-    "@mikro-orm/mongodb": "^6.5.8",
+    "@mikro-orm/core": "^6.5.9",
+    "@mikro-orm/mongodb": "^6.5.9",
     "@mikro-orm/nestjs": "^6.1.1",
     "@nestjs-modules/mailer": "^2.0.2",
-    "@nestjs/common": "^11.1.6",
+    "@nestjs/common": "^11.1.8",
     "@nestjs/config": "^4.0.2",
-    "@nestjs/core": "^11.1.6",
+    "@nestjs/core": "^11.1.8",
     "@nestjs/jwt": "^11.0.1",
     "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.8",
     "@nestjs/swagger": "^11.2.1",
     "bcrypt": "^6.0.0",
     "bson": "^6.10.4",
@@ -61,8 +61,8 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.9",
-    "@nestjs/testing": "^11.1.6",
-    "@types/express": "^5.0.3",
+    "@nestjs/testing": "^11.1.8",
+    "@types/express": "^5.0.4",
     "@types/jest": "^29.5.14",
     "@types/node": "^18.19.130",
     "@types/passport-local": "^1.0.38",
@@ -77,7 +77,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.1"
+    "typescript-eslint": "^8.46.2"
   },
   "jest": {
     "moduleFileExtensions": [
