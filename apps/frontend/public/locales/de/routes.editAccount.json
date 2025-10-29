@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "title": "Konto bearbeiten - Analytodon"
+  },
+  "title": "Konto bearbeiten",
+  "form": {
+    "name": "Name",
+    "username": "Benutzername",
+    "serverUrl": "Server-URL",
+    "accountUrl": "Konto-URL",
+    "avatarUrl": "Avatar-URL",
+    "timezone": "Zeitzone"
+  },
+  "connection": {
+    "connected": "Verbunden mit {{accountName}}",
+    "notConnected": "Nicht mit einem Konto verbunden"
+  },
+  "actions": {
+    "back": "Zurück",
+    "save": "Speichern",
+    "saving": "Speichere..."
+  },
+  "success": {
+    "accountSaved": "Konto gespeichert."
+  },
+  "errors": {
+    "failedToUpdate": "Aktualisierung des Kontos fehlgeschlagen. Bitte versuchen Sie es erneut."
+  }
+}

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { SessionUserDto } from '@analytodon/rest-client';
 import { Box, Link } from '@mui/material';
@@ -14,6 +15,7 @@ const TotalBox: React.FunctionComponent<{
   linkText?: string;
   link?: string;
 }> = ({ title, amount, date, linkText, link }) => {
+  const { t } = useTranslation('components.totalBox');
   const appData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto };
   const userTimezone = appData?.user?.timezone;
 
@@ -44,7 +46,7 @@ const TotalBox: React.FunctionComponent<{
           opacity: 0.8,
         }}
       >
-        on {formatDate(date, userTimezone)}
+        {t('on')} {formatDate(date, userTimezone)}
       </Typography>
       {linkText && link && (
         <Box sx={{ mt: 2 }}>

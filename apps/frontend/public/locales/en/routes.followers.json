@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "title": "Followers Analytics - Analytodon"
+  },
+  "kpi": {
+    "followersGained": "followers gained",
+    "totalFollowers": "Total Followers"
+  },
+  "messages": {
+    "selectAccount": "Please select an account to view follower analytics."
+  }
+}

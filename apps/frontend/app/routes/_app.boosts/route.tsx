@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { BoostedTootDto, BoostsKpiDto, ChartDataPointDto, TotalSnapshotDto } from '@analytodon/rest-client';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -17,6 +18,11 @@ import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Boosts Analytics - Analytodon' }];
+};
+
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.boosts',
 };
 
 interface LoaderData {
@@ -121,6 +127,7 @@ export default function BoostsPage() {
   } = useLoaderData<LoaderData>();
   const fetcher = useFetcher<LoaderData>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
+  const { t } = useTranslation('routes.boosts');
 
   const rootData = useRouteLoaderData<{ ENV: { SUPPORT_EMAIL: string } }>('root');
   const supportEmail = rootData?.ENV?.SUPPORT_EMAIL || 'support@analytodon.com';
@@ -152,7 +159,7 @@ export default function BoostsPage() {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Typography variant="h5" align="center">
-          Please select an account to view boosts analytics.
+          {t('messages.selectAccount')}
         </Typography>
       </Container>
     );
@@ -166,13 +173,13 @@ export default function BoostsPage() {
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {weeklyKPI ? (
               <TrendBox
-                title={weeklyKPI.isLastPeriod ? 'Last Week' : 'This Week'}
-                subtitle="boosted posts"
+                title={weeklyKPI.isLastPeriod ? t('common:periods.lastWeek') : t('common:periods.thisWeek')}
+                subtitle={t('kpi.boostedPosts')}
                 amount={weeklyKPI.currentPeriod ?? 0}
                 trend={weeklyKPI.trend}
               />
             ) : (
-              <Typography sx={{ textAlign: 'center', pt: 4 }}>No weekly data.</Typography>
+              <Typography sx={{ textAlign: 'center', pt: 4 }}>{t('common:messages.noWeeklyData')}</Typography>
             )}
           </TotalBoxPaper>
         </Grid>
@@ -180,13 +187,13 @@ export default function BoostsPage() {
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {monthlyKPI ? (
               <TrendBox
-                title={monthlyKPI.isLastPeriod ? 'Last Month' : 'This Month'}
-                subtitle="boosted posts"
+                title={monthlyKPI.isLastPeriod ? t('common:periods.lastMonth') : t('common:periods.thisMonth')}
+                subtitle={t('kpi.boostedPosts')}
                 amount={monthlyKPI.currentPeriod ?? 0}
                 trend={monthlyKPI.trend}
               />
             ) : (
-              <Typography sx={{ textAlign: 'center', pt: 4 }}>No monthly data.</Typography>
+              <Typography sx={{ textAlign: 'center', pt: 4 }}>{t('common:messages.noMonthlyData')}</Typography>
             )}
           </TotalBoxPaper>
         </Grid>
@@ -194,22 +201,22 @@ export default function BoostsPage() {
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {yearlyKPI ? (
               <TrendBox
-                title={yearlyKPI.isLastPeriod ? 'Last Year' : 'This Year'}
-                subtitle="boosted posts"
+                title={yearlyKPI.isLastPeriod ? t('common:periods.lastYear') : t('common:periods.thisYear')}
+                subtitle={t('kpi.boostedPosts')}
                 amount={yearlyKPI.currentPeriod ?? 0}
                 trend={yearlyKPI.trend}
               />
             ) : (
-              <Typography sx={{ textAlign: 'center', pt: 4 }}>No yearly data.</Typography>
+              <Typography sx={{ textAlign: 'center', pt: 4 }}>{t('common:messages.noYearlyData')}</Typography>
             )}
           </TotalBoxPaper>
         </Grid>
         <Grid size={{ xs: 12, md: 4, lg: 3 }}>
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {total ? (
-              <TotalBox title="Total Boosts" amount={total.amount} date={total.day} />
+              <TotalBox title={t('kpi.totalBoosts')} amount={total.amount} date={total.day} />
             ) : (
-              <Typography sx={{ textAlign: 'center', pt: 4 }}>No total data.</Typography>
+              <Typography sx={{ textAlign: 'center', pt: 4 }}>{t('common:messages.noTotalData')}</Typography>
             )}
           </TotalBoxPaper>
         </Grid>
@@ -219,8 +226,8 @@ export default function BoostsPage() {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <PeriodSelector timeframe={currentTimeframe} onChange={handleTimeframeChange} disabled={isLoadingData} />
             <IconButton
-              title="Download CSV"
-              aria-label="Download CSV"
+              title={t('common:actions.downloadCsv')}
+              aria-label={t('common:actions.downloadCsv')}
               onClick={handleCSVDownload}
               disabled={isLoadingData}
             >
@@ -248,7 +255,7 @@ export default function BoostsPage() {
                   pointerEvents: isLoadingData ? 'auto' : 'none',
                 })}
               >
-                <Typography>Loading chart data...</Typography>
+                <Typography>{t('common:messages.loadingChart')}</Typography>
               </Box>
             </Fade>
             {!hasChartData && !isLoadingData && (
@@ -263,21 +270,21 @@ export default function BoostsPage() {
                   px: 2,
                 }}
               >
-                No data available for the selected timeframe.
+                {t('common:messages.noDataForTimeframe')}
                 <br />
-                Please select another time frame.
+                {t('common:messages.selectAnother')}
                 <br />
                 <br />
-                If you&apos;ve just set up your account this message is expected.
+                {t('common:messages.setupExpected')}
                 <br />
-                We&apos;ll send you an email once your data is ready.
+                {t('common:messages.emailNotification')}
                 <br />
                 <br />
                 <Box
                   component="span"
                   sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
                 >
-                  If this message persists please{' '}
+                  {t('common:messages.persistentIssue')}{' '}
                   <Link
                     href={`mailto:${supportEmail}?subject=Support`}
                     sx={{
@@ -302,7 +309,7 @@ export default function BoostsPage() {
                       },
                     }}
                   >
-                    contact support
+                    {t('common:messages.contactSupport')}
                   </Link>
                   .
                 </Box>
@@ -315,16 +322,18 @@ export default function BoostsPage() {
         <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
           <DataTablePaper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             {hasTopTootsData && topTootsData && (
-              <TopToots data={topTootsData} title="Top Posts by Boosts" showReplies={false} showFavorites={false} />
+              <TopToots data={topTootsData} title={t('topPosts.title')} showReplies={false} showFavorites={false} />
             )}
             {!hasTopTootsData && !isLoadingData && (
               <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>
-                No top posts data available for the selected timeframe.
+                {t('common:messages.noDataForTimeframe')}
               </Typography>
             )}
             {/* Optional: Loading state for top toots if it's separate or part of isLoadingData */}
             {isLoadingData && !hasTopTootsData && (
-              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>Loading top posts data...</Typography>
+              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>
+                {t('common:messages.loadingChart')}
+              </Typography>
             )}
           </DataTablePaper>
         </Grid>

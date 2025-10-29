@@ -6,12 +6,21 @@
 
 import { startTransition, StrictMode, useState } from 'react';
 import { hydrateRoot } from 'react-dom/client';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
 
 import { CacheProvider } from '@emotion/react';
 import { RemixBrowser } from '@remix-run/react';
+import i18nextConfig from '~/services/i18n/i18n';
+import i18next from 'i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+import Backend from 'i18next-http-backend';
+import { getInitialNamespaces } from 'remix-i18next/client';
 
 import { ClientStyleContext } from './utils/client-style-context';
 import { createEmotionCache } from './utils/createEmotionCache';
+
+// Version for cache busting when translations update
+const TRANSLATIONS_VERSION = '1.0.0';
 
 interface ClientCacheProviderProps {
   children: React.ReactNode;
@@ -33,13 +42,45 @@ function ClientCacheProvider({ children }: ClientCacheProviderProps) {
   );
 }
 
-startTransition(() => {
-  hydrateRoot(
-    document,
-    <StrictMode>
-      <ClientCacheProvider>
-        <RemixBrowser />
-      </ClientCacheProvider>
-    </StrictMode>,
-  );
-});
+async function hydrate() {
+  // Initialize i18next
+  await i18next
+    .use(initReactI18next)
+    .use(LanguageDetector)
+    .use(Backend)
+    .init({
+      ...i18nextConfig,
+      ns: getInitialNamespaces(),
+
+      // Language detection
+      detection: {
+        order: ['htmlTag'], // Read from <html lang="...">
+        caches: [], // Don't cache in localStorage (prevents hydration mismatch)
+      },
+
+      // Client-side loading
+      backend: {
+        loadPath: '/locales/{{lng}}/{{ns}}.json',
+        queryStringParams: { v: TRANSLATIONS_VERSION }, // Cache busting
+      },
+    });
+
+  startTransition(() => {
+    hydrateRoot(
+      document,
+      <StrictMode>
+        <I18nextProvider i18n={i18next}>
+          <ClientCacheProvider>
+            <RemixBrowser />
+          </ClientCacheProvider>
+        </I18nextProvider>
+      </StrictMode>,
+    );
+  });
+}
+
+if (window.requestIdleCallback) {
+  window.requestIdleCallback(hydrate);
+} else {
+  window.setTimeout(hydrate, 1);
+}

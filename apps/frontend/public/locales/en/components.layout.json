@@ -1,0 +1,17 @@
+{
+  "drawer": {
+    "openAriaLabel": "open drawer"
+  },
+  "accountFor": "for {{accountName}}",
+  "accountForDefault": "for Your Account",
+  "username": "Username",
+  "accountMenu": {
+    "ariaLabel": "account of current user",
+    "switching": "Switching..."
+  },
+  "logout": {
+    "button": "Logout",
+    "loggingOut": "Logging out..."
+  },
+  "branding": "Analytodon"
+}

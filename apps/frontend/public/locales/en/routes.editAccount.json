@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "title": "Edit Account - Analytodon"
+  },
+  "title": "Edit Account",
+  "form": {
+    "name": "Name",
+    "username": "Username",
+    "serverUrl": "Server URL",
+    "accountUrl": "Account URL",
+    "avatarUrl": "Avatar URL",
+    "timezone": "Timezone"
+  },
+  "connection": {
+    "connected": "Connected to {{accountName}}",
+    "notConnected": "Not connected to any account"
+  },
+  "actions": {
+    "back": "Back",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "success": {
+    "accountSaved": "Account saved."
+  },
+  "errors": {
+    "failedToUpdate": "Failed to update account. Please try again."
+  }
+}

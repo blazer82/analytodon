@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -22,6 +23,11 @@ import logger from '~/services/logger.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Reset your Analytodon password' }];
+};
+
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.resetPassword',
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -50,7 +56,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const email = formData.get('email') as string;
 
     if (!email) {
-      return new Response(JSON.stringify({ error: 'Email is required' }), {
+      return new Response(JSON.stringify({ error: 'errors.emailRequired' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -64,13 +70,13 @@ export async function action({ request }: ActionFunctionArgs) {
 
       // For security reasons, always return success even if email doesn't exist
       return {
-        success: 'If an account with this email exists, a password reset link has been sent.',
+        success: 'success.linkSent',
       };
     } catch (error) {
       logger.error('Password reset request error:', error, { email });
       // For security reasons, always return success even if email doesn't exist
       return {
-        success: 'If an account with this email exists, a password reset link has been sent.',
+        success: 'success.linkSent',
       };
     }
   } else {
@@ -80,28 +86,28 @@ export async function action({ request }: ActionFunctionArgs) {
     const confirmPassword = formData.get('confirmPassword') as string;
 
     if (!token) {
-      return new Response(JSON.stringify({ error: 'Reset token is missing' }), {
+      return new Response(JSON.stringify({ error: 'errors.tokenMissing' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
     if (!password) {
-      return new Response(JSON.stringify({ error: 'Password is required' }), {
+      return new Response(JSON.stringify({ error: 'errors.passwordRequired' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
     if (password !== confirmPassword) {
-      return new Response(JSON.stringify({ error: 'Passwords do not match' }), {
+      return new Response(JSON.stringify({ error: 'errors.passwordsDoNotMatch' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
     if (password.length < 8) {
-      return new Response(JSON.stringify({ error: 'Password must be at least 8 characters long' }), {
+      return new Response(JSON.stringify({ error: 'errors.passwordTooShort' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -114,7 +120,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
 
       return {
-        success: 'Your password has been reset successfully. You can now log in with your new password.',
+        success: 'success.passwordReset',
         completed: true,
       };
     } catch (error: unknown) {
@@ -125,22 +131,23 @@ export async function action({ request }: ActionFunctionArgs) {
       if (apiError.response) {
         const status = apiError.response.status;
         if (status === 404) {
-          return new Response(JSON.stringify({ error: 'Invalid or expired password reset token.' }), {
+          return new Response(JSON.stringify({ error: 'errors.invalidToken' }), {
             status: 404,
             headers: { 'Content-Type': 'application/json' },
           });
         }
       }
 
-      return new Response(
-        JSON.stringify({ error: 'An error occurred while resetting your password. Please try again.' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'errors.generic' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
   }
 }
 
 export default function ResetPassword() {
+  const { t } = useTranslation('routes.resetPassword');
   const theme = useTheme();
   const { token } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>() as ActionData | undefined;
@@ -185,12 +192,10 @@ export default function ResetPassword() {
         <HeroContent>
           <Logo size="large" color={theme.palette.primary.contrastText} />
           <Typography variant="h4" component="h1" sx={{ mt: 3, fontWeight: 700 }}>
-            Password Reset
+            {t('hero.title')}
           </Typography>
           <Typography variant="body1" sx={{ mt: 2, mb: 4, opacity: 0.9 }}>
-            {isResetForm
-              ? 'Create a new password for your account.'
-              : "Don't worry! It happens to the best of us. Enter your email address and we'll send you a link to reset your password."}
+            {isResetForm ? t('hero.subtitleCreate') : t('hero.subtitleRequest')}
           </Typography>
         </HeroContent>
       </HeroSection>
@@ -198,18 +203,18 @@ export default function ResetPassword() {
       <FormSection>
         <FormCard>
           <Typography variant="h5" component="h2" align="center" sx={{ mb: 3, fontWeight: 600 }}>
-            {isResetForm ? 'Create new password' : 'Reset your password'}
+            {isResetForm ? t('form.titleCreate') : t('form.titleRequest')}
           </Typography>
 
           {isResetCompleted ? (
             <>
               <Alert severity="success" sx={{ mb: 3 }}>
-                {actionData && 'success' in actionData && actionData.success}
+                {actionData && 'success' in actionData && t(actionData.success)}
               </Alert>
               <Box sx={{ textAlign: 'center', mt: 2 }}>
                 <Link to="/login" style={{ textDecoration: 'none', width: '100%', display: 'block' }}>
                   <StyledButton fullWidth variant="contained" size="large" sx={{ mt: 2, mb: 3 }}>
-                    Go to Login
+                    {t('form.goToLogin')}
                   </StyledButton>
                 </Link>
               </Box>
@@ -224,24 +229,26 @@ export default function ResetPassword() {
                     required
                     fullWidth
                     name="password"
-                    label="New Password"
+                    label={t('form.newPasswordLabel')}
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    placeholder="Enter your new password"
+                    placeholder={t('form.newPasswordPlaceholder')}
                     sx={{ mb: 3 }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={handleClickShowPassword}
-                            onMouseDown={handleMouseDownPassword}
-                            edge="end"
-                          >
-                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleClickShowPassword}
+                              onMouseDown={handleMouseDownPassword}
+                              edge="end"
+                            >
+                              {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
 
@@ -249,24 +256,26 @@ export default function ResetPassword() {
                     required
                     fullWidth
                     name="confirmPassword"
-                    label="Confirm New Password"
+                    label={t('form.confirmPasswordLabel')}
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    placeholder="Confirm your new password"
+                    placeholder={t('form.confirmPasswordPlaceholder')}
                     sx={{ mb: 3 }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={handleClickShowConfirmPassword}
-                            onMouseDown={handleMouseDownPassword}
-                            edge="end"
-                          >
-                            {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleClickShowConfirmPassword}
+                              onMouseDown={handleMouseDownPassword}
+                              edge="end"
+                            >
+                              {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
                 </>
@@ -274,23 +283,23 @@ export default function ResetPassword() {
                 <StyledTextField
                   required
                   fullWidth
-                  label="Your Email Address"
+                  label={t('form.emailLabel')}
                   name="email"
                   autoComplete="email"
-                  placeholder="Enter the email you used to register"
+                  placeholder={t('form.emailPlaceholder')}
                   sx={{ mb: 3 }}
                 />
               )}
 
               {actionData && 'error' in actionData && (
                 <Alert severity="error" sx={{ mb: 2 }}>
-                  {actionData.error}
+                  {t(actionData.error)}
                 </Alert>
               )}
 
               {actionData && 'success' in actionData && !isResetCompleted && (
                 <Alert severity="success" sx={{ mb: 2 }}>
-                  {actionData.success}
+                  {t(actionData.success)}
                 </Alert>
               )}
 
@@ -304,17 +313,17 @@ export default function ResetPassword() {
               >
                 {isSubmitting
                   ? isResetForm
-                    ? 'Resetting Password...'
-                    : 'Sending Link...'
+                    ? t('form.submittingReset')
+                    : t('form.submittingSend')
                   : isResetForm
-                    ? 'Reset Password'
-                    : 'Send Reset Link'}
+                    ? t('form.submitReset')
+                    : t('form.submitSend')}
               </StyledButton>
 
               <LinksContainer>
                 <Typography variant="body2" align="center">
                   <MuiLink component={Link} to="/login" underline="hover">
-                    Remember your password? Sign in
+                    {t('links.rememberPassword')}
                   </MuiLink>
                 </Typography>
               </LinksContainer>

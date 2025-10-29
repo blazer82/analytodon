@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Top-Beiträge - Analytodon"
+  },
+  "sections": {
+    "topPosts": "Top-Beiträge",
+    "byReplies": "Top-Beiträge nach Antworten",
+    "byBoosts": "Top-Beiträge nach Boosts",
+    "byFavorites": "Top-Beiträge nach Favoriten"
+  },
+  "messages": {
+    "noData": "Keine Daten verfügbar.",
+    "selectAccount": "Bitte wählen Sie ein Konto aus, um Top-Beiträge anzuzeigen."
+  }
+}

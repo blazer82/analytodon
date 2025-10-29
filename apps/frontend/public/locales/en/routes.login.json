@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "title": "Sign in to Analytodon"
+  },
+  "hero": {
+    "title": "Welcome Back!",
+    "subtitle": "Track your Mastodon analytics and gain valuable insights about your audience and content performance."
+  },
+  "form": {
+    "title": "Sign in to your account",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "submit": "Sign In",
+    "submitting": "Signing In..."
+  },
+  "links": {
+    "register": "New to Analytodon? Create an account",
+    "forgotPassword": "Forgot your password?",
+    "registrationsClosed": "New registrations are currently closed"
+  },
+  "errors": {
+    "required": "Email and password are required",
+    "invalidCredentials": "Invalid email or password",
+    "tooManyAttempts": "Too many login attempts. Please try again later.",
+    "generic": "An error occurred during login. Please try again."
+  }
+}

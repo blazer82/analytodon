@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Antworten-Analytik - Analytodon"
+  },
+  "kpi": {
+    "replies": "Antworten",
+    "totalReplies": "Antworten gesamt"
+  },
+  "topPosts": {
+    "title": "Top-Beiträge nach Antworten"
+  },
+  "messages": {
+    "selectAccount": "Bitte wählen Sie ein Konto aus, um Antworten-Analytik anzuzeigen."
+  }
+}

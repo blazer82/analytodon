@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Boosts-Analytik - Analytodon"
+  },
+  "kpi": {
+    "boostedPosts": "Geboostete Beiträge",
+    "totalBoosts": "Boosts gesamt"
+  },
+  "topPosts": {
+    "title": "Top-Beiträge nach Boosts"
+  },
+  "messages": {
+    "selectAccount": "Bitte wählen Sie ein Konto aus, um Boosts-Analytik anzuzeigen."
+  }
+}

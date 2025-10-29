@@ -9,6 +9,11 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Sign in to Analytodon' }];
 };
 
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.login',
+};
+
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // Check if user is already authenticated and redirect to dashboard if so
   const user = await getUser(request);

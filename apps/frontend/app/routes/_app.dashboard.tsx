@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ChartDataPointDto, RankedTootDto, TotalSnapshotDto } from '@analytodon/rest-client';
 import { Box, Container, Grid, Link, Typography } from '@mui/material';
@@ -14,6 +15,11 @@ import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }];
+};
+
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.dashboard',
 };
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
@@ -88,6 +94,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 });
 
 export default function Dashboard() {
+  const { t } = useTranslation('routes.dashboard');
   const { total, chart, top } = useLoaderData<typeof loader>() as {
     total: TotalSnapshotDto | null;
     chart: ChartDataPointDto[];
@@ -105,7 +112,9 @@ export default function Dashboard() {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 8, lg: 9 }}>
           <ChartPaper>
-            {hasChart && chart && <Chart title="Followers Last 30 Days" data={chart} dataLabel="Followers" />}
+            {hasChart && chart && (
+              <Chart title={t('chart.followersTitle')} data={chart} dataLabel={t('dataLabels.followers')} />
+            )}
             {!hasChart && (
               <Typography
                 sx={{
@@ -118,19 +127,19 @@ export default function Dashboard() {
                   px: 2,
                 }}
               >
-                No data available.
+                {t('messages.noData')}
                 <br />
                 <br />
-                If you&apos;ve just set up your account this message is expected.
+                {t('common:messages.setupExpected')}
                 <br />
-                We&apos;ll send you an email once your data is ready.
+                {t('common:messages.emailNotification')}
                 <br />
                 <br />
                 <Box
                   component="span"
                   sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
                 >
-                  If this message persists please{' '}
+                  {t('common:messages.persistentIssue')}{' '}
                   <Link
                     href={`mailto:${supportEmail}?subject=Support`}
                     sx={{
@@ -155,7 +164,7 @@ export default function Dashboard() {
                       },
                     }}
                   >
-                    contact support
+                    {t('common:messages.contactSupport')}
                   </Link>
                   .
                 </Box>
@@ -167,10 +176,10 @@ export default function Dashboard() {
           <TotalBoxPaper>
             {total && (
               <TotalBox
-                title="Total Followers"
+                title={t('totalBox.followersTitle')}
                 amount={total.amount}
                 date={total.day}
-                linkText="View follower stats"
+                linkText={t('totalBox.viewStats')}
                 link="/followers"
               />
             )}
@@ -185,7 +194,7 @@ export default function Dashboard() {
                   opacity: 0.8,
                 }}
               >
-                No data available.
+                {t('messages.noData')}
               </Typography>
             )}
           </TotalBoxPaper>
@@ -193,7 +202,7 @@ export default function Dashboard() {
         <Grid size={{ xs: 12 }}>
           <DataTablePaper>
             {top && top.length > 0 ? (
-              <TopToots data={top} title="Top Posts Last 30 Days" linkText="See more top posts" link="/top-posts" />
+              <TopToots data={top} title={t('topPosts.title')} linkText={t('topPosts.viewMore')} link="/top-posts" />
             ) : (
               <Typography
                 sx={{
@@ -202,7 +211,7 @@ export default function Dashboard() {
                   opacity: 0.8,
                 }}
               >
-                No data available.
+                {t('messages.noData')}
               </Typography>
             )}
           </DataTablePaper>

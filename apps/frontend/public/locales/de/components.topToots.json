@@ -1,0 +1,9 @@
+{
+  "headers": {
+    "date": "Datum",
+    "toot": "Beitrag",
+    "replies": "Antworten",
+    "boosts": "Boosts",
+    "favorites": "Favoriten"
+  }
+}

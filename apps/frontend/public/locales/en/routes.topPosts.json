@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Top Posts - Analytodon"
+  },
+  "sections": {
+    "topPosts": "Top Posts",
+    "byReplies": "Top Posts by Replies",
+    "byBoosts": "Top Posts by Boosts",
+    "byFavorites": "Top Posts by Favorites"
+  },
+  "messages": {
+    "noData": "No data available.",
+    "selectAccount": "Please select an account to view top posts."
+  }
+}
