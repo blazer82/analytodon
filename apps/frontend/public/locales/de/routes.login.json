@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "title": "Bei Analytodon anmelden"
+  },
+  "hero": {
+    "title": "Willkommen zurück!",
+    "subtitle": "Verfolgen Sie Ihre Mastodon-Analysen und gewinnen Sie wertvolle Einblicke in Ihr Publikum und die Performance Ihrer Inhalte."
+  },
+  "form": {
+    "title": "Melden Sie sich bei Ihrem Konto an",
+    "emailLabel": "E-Mail-Adresse",
+    "passwordLabel": "Passwort",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
+    "submit": "Anmelden",
+    "submitting": "Wird angemeldet..."
+  },
+  "links": {
+    "register": "Neu bei Analytodon? Konto erstellen",
+    "forgotPassword": "Passwort vergessen?",
+    "registrationsClosed": "Neue Registrierungen sind derzeit geschlossen"
+  },
+  "errors": {
+    "required": "E-Mail und Passwort sind erforderlich",
+    "invalidCredentials": "Ungültige E-Mail oder Passwort",
+    "tooManyAttempts": "Zu viele Anmeldeversuche. Bitte versuchen Sie es später erneut.",
+    "generic": "Bei der Anmeldung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+  }
+}

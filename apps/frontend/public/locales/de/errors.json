@@ -1,0 +1,22 @@
+{
+  "http": {
+    "400": "Ungültige Anfrage",
+    "401": "Nicht autorisiert - Bitte melden Sie sich erneut an",
+    "403": "Verboten - Sie haben keinen Zugriff auf diese Ressource",
+    "404": "Nicht gefunden",
+    "429": "Zu viele Anfragen - Bitte warten Sie einen Moment",
+    "500": "Interner Serverfehler - Bitte versuchen Sie es später erneut"
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "minLength": "Muss mindestens {{min}} Zeichen lang sein",
+    "maxLength": "Darf höchstens {{max}} Zeichen lang sein",
+    "passwordMatch": "Passwörter müssen übereinstimmen"
+  },
+  "network": {
+    "offline": "Keine Internetverbindung",
+    "timeout": "Zeitüberschreitung der Anfrage",
+    "generic": "Ein Netzwerkfehler ist aufgetreten"
+  }
+}

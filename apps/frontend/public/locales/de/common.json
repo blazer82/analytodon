@@ -1,0 +1,79 @@
+{
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "export": "Exportieren",
+    "download": "Herunterladen",
+    "downloadCsv": "CSV herunterladen",
+    "viewMore": "Mehr anzeigen",
+    "backToDashboard": "Zurück zum Dashboard",
+    "retry": "Erneut versuchen",
+    "close": "Schließen"
+  },
+  "labels": {
+    "name": "Name",
+    "description": "Beschreibung",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "status": "Status",
+    "period": "Zeitraum",
+    "timeframe": "Zeitrahmen",
+    "language": "Sprache"
+  },
+  "status": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "pending": "Ausstehend",
+    "completed": "Abgeschlossen",
+    "setupComplete": "Einrichtung abgeschlossen"
+  },
+  "timeframes": {
+    "last7days": "Letzte 7 Tage",
+    "last30days": "Letzte 30 Tage",
+    "last90days": "Letzte 90 Tage",
+    "allTime": "Gesamter Zeitraum"
+  },
+  "periods": {
+    "lastWeek": "Letzte Woche",
+    "thisWeek": "Diese Woche",
+    "lastMonth": "Letzter Monat",
+    "thisMonth": "Dieser Monat",
+    "lastYear": "Letztes Jahr",
+    "thisYear": "Dieses Jahr"
+  },
+  "messages": {
+    "loading": "Wird geladen...",
+    "loadingChart": "Diagrammdaten werden geladen...",
+    "noData": "Keine Daten verfügbar",
+    "noDataDescription": "Wenn Sie Ihr Konto gerade eingerichtet haben, ist diese Nachricht zu erwarten. Wir senden Ihnen eine E-Mail, sobald Ihre Daten bereit sind.",
+    "noDataForTimeframe": "Keine Daten für den ausgewählten Zeitraum verfügbar.",
+    "noWeeklyData": "Keine wöchentlichen Daten.",
+    "noMonthlyData": "Keine monatlichen Daten.",
+    "noYearlyData": "Keine jährlichen Daten.",
+    "noTotalData": "Keine Gesamtdaten.",
+    "setupExpected": "Wenn Sie Ihr Konto gerade eingerichtet haben, ist diese Nachricht zu erwarten.",
+    "emailNotification": "Wir senden Ihnen eine E-Mail, sobald Ihre Daten bereit sind.",
+    "persistentIssue": "Falls das Problem weiterhin auftritt, bitte",
+    "contactSupport": "Support kontaktieren",
+    "selectAnother": "Bitte wählen Sie einen anderen Zeitrahmen.",
+    "selectAccount": "Bitte wählen Sie ein Konto aus, um fortzufahren.",
+    "success": "Vorgang erfolgreich",
+    "error": "Ein Fehler ist aufgetreten",
+    "saved": "Änderungen erfolgreich gespeichert",
+    "deleted": "Erfolgreich gelöscht"
+  },
+  "analytics": {
+    "followers": "Follower",
+    "boosts": "Boosts",
+    "replies": "Antworten",
+    "favorites": "Favoriten",
+    "posts": "Beiträge",
+    "engagement": "Engagement"
+  }
+}

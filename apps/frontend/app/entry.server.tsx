@@ -4,14 +4,20 @@
  * For more information, see https://remix.run/file-conventions/entry.server
  */
 
+import { resolve } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { renderToPipeableStream } from 'react-dom/server';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
 
 import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
 import type { EntryContext } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
+import i18nextConfig from '~/services/i18n/i18n';
+import i18next from '~/services/i18n/i18next.server';
 import logger from '~/services/logger.server';
+import { createInstance } from 'i18next';
+import Backend from 'i18next-fs-backend';
 import { isbot } from 'isbot';
 
 import { createEmotionCache } from './utils/createEmotionCache';
@@ -29,21 +35,41 @@ export default function handleRequest(
     : handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext);
 }
 
-function handleBotRequest(
+async function handleBotRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
   remixContext: EntryContext,
 ) {
+  // Create i18next instance for this request
+  const instance = createInstance();
+  const lng = await i18next.getLocale(request);
+  const ns = i18next.getRouteNamespaces(remixContext);
+
+  // Initialize instance with translations
+  await instance
+    .use(initReactI18next)
+    .use(Backend)
+    .init({
+      ...i18nextConfig,
+      lng,
+      ns,
+      backend: {
+        loadPath: resolve('./public/locales/{{lng}}/{{ns}}.json'),
+      },
+    });
+
   return new Promise((resolve, reject) => {
     const cache = createEmotionCache();
     const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
 
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
-      <CacheProvider value={cache}>
-        <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />
-      </CacheProvider>,
+      <I18nextProvider i18n={instance}>
+        <CacheProvider value={cache}>
+          <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />
+        </CacheProvider>
+      </I18nextProvider>,
       {
         onAllReady() {
           shellRendered = true;
@@ -93,21 +119,41 @@ function handleBotRequest(
   });
 }
 
-function handleBrowserRequest(
+async function handleBrowserRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
   remixContext: EntryContext,
 ) {
+  // Create i18next instance for this request
+  const instance = createInstance();
+  const lng = await i18next.getLocale(request);
+  const ns = i18next.getRouteNamespaces(remixContext);
+
+  // Initialize instance with translations
+  await instance
+    .use(initReactI18next)
+    .use(Backend)
+    .init({
+      ...i18nextConfig,
+      lng,
+      ns,
+      backend: {
+        loadPath: resolve('./public/locales/{{lng}}/{{ns}}.json'),
+      },
+    });
+
   return new Promise((resolve, reject) => {
     const cache = createEmotionCache();
     const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
 
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
-      <CacheProvider value={cache}>
-        <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />
-      </CacheProvider>,
+      <I18nextProvider i18n={instance}>
+        <CacheProvider value={cache}>
+          <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />
+        </CacheProvider>
+      </I18nextProvider>,
       {
         onShellReady() {
           shellRendered = true;

@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Replies Analytics - Analytodon"
+  },
+  "kpi": {
+    "replies": "replies",
+    "totalReplies": "Total Replies"
+  },
+  "topPosts": {
+    "title": "Top Posts by Replies"
+  },
+  "messages": {
+    "selectAccount": "Please select an account to view replies analytics."
+  }
+}

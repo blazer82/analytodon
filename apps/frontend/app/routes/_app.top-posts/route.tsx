@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { RankedTootDto } from '@analytodon/rest-client';
 import { Box, Container, Grid, Typography } from '@mui/material';
@@ -13,6 +14,11 @@ import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Top Posts - Analytodon' }];
+};
+
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.topPosts',
 };
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
@@ -87,6 +93,7 @@ export default function TopPostsPage() {
     useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof loader>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
+  const { t } = useTranslation('routes.topPosts');
 
   const topData = fetcher.data?.top ?? top;
   const topByRepliesData = fetcher.data?.topByReplies ?? topByReplies;
@@ -108,7 +115,7 @@ export default function TopPostsPage() {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Typography variant="h5" align="center">
-          Please select an account to view top posts.
+          {t('messages.selectAccount')}
         </Typography>
       </Container>
     );
@@ -126,9 +133,9 @@ export default function TopPostsPage() {
         <Grid size={{ xs: 12 }}>
           <DataTablePaper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             {topData && topData.length > 0 ? (
-              <TopToots data={topData} title="Top Posts" />
+              <TopToots data={topData} title={t('sections.topPosts')} />
             ) : (
-              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>No data available.</Typography>
+              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>{t('messages.noData')}</Typography>
             )}
           </DataTablePaper>
         </Grid>
@@ -136,9 +143,14 @@ export default function TopPostsPage() {
         <Grid size={{ xs: 12 }}>
           <DataTablePaper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             {topByRepliesData && topByRepliesData.length > 0 ? (
-              <TopToots data={topByRepliesData} title="Top Posts by Replies" showBoosts={false} showFavorites={false} />
+              <TopToots
+                data={topByRepliesData}
+                title={t('sections.byReplies')}
+                showBoosts={false}
+                showFavorites={false}
+              />
             ) : (
-              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>No data available.</Typography>
+              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>{t('messages.noData')}</Typography>
             )}
           </DataTablePaper>
         </Grid>
@@ -146,9 +158,14 @@ export default function TopPostsPage() {
         <Grid size={{ xs: 12 }}>
           <DataTablePaper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
             {topByBoostsData && topByBoostsData.length > 0 ? (
-              <TopToots data={topByBoostsData} title="Top Posts by Boosts" showReplies={false} showFavorites={false} />
+              <TopToots
+                data={topByBoostsData}
+                title={t('sections.byBoosts')}
+                showReplies={false}
+                showFavorites={false}
+              />
             ) : (
-              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>No data available.</Typography>
+              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>{t('messages.noData')}</Typography>
             )}
           </DataTablePaper>
         </Grid>
@@ -158,12 +175,12 @@ export default function TopPostsPage() {
             {topByFavoritesData && topByFavoritesData.length > 0 ? (
               <TopToots
                 data={topByFavoritesData}
-                title="Top Posts by Favorites"
+                title={t('sections.byFavorites')}
                 showReplies={false}
                 showBoosts={false}
               />
             ) : (
-              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>No data available.</Typography>
+              <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>{t('messages.noData')}</Typography>
             )}
           </DataTablePaper>
         </Grid>

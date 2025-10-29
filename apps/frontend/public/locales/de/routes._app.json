@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "title": "Analytodon Dashboard"
+  },
+  "pageTitles": {
+    "dashboard": "Dashboard",
+    "followers": "Follower",
+    "replies": "Antworten",
+    "boosts": "Boosts",
+    "favorites": "Favoriten",
+    "topPosts": "Top-Beiträge",
+    "settings": "Einstellungen"
+  }
+}

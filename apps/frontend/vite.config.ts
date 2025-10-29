@@ -18,7 +18,15 @@ export default defineConfig({
         v3_singleFetch: true,
         v3_lazyRouteDiscovery: true,
       },
+      serverModuleFormat: 'esm',
     }),
     tsconfigPaths(),
   ],
+  ssr: {
+    noExternal: ['remix-i18next'],
+  },
+  optimizeDeps: {
+    include: ['react-i18next', 'i18next'],
+    exclude: ['i18next-fs-backend', 'remix-i18next'],
+  },
 });

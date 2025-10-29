@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Alert, Box, Container, FormGroup, Link, Paper, Snackbar, Typography } from '@mui/material';
 import { ActionFunctionArgs, json, LoaderFunctionArgs, MetaFunction, redirect } from '@remix-run/node';
@@ -12,6 +13,11 @@ import { stripSchema } from '~/utils/url';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Edit Account - Analytodon' }];
+};
+
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.editAccount',
 };
 
 export const loader = withSessionHandling(async ({ request, params }: LoaderFunctionArgs) => {
@@ -55,13 +61,14 @@ export const action = withSessionHandling(async ({ request, params }: ActionFunc
     return json({ success: true });
   } catch (error) {
     logger.error('Failed to update account:', error, { accountId });
-    return json({ error: 'Failed to update account. Please try again.' }, { status: 500 });
+    return json({ error: 'errors.failedToUpdate' }, { status: 500 });
   }
 });
 
 export default function EditAccountPage() {
   const { account } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const { t } = useTranslation('routes.editAccount');
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
 
@@ -75,7 +82,7 @@ export default function EditAccountPage() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4, animation: 'fadeIn 0.6s ease-out' }}>
-      <Title>Edit Account</Title>
+      <Title>{t('title')}</Title>
       <Paper
         sx={{
           p: 4,
@@ -104,7 +111,7 @@ export default function EditAccountPage() {
         <Form method="post">
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
-              label="Name"
+              label={t('form.name')}
               name="name"
               defaultValue={account.name}
               InputLabelProps={{ shrink: true }}
@@ -113,7 +120,7 @@ export default function EditAccountPage() {
           </FormGroup>
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
-              label="Username"
+              label={t('form.username')}
               value={account.username}
               disabled
               InputLabelProps={{ shrink: Boolean(account.username) }}
@@ -122,7 +129,7 @@ export default function EditAccountPage() {
           </FormGroup>
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
-              label="Server URL"
+              label={t('form.serverUrl')}
               value={stripSchema(account.serverURL)}
               disabled
               InputLabelProps={{ shrink: true }}
@@ -131,7 +138,7 @@ export default function EditAccountPage() {
           </FormGroup>
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
-              label="Account URL"
+              label={t('form.accountUrl')}
               value={account.accountURL}
               disabled
               InputLabelProps={{ shrink: Boolean(account.accountURL) }}
@@ -140,7 +147,7 @@ export default function EditAccountPage() {
           </FormGroup>
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
-              label="Avatar URL"
+              label={t('form.avatarUrl')}
               value={account.avatarURL}
               disabled
               InputLabelProps={{ shrink: Boolean(account.avatarURL) }}
@@ -149,7 +156,7 @@ export default function EditAccountPage() {
           </FormGroup>
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
-              label="Timezone"
+              label={t('form.timezone')}
               value={account.timezone}
               disabled
               InputLabelProps={{ shrink: true }}
@@ -158,7 +165,7 @@ export default function EditAccountPage() {
           </FormGroup>
           {account.accountName && (
             <Typography component="p" sx={{ mb: 3 }}>
-              Connected to{' '}
+              {t('connection.connected', { accountName: account.accountName }).replace(account.accountName, '')}
               <Link href={account.accountURL || ''} target="_blank" rel="noopener noreferrer">
                 {account.accountName}
               </Link>
@@ -166,15 +173,15 @@ export default function EditAccountPage() {
           )}
           {!account.accountName && (
             <Typography component="p" sx={{ mb: 3 }}>
-              Not connected to any account
+              {t('connection.notConnected')}
             </Typography>
           )}
           <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'right', mt: 3 }}>
             <StyledButton variant="outlined" component={RemixLink} to="/settings/accounts" sx={{ mr: 2 }}>
-              Back
+              {t('actions.back')}
             </StyledButton>
             <StyledButton variant="contained" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save'}
+              {isSubmitting ? t('actions.saving') : t('actions.save')}
             </StyledButton>
           </Box>
         </Form>
@@ -186,7 +193,7 @@ export default function EditAccountPage() {
         onClose={() => setErrorSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity="error">{actionData?.error}</Alert>
+        <Alert severity="error">{t(actionData?.error || '')}</Alert>
       </Snackbar>
       <Snackbar
         open={successSnackbarOpen}
@@ -194,7 +201,7 @@ export default function EditAccountPage() {
         onClose={() => setSuccessSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity="success">Account saved.</Alert>
+        <Alert severity="success">{t('success.accountSaved')}</Alert>
       </Snackbar>
     </Container>
   );

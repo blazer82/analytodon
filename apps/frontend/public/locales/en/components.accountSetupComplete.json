@@ -1,0 +1,8 @@
+{
+  "title": "Set Up Your Mastodon Account",
+  "success": "You're all set. Your account has been connected successfully.",
+  "waitMessage": "It may take a couple of minutes before you see any analytics for this account.",
+  "emailNotification": "We'll send you an email once your data is ready.",
+  "close": "Close",
+  "goToDashboard": "Go to Dashboard"
+}

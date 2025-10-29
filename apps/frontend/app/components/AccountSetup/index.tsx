@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Alert,
@@ -27,16 +28,17 @@ export interface AccountSetupFormData {
 }
 
 export const StepProgress: React.FunctionComponent<{ currentStep: number }> = ({ currentStep }) => {
+  const { t } = useTranslation('components.accountSetup');
   return (
     <Stepper activeStep={currentStep} alternativeLabel sx={{ mb: 4, mt: 2 }}>
       <Step>
-        <StepLabel>Connect</StepLabel>
+        <StepLabel>{t('steps.connect')}</StepLabel>
       </Step>
       <Step>
-        <StepLabel>Authorize</StepLabel>
+        <StepLabel>{t('steps.authorize')}</StepLabel>
       </Step>
       <Step>
-        <StepLabel>Complete</StepLabel>
+        <StepLabel>{t('steps.complete')}</StepLabel>
       </Step>
     </Stepper>
   );
@@ -57,6 +59,7 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
   initialTimezone = '',
   error,
 }) => {
+  const { t } = useTranslation('components.accountSetup');
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
   const navigation = useNavigation();
@@ -88,21 +91,21 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
 
   return (
     <Dialog fullScreen={fullScreen} open onClose={onClose}>
-      <DialogTitle>Set Up Your Mastodon Account</DialogTitle>
+      <DialogTitle>{t('dialog.title')}</DialogTitle>
       <DialogContent>
         <StepProgress currentStep={currentStep}></StepProgress>
-        <DialogContentText>In order to use Analytodon, you need to connect your Mastodon account.</DialogContentText>
+        <DialogContentText>{t('dialog.description')}</DialogContentText>
         <Form method="post">
           <FormGroup sx={{ mt: 4 }}>
             <StyledTextField
               margin="normal"
               required
               fullWidth
-              label="Server URL (e.g. mastodon.social)"
+              label={t('form.serverUrl.label')}
               name="serverURL"
               value={values.serverURL}
               onChange={(event) => setValues({ ...values, serverURL: event.target.value })}
-              helperText="The URL of the Mastodon instance your account is on."
+              helperText={t('form.serverUrl.helperText')}
               error={!!errors.serverURL}
             />
           </FormGroup>
@@ -123,23 +126,23 @@ export const StepOne: React.FunctionComponent<StepOneProps> = ({
                   margin="normal"
                   required
                   name="timezone"
-                  label="Timezone"
-                  helperText="The timezone you want your analytics reports to be in."
+                  label={t('form.timezone.label')}
+                  helperText={t('form.timezone.helperText')}
                   error={!!errors.timezone}
                 />
               )}
             />
           </FormGroup>
-          {hasErrors && <Alert severity="error">Please enter valid values into all form fields.</Alert>}
+          {hasErrors && <Alert severity="error">{t('form.validationError')}</Alert>}
           {error && <Alert severity="error">{error}</Alert>}
           <DialogActions sx={{ mb: 1, mr: 2, mt: 2, pl: 0 }}>
             {onClose && (
               <StyledButton variant="outlined" onClick={() => onClose()}>
-                Cancel
+                {t('form.cancel')}
               </StyledButton>
             )}
             <StyledButton variant="contained" type="submit" name="_action" value="connect" disabled={isSubmitting}>
-              {isSubmitting ? 'Connecting...' : 'Connect Account'}
+              {isSubmitting ? t('form.connecting') : t('form.connect')}
             </StyledButton>
           </DialogActions>
         </Form>
@@ -155,22 +158,20 @@ interface StepTwoProps {
 }
 
 export const StepTwo: React.FunctionComponent<StepTwoProps> = ({ currentStep, url, onClose }) => {
+  const { t } = useTranslation('components.accountSetup');
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
     <Dialog fullScreen={fullScreen} open onClose={onClose}>
-      <DialogTitle>Set Up Your Mastodon Account</DialogTitle>
+      <DialogTitle>{t('dialog.title')}</DialogTitle>
       <DialogContent>
         <StepProgress currentStep={currentStep}></StepProgress>
-        <DialogContentText>
-          For this next step you&apos;ll need to authorize Analytodon with your Mastodon account. Click on the button
-          below to go to your instance and authorize Analytodon.
-        </DialogContentText>
+        <DialogContentText>{t('authorize.description')}</DialogContentText>
       </DialogContent>
       <DialogActions sx={{ mb: 1, mr: 2 }}>
         <StyledButton variant="contained" component="a" href={url}>
-          Authorize Analytodon
+          {t('authorize.button')}
         </StyledButton>
       </DialogActions>
     </Dialog>

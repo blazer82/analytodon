@@ -1,0 +1,53 @@
+{
+  "meta": {
+    "title": "Konten - Analytodon"
+  },
+  "title": "Verwalten Sie Ihre Konten",
+  "table": {
+    "headers": {
+      "name": "Name",
+      "username": "Benutzername",
+      "server": "Server",
+      "timezone": "Zeitzone",
+      "added": "Hinzugefügt"
+    },
+    "actions": {
+      "reconnect": "Erneut verbinden",
+      "edit": "Bearbeiten",
+      "delete": "Löschen"
+    }
+  },
+  "actions": {
+    "addAccount": "Konto hinzufügen"
+  },
+  "usage": "{{used}} / {{max}} Konten verwendet",
+  "dialogs": {
+    "reconnect": {
+      "title": "Konto erneut verbinden",
+      "description": "Sie sind dabei, Ihr Konto {{name}} erneut zu verbinden. Dies leitet Sie zu Ihrem Mastodon-Server weiter, wo Sie Analytodon erneut autorisieren müssen.",
+      "helper": "Dies ist nützlich, wenn Ihre Autorisierung abgelaufen ist oder Sie den Zugriff auf Ihrem Mastodon-Server widerrufen haben.",
+      "cancel": "Abbrechen",
+      "confirm": "Erneut verbinden",
+      "confirming": "Verbinde erneut..."
+    },
+    "delete": {
+      "title": "Konto löschen",
+      "description": "Dies löscht das Konto {{name}} und alle zugehörigen Analysedaten. Diese Aktion kann nicht rückgängig gemacht werden!",
+      "instruction": "Um fortzufahren, geben Sie „delete" in das Feld unten ein:",
+      "cancel": "Abbrechen",
+      "confirm": "Konto löschen",
+      "confirming": "Lösche..."
+    }
+  },
+  "errors": {
+    "serverUrlAndTimezoneRequired": "Server-URL und Zeitzone sind erforderlich.",
+    "failedToConnect": "Verbindung zum Mastodon-Server fehlgeschlagen. Bitte überprüfen Sie die Server-URL und versuchen Sie es erneut.",
+    "accountIdRequired": "Konto-ID ist für diese Aktion erforderlich",
+    "failedToGetReconnectionUrl": "Fehler beim Abrufen der Wiederverbindungs-URL",
+    "invalidAction": "Ungültige Aktion angegeben.",
+    "failedToAction": "{{action}} des Kontos fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
+  "success": {
+    "accountDeleted": "Konto erfolgreich gelöscht"
+  }
+}
