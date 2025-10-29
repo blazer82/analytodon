@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
+  "items": {
+    "dashboard": "Dashboard",
+    "followers": "Followers",
+    "replies": "Replies",
+    "boosts": "Boosts",
+    "favorites": "Favorites",
+    "topPosts": "Top Posts",
+    "accounts": "Accounts"
+  }
+}

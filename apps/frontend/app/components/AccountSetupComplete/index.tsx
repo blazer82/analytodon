@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Dialog,
@@ -19,30 +20,31 @@ interface AccountSetupCompleteProps {
 }
 
 const AccountSetupComplete: React.FunctionComponent<AccountSetupCompleteProps> = ({ onClose }) => {
+  const { t } = useTranslation('components.accountSetupComplete');
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
     <Dialog fullScreen={fullScreen} open onClose={onClose}>
-      <DialogTitle>Set Up Your Mastodon Account</DialogTitle>
+      <DialogTitle>{t('title')}</DialogTitle>
       <DialogContent>
         <StepProgress currentStep={2}></StepProgress>
         <DialogContentText>
-          You&apos;re all set. Your account has been connected successfully.
+          {t('success')}
           <br />
-          It may take a couple of minutes before you see any analytics for this account.
+          {t('waitMessage')}
           <br />
-          We&apos;ll send you an email once your data is ready.
+          {t('common:messages.emailNotification')}
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ mb: 1, mr: 2 }}>
         {onClose ? (
           <StyledButton variant="contained" onClick={onClose}>
-            Close
+            {t('close')}
           </StyledButton>
         ) : (
           <StyledButton variant="contained" component={Link} to="/">
-            Go to Dashboard
+            {t('goToDashboard')}
           </StyledButton>
         )}
       </DialogActions>

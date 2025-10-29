@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -35,6 +36,11 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Sign up for Analytodon' }];
 };
 
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.register',
+};
+
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // Check if user is already authenticated and redirect to dashboard if so
   const user = await getUser(request);
@@ -66,6 +72,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // Check if registrations are disabled
   const isRegistrationDisabled = process.env.DISABLE_NEW_REGISTRATIONS === 'true';
   if (isRegistrationDisabled) {
+    // Translation key: messages.registrationDisabled
     return new Response(JSON.stringify({ error: 'New registrations are currently disabled' }), {
       status: 403,
       headers: { 'Content-Type': 'application/json' },
@@ -85,6 +92,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // Validate form data
   if (!email || !password || !serverURL || !timezone) {
+    // Translation key: errors.allFieldsRequired
     return new Response(JSON.stringify({ error: 'All fields are required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
@@ -92,6 +100,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (password.length < 8) {
+    // Translation key: errors.passwordTooShort
     return new Response(JSON.stringify({ error: 'Password must be at least 8 characters long' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
@@ -116,6 +125,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const apiError = error as { response?: { status: number; json: () => Promise<{ message?: string | string[] }> } };
     if (apiError.response) {
       const status = apiError.response.status;
+      // Translation key: errors.generic
       let errorMessage = 'An error occurred during registration. Please try again.';
       try {
         const errorJson = await apiError.response.json();
@@ -127,12 +137,14 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       if (status === 400) {
+        // Translation key: errors.invalidData (with {{errorMessage}} interpolation)
         return new Response(JSON.stringify({ error: `Invalid data: ${errorMessage}` }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         });
       }
       if (status === 409) {
+        // Translation key: errors.emailAlreadyRegistered
         return new Response(JSON.stringify({ error: 'Email already registered. Please try to login.' }), {
           status: 409,
           headers: { 'Content-Type': 'application/json' },
@@ -144,6 +156,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
+    // Translation key: errors.unexpected
     return new Response(JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -152,6 +165,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Register() {
+  const { t } = useTranslation('routes.register');
   const { serverURL: initialServerURL } = useLoaderData<typeof loader>();
   const theme = useTheme();
   const actionData = useActionData<typeof action>();
@@ -200,11 +214,10 @@ export default function Register() {
         <HeroContent>
           <Logo size="large" color={theme.palette.primary.contrastText} />
           <Typography variant="h4" component="h1" sx={{ mt: 3, fontWeight: 700 }}>
-            Join Analytodon
+            {t('hero.title')}
           </Typography>
           <Typography variant="body1" sx={{ mt: 2, mb: 4, opacity: 0.9 }}>
-            Start tracking your Mastodon analytics today and gain valuable insights about your audience and content
-            performance.
+            {t('hero.subtitle')}
           </Typography>
         </HeroContent>
       </HeroSection>
@@ -212,14 +225,14 @@ export default function Register() {
       <FormSection>
         <FormCard>
           <Typography variant="h5" component="h2" align="center" sx={{ mb: 3, fontWeight: 600 }}>
-            Create your account
+            {t('form.title')}
           </Typography>
 
           <Box component={Form} method="post" noValidate>
             <StyledTextField
               required
               fullWidth
-              label="Your Email Address"
+              label={t('form.emailLabel')}
               name="email"
               autoComplete="email"
               value={values.email}
@@ -230,34 +243,36 @@ export default function Register() {
               required
               fullWidth
               name="password"
-              label="Choose a Password"
+              label={t('form.passwordLabel')}
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
               value={values.password}
               onChange={(e) => setValues({ ...values, password: e.target.value })}
               sx={{ mb: 3 }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <StyledTextField
               required
               fullWidth
-              label="Mastodon Server URL"
+              label={t('form.serverUrlLabel')}
               name="serverURL"
-              placeholder="mastodon.social"
-              helperText="The URL of the Mastodon instance your account is on"
+              placeholder={t('form.serverUrlPlaceholder')}
+              helperText={t('form.serverUrlHelper')}
               value={values.serverURL}
               onChange={(e) => setValues({ ...values, serverURL: e.target.value })}
               sx={{ mb: 3 }}
@@ -274,8 +289,8 @@ export default function Register() {
                   required
                   fullWidth
                   name="timezone"
-                  label="Your Timezone"
-                  helperText="The timezone you want your analytics reports to be in"
+                  label={t('form.timezoneLabel')}
+                  helperText={t('form.timezoneHelper')}
                   sx={{ mb: 3 }}
                 />
               )}
@@ -295,13 +310,13 @@ export default function Register() {
               sx={{ mt: 2, mb: 3 }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+              {isSubmitting ? t('form.submitting') : t('form.submit')}
             </StyledButton>
 
             <LinksContainer>
               <Typography variant="body2" align="center">
                 <MuiLink component={Link} to="/login" underline="hover">
-                  Already have an account? Sign in
+                  {t('links.login')}
                 </MuiLink>
               </Typography>
             </LinksContainer>

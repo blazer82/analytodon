@@ -1,0 +1,18 @@
+{
+  "meta": {
+    "title": "Verify Your Email"
+  },
+  "dialog": {
+    "verified": "Email Verified",
+    "failed": "Verification Failed",
+    "required": "Email Verification Required"
+  },
+  "messages": {
+    "success": "You can now continue setting up your Analytodon account.",
+    "checkInbox": "Please check your inbox for an email sent to {{email}} and click the verification link to complete your registration."
+  },
+  "actions": {
+    "contactSupport": "Contact Support",
+    "goToAnalytodon": "Go to Analytodon"
+  }
+}

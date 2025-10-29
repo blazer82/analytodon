@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "title": "Follower-Analytik - Analytodon"
+  },
+  "kpi": {
+    "followersGained": "Follower gewonnen",
+    "totalFollowers": "Follower gesamt"
+  },
+  "messages": {
+    "selectAccount": "Bitte wählen Sie ein Konto aus, um Follower-Analytik anzuzeigen."
+  }
+}

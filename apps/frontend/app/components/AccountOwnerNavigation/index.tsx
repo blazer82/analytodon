@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import BoostsIcon from '@mui/icons-material/Cached';
 import RepliesIcon from '@mui/icons-material/Comment';
@@ -13,27 +14,28 @@ import { Link, useLocation } from '@remix-run/react';
 import { NavItemContainer } from '../Layout/styles';
 
 const AccountOwnerNavigation: React.FunctionComponent = () => {
+  const { t } = useTranslation('components.navigation');
   const location = useLocation();
 
   const navigation = React.useMemo(
     () => [
       {
-        label: 'Analytics',
+        label: t('sections.analytics'),
         items: [
-          { label: 'Dashboard', link: `/dashboard`, icon: <DashboardIcon /> },
-          { label: 'Followers', link: `/followers`, icon: <FollowersIcon /> },
-          { label: 'Replies', link: `/replies`, icon: <RepliesIcon /> },
-          { label: 'Boosts', link: `/boosts`, icon: <BoostsIcon /> },
-          { label: 'Favorites', link: `/favorites`, icon: <FavoritesIcon /> },
-          { label: 'Top Posts', link: `/top-posts`, icon: <TopIcon /> },
+          { label: t('items.dashboard'), link: `/dashboard`, icon: <DashboardIcon /> },
+          { label: t('items.followers'), link: `/followers`, icon: <FollowersIcon /> },
+          { label: t('items.replies'), link: `/replies`, icon: <RepliesIcon /> },
+          { label: t('items.boosts'), link: `/boosts`, icon: <BoostsIcon /> },
+          { label: t('items.favorites'), link: `/favorites`, icon: <FavoritesIcon /> },
+          { label: t('items.topPosts'), link: `/top-posts`, icon: <TopIcon /> },
         ],
       },
       {
-        label: 'Settings',
-        items: [{ label: 'Accounts', link: '/settings/accounts', icon: <AccountsIcon /> }],
+        label: t('sections.settings'),
+        items: [{ label: t('items.accounts'), link: '/settings/accounts', icon: <AccountsIcon /> }],
       },
     ],
-    [],
+    [t],
   );
 
   return (

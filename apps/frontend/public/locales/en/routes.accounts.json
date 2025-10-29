@@ -1,0 +1,53 @@
+{
+  "meta": {
+    "title": "Accounts - Analytodon"
+  },
+  "title": "Manage Your Accounts",
+  "table": {
+    "headers": {
+      "name": "Name",
+      "username": "Username",
+      "server": "Server",
+      "timezone": "Timezone",
+      "added": "Added"
+    },
+    "actions": {
+      "reconnect": "Reconnect",
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "actions": {
+    "addAccount": "Add Account"
+  },
+  "usage": "{{used}} / {{max}} accounts used",
+  "dialogs": {
+    "reconnect": {
+      "title": "Reconnect Account",
+      "description": "You are about to reconnect your account {{name}}. This will redirect you to your Mastodon server where you'll need to authorize Analytodon again.",
+      "helper": "This is useful if your authorization has expired or if you've revoked access on your Mastodon server.",
+      "cancel": "Cancel",
+      "confirm": "Reconnect",
+      "confirming": "Reconnecting..."
+    },
+    "delete": {
+      "title": "Delete Account",
+      "description": "This will delete the account {{name}} and all related analytics data. This operation cannot be undone!",
+      "instruction": "To continue type delete into the field below:",
+      "cancel": "Cancel",
+      "confirm": "Delete Account",
+      "confirming": "Deleting..."
+    }
+  },
+  "errors": {
+    "serverUrlAndTimezoneRequired": "Server URL and Timezone are required.",
+    "failedToConnect": "Failed to connect to Mastodon server. Please check the server URL and try again.",
+    "accountIdRequired": "Account ID is required for this action",
+    "failedToGetReconnectionUrl": "Failed to get reconnection URL",
+    "invalidAction": "Invalid action specified.",
+    "failedToAction": "Failed to {{action}} account. Please try again."
+  },
+  "success": {
+    "accountDeleted": "Account deleted successfully"
+  }
+}

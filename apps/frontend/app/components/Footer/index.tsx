@@ -1,10 +1,13 @@
 import { FunctionComponent } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Typography } from '@mui/material';
 import Link from '@mui/material/Link';
 import { useRouteLoaderData } from '@remix-run/react';
 
 const Footer: FunctionComponent = () => {
+  const { t } = useTranslation('components.footer');
+
   // Get ENV from the root loader data
   const rootData = useRouteLoaderData<{ ENV: { MARKETING_URL: string; SUPPORT_EMAIL: string } }>('root');
 
@@ -14,17 +17,17 @@ const Footer: FunctionComponent = () => {
 
   return (
     <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 8, mb: 4 }}>
-      {'Brought to you by '}
+      {t('broughtToYouBy')}{' '}
       <Link color="inherit" href={marketingUrl}>
         Analytodon
-      </Link>
-      {' | '}
+      </Link>{' '}
+      {t('separator')}{' '}
       <Link color="inherit" href={`mailto:${supportEmail}?subject=Support`}>
-        Get Support
-      </Link>
-      {' | '}
+        {t('getSupport')}
+      </Link>{' '}
+      {t('separator')}{' '}
       <Link color="inherit" href="https://ko-fi.com/analytodon" target="_blank" rel="noopener noreferrer">
-        Donate
+        {t('donate')}
       </Link>
     </Typography>
   );

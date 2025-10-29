@@ -1,17 +1,27 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { deDE, enUS } from '@mui/material/locale';
 import { createTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
+const MUI_LOCALES = {
+  en: enUS,
+  de: deDE,
+};
+
 /**
- * Creates and returns a MUI theme based on the user's preferred color scheme
+ * Creates and returns a MUI theme based on the user's preferred color scheme and language
  */
 export function useAppTheme() {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const { i18n } = useTranslation();
 
-  return useMemo(
-    () =>
-      createTheme({
+  return useMemo(() => {
+    const muiLocale = MUI_LOCALES[i18n.language as keyof typeof MUI_LOCALES] || enUS;
+
+    return createTheme(
+      {
         palette: {
           mode: prefersDarkMode ? 'dark' : 'light',
           primary: {
@@ -78,7 +88,8 @@ export function useAppTheme() {
             },
           },
         },
-      }),
-    [prefersDarkMode],
-  );
+      },
+      muiLocale,
+    );
+  }, [prefersDarkMode, i18n.language]);
 }

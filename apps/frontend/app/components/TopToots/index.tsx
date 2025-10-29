@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { SessionUserDto } from '@analytodon/rest-client';
 import { Box, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
@@ -26,6 +27,7 @@ const TopToots: React.FunctionComponent<{
   showBoosts?: boolean;
   showFavorites?: boolean;
 }> = ({ data, title, linkText, link, showReplies = true, showBoosts = true, showFavorites = true }) => {
+  const { t } = useTranslation('components.topToots');
   const appData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto };
   const userTimezone = appData?.user?.timezone;
 
@@ -54,7 +56,7 @@ const TopToots: React.FunctionComponent<{
                   borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                 }}
               >
-                Date
+                {t('headers.date')}
               </TableCell>
               <TableCell
                 sx={{
@@ -62,7 +64,7 @@ const TopToots: React.FunctionComponent<{
                   borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                 }}
               >
-                Toot
+                {t('headers.toot')}
               </TableCell>
               {showReplies && (
                 <TableCell
@@ -72,7 +74,7 @@ const TopToots: React.FunctionComponent<{
                     borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                   }}
                 >
-                  Replies
+                  {t('headers.replies')}
                 </TableCell>
               )}
               {showBoosts && (
@@ -83,7 +85,7 @@ const TopToots: React.FunctionComponent<{
                     borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                   }}
                 >
-                  Boosts
+                  {t('headers.boosts')}
                 </TableCell>
               )}
               {showFavorites && (
@@ -94,7 +96,7 @@ const TopToots: React.FunctionComponent<{
                     borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                   }}
                 >
-                  Favorites
+                  {t('headers.favorites')}
                 </TableCell>
               )}
             </TableRow>

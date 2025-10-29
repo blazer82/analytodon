@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ChartDataPointDto, FollowersKpiDto, TotalSnapshotDto } from '@analytodon/rest-client';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -16,6 +17,11 @@ import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Followers Analytics - Analytodon' }];
+};
+
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.followers',
 };
 
 interface LoaderData {
@@ -105,6 +111,7 @@ export default function FollowersPage() {
   } = useLoaderData<LoaderData>();
   const fetcher = useFetcher<LoaderData>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
+  const { t } = useTranslation('routes.followers');
 
   const rootData = useRouteLoaderData<{ ENV: { SUPPORT_EMAIL: string } }>('root');
   const supportEmail = rootData?.ENV?.SUPPORT_EMAIL || 'support@analytodon.com';
@@ -134,7 +141,7 @@ export default function FollowersPage() {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Typography variant="h5" align="center">
-          Please select an account to view follower analytics.
+          {t('messages.selectAccount')}
         </Typography>
       </Container>
     );
@@ -148,13 +155,13 @@ export default function FollowersPage() {
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {weeklyKPI ? (
               <TrendBox
-                title={weeklyKPI.isLastPeriod ? 'Last Week' : 'This Week'}
-                subtitle="followers gained"
+                title={weeklyKPI.isLastPeriod ? t('common:periods.lastWeek') : t('common:periods.thisWeek')}
+                subtitle={t('kpi.followersGained')}
                 amount={weeklyKPI.currentPeriod ?? 0}
                 trend={weeklyKPI.trend}
               />
             ) : (
-              <Typography sx={{ textAlign: 'center', pt: 4 }}>No weekly data.</Typography>
+              <Typography sx={{ textAlign: 'center', pt: 4 }}>{t('common:messages.noWeeklyData')}</Typography>
             )}
           </TotalBoxPaper>
         </Grid>
@@ -162,13 +169,13 @@ export default function FollowersPage() {
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {monthlyKPI ? (
               <TrendBox
-                title={monthlyKPI.isLastPeriod ? 'Last Month' : 'This Month'}
-                subtitle="followers gained"
+                title={monthlyKPI.isLastPeriod ? t('common:periods.lastMonth') : t('common:periods.thisMonth')}
+                subtitle={t('kpi.followersGained')}
                 amount={monthlyKPI.currentPeriod ?? 0}
                 trend={monthlyKPI.trend}
               />
             ) : (
-              <Typography sx={{ textAlign: 'center', pt: 4 }}>No monthly data.</Typography>
+              <Typography sx={{ textAlign: 'center', pt: 4 }}>{t('common:messages.noMonthlyData')}</Typography>
             )}
           </TotalBoxPaper>
         </Grid>
@@ -176,22 +183,22 @@ export default function FollowersPage() {
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {yearlyKPI ? (
               <TrendBox
-                title={yearlyKPI.isLastPeriod ? 'Last Year' : 'This Year'}
-                subtitle="followers gained"
+                title={yearlyKPI.isLastPeriod ? t('common:periods.lastYear') : t('common:periods.thisYear')}
+                subtitle={t('kpi.followersGained')}
                 amount={yearlyKPI.currentPeriod ?? 0}
                 trend={yearlyKPI.trend}
               />
             ) : (
-              <Typography sx={{ textAlign: 'center', pt: 4 }}>No yearly data.</Typography>
+              <Typography sx={{ textAlign: 'center', pt: 4 }}>{t('common:messages.noYearlyData')}</Typography>
             )}
           </TotalBoxPaper>
         </Grid>
         <Grid size={{ xs: 12, md: 4, lg: 3 }}>
           <TotalBoxPaper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 160 }}>
             {total ? (
-              <TotalBox title="Total Followers" amount={total.amount} date={total.day} />
+              <TotalBox title={t('kpi.totalFollowers')} amount={total.amount} date={total.day} />
             ) : (
-              <Typography sx={{ textAlign: 'center', pt: 4 }}>No total data.</Typography>
+              <Typography sx={{ textAlign: 'center', pt: 4 }}>{t('common:messages.noTotalData')}</Typography>
             )}
           </TotalBoxPaper>
         </Grid>
@@ -201,8 +208,8 @@ export default function FollowersPage() {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <PeriodSelector timeframe={currentTimeframe} onChange={handleTimeframeChange} disabled={isLoadingChart} />
             <IconButton
-              title="Download CSV"
-              aria-label="Download CSV"
+              title={t('common:actions.downloadCsv')}
+              aria-label={t('common:actions.downloadCsv')}
               onClick={handleCSVDownload}
               disabled={isLoadingChart}
             >
@@ -233,7 +240,7 @@ export default function FollowersPage() {
                   pointerEvents: isLoadingChart ? 'auto' : 'none', // Prevent interaction when not visible
                 })}
               >
-                <Typography>Loading chart data...</Typography>
+                <Typography>{t('common:messages.loadingChart')}</Typography>
               </Box>
             </Fade>
 
@@ -250,21 +257,21 @@ export default function FollowersPage() {
                   px: 2,
                 }}
               >
-                No data available for the selected timeframe.
+                {t('common:messages.noDataForTimeframe')}
                 <br />
-                Please select another time frame.
+                {t('common:messages.selectAnother')}
                 <br />
                 <br />
-                If you&apos;ve just set up your account this message is expected.
+                {t('common:messages.setupExpected')}
                 <br />
-                We&apos;ll send you an email once your data is ready.
+                {t('common:messages.emailNotification')}
                 <br />
                 <br />
                 <Box
                   component="span"
                   sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
                 >
-                  If this message persists please{' '}
+                  {t('common:messages.persistentIssue')}{' '}
                   <Link
                     href={`mailto:${supportEmail}?subject=Support`}
                     sx={{
@@ -289,7 +296,7 @@ export default function FollowersPage() {
                       },
                     }}
                   >
-                    contact support
+                    {t('common:messages.contactSupport')}
                   </Link>
                   .
                 </Box>

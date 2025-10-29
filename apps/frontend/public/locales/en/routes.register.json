@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "title": "Sign up for Analytodon"
+  },
+  "hero": {
+    "title": "Join Analytodon",
+    "subtitle": "Start tracking your Mastodon analytics today and gain valuable insights about your audience and content performance."
+  },
+  "form": {
+    "title": "Create your account",
+    "emailLabel": "Your Email Address",
+    "passwordLabel": "Choose a Password",
+    "serverUrlLabel": "Mastodon Server URL",
+    "serverUrlPlaceholder": "mastodon.social",
+    "serverUrlHelper": "The URL of the Mastodon instance your account is on",
+    "timezoneLabel": "Your Timezone",
+    "timezoneHelper": "The timezone you want your analytics reports to be in",
+    "submit": "Create Account",
+    "submitting": "Creating Account..."
+  },
+  "links": {
+    "login": "Already have an account? Sign in"
+  },
+  "messages": {
+    "registrationDisabled": "New registrations are currently disabled"
+  },
+  "errors": {
+    "allFieldsRequired": "All fields are required",
+    "passwordTooShort": "Password must be at least 8 characters long",
+    "emailAlreadyRegistered": "Email already registered. Please try to login.",
+    "invalidData": "Invalid data: {{errorMessage}}",
+    "generic": "An error occurred during registration. Please try again.",
+    "unexpected": "An unexpected error occurred. Please try again."
+  }
+}

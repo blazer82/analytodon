@@ -10,6 +10,11 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon Dashboard' }];
 };
 
+// Declare i18n namespaces for this route
+export const handle = {
+  i18n: ['routes._app', 'components.layout'],
+};
+
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request); // Ensures user is logged in and handles basic redirects
 

@@ -4,7 +4,9 @@ import { CacheProvider, withEmotionCache } from '@emotion/react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '@remix-run/react';
+import i18next from '~/services/i18n/i18next.server';
 import { getUser, withSessionHandling } from '~/utils/session.server';
+import { useChangeLanguage } from 'remix-i18next/react';
 
 import { AuthProvider } from './utils/auth.context';
 import { ClientStyleContext } from './utils/client-style-context';
@@ -20,9 +22,11 @@ export const links: LinksFunction = () => [
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // Get the user from the session
   const user = await getUser(request);
+  const locale = await i18next.getLocale(request);
 
   return {
     user,
+    locale,
     ENV: {
       MARKETING_URL: process.env.MARKETING_URL || 'https://analytodon.com',
       SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || 'support@analytodon.com',
@@ -30,15 +34,21 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   };
 });
 
+// Default namespace for root
+export const handle = {
+  i18n: 'common',
+};
+
 interface DocumentProps {
   children: React.ReactNode;
   title?: string;
+  locale?: string;
 }
 
 // Define the isomorphic hook
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-const Document = withEmotionCache(({ children, title }: DocumentProps, emotionCache) => {
+const Document = withEmotionCache(({ children, title, locale }: DocumentProps, emotionCache) => {
   const theme = useAppTheme();
   const clientStyleData = useContext(ClientStyleContext);
 
@@ -73,7 +83,7 @@ const Document = withEmotionCache(({ children, title }: DocumentProps, emotionCa
   }, []);
 
   return (
-    <html lang="en">
+    <html lang={locale || 'en'} dir="ltr">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -99,9 +109,13 @@ const Document = withEmotionCache(({ children, title }: DocumentProps, emotionCa
 export function Layout({ children }: { children: React.ReactNode }) {
   const loaderData = useLoaderData<typeof loader>();
   const user = loaderData?.user ?? null;
+  const locale = loaderData?.locale ?? 'en';
+
+  // Sync language changes with remix-i18next
+  useChangeLanguage(locale);
 
   return (
-    <Document>
+    <Document locale={locale}>
       <AuthProvider initialUser={user}>{children}</AuthProvider>
     </Document>
   );
