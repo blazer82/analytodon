@@ -1,7 +1,7 @@
 // @server-only
 import { resolve } from 'node:path';
 
-import { createCookie } from '@remix-run/node';
+import { getUser } from '~/utils/session.server';
 import Backend from 'i18next-fs-backend';
 import { RemixI18Next } from 'remix-i18next/server';
 
@@ -10,20 +10,33 @@ import i18nextConfig from './i18n';
 // Version for cache busting when translations update
 const TRANSLATIONS_VERSION = '1.0.0';
 
-// Create a cookie for language preference
-const languageCookie = createCookie('i18next', {
-  sameSite: 'lax',
-  path: '/',
-  httpOnly: true,
-});
+// Custom locale resolver that prioritizes user's stored locale
+class CustomI18Next extends RemixI18Next {
+  async getLocale(request: Request): Promise<string> {
+    // First, try to get the user's stored locale preference
+    try {
+      const user = await getUser(request);
+      if (user?.locale && i18nextConfig.supportedLngs.includes(user.locale)) {
+        return user.locale;
+      }
+    } catch (_error) {
+      // If we can't get the user (not logged in, error, etc.), continue to browser detection
+    }
 
-export default new RemixI18Next({
+    // Fall back to browser's Accept-Language header for non-authenticated users
+    return super.getLocale(request);
+  }
+}
+
+// Create custom instance with detection config
+export default new CustomI18Next({
   detection: {
-    // Language detection order: cookie, accept-language header, then fallback
+    // Language detection priority:
+    // 1. Stored user locale (for authenticated users)
+    // 2. Accept-Language header (for non-authenticated users or as fallback)
+    // The detected language is stored/updated on login/register/refresh
     supportedLanguages: i18nextConfig.supportedLngs,
     fallbackLanguage: i18nextConfig.fallbackLng,
-    // Cookie configuration
-    cookie: languageCookie,
   },
 
   i18next: {

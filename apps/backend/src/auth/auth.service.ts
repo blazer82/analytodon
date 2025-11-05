@@ -36,6 +36,7 @@ export interface AuthOperationResult {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly supportedLocales = ['en', 'de']; // Should match i18n config
 
   constructor(
     private readonly usersService: UsersService,
@@ -50,6 +51,23 @@ export class AuthService {
     @Inject(forwardRef(() => MailService)) private readonly mailService: MailService,
     private readonly em: EntityManager,
   ) {}
+
+  /**
+   * Extract locale from Accept-Language header
+   * Returns the first supported language or undefined
+   */
+  extractLocaleFromHeader(acceptLanguage?: string): string | undefined {
+    if (!acceptLanguage) return undefined;
+
+    // Parse Accept-Language header (e.g., "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7")
+    const locales = acceptLanguage.split(',').map((lang) => {
+      const [locale] = lang.split(';');
+      return locale.trim().toLowerCase().split('-')[0]; // Get language code only
+    });
+
+    // Find first supported locale
+    return locales.find((locale) => this.supportedLocales.includes(locale));
+  }
 
   /**
    * Validates a user's credentials.
@@ -87,9 +105,10 @@ export class AuthService {
   /**
    * Logs in a user and returns tokens and the user entity.
    * @param user - The authenticated user entity.
+   * @param locale - Optional locale to update user's language preference.
    * @returns A promise that resolves to an object containing tokens and the user entity.
    */
-  async login(user: UserEntity): Promise<AuthOperationResult> {
+  async login(user: UserEntity, locale?: string): Promise<AuthOperationResult> {
     // At this point, 'user' is authenticated by LocalStrategy
     // We need to ensure the full user entity with credentials is available if it wasn't fully populated by validateUser
     // or if validateUser returned a partial object.
@@ -102,6 +121,11 @@ export class AuthService {
 
     // Update last login timestamp
     user.lastLoginAt = new Date();
+
+    // Update locale if provided
+    if (locale) {
+      user.locale = locale;
+    }
 
     await this.usersService.save(user);
 
@@ -168,10 +192,11 @@ export class AuthService {
   /**
    * Refreshes access and refresh tokens using a valid refresh token.
    * @param token - The refresh token.
+   * @param locale - Optional locale to update user's language preference.
    * @returns A promise that resolves to an object containing new tokens and the user entity.
    * @throws UnauthorizedException if the refresh token is invalid, expired, or the user is not found/active.
    */
-  async refreshTokens(token: string): Promise<AuthOperationResult> {
+  async refreshTokens(token: string, locale?: string): Promise<AuthOperationResult> {
     const refreshTokenEntity = await this.refreshTokenRepository.findOne(
       { token },
       { populate: ['user', 'user.accounts'] },
@@ -201,6 +226,11 @@ export class AuthService {
 
     // Update last login timestamp
     user.lastLoginAt = new Date();
+
+    // Update locale if provided
+    if (locale) {
+      user.locale = locale;
+    }
 
     // Note: user is already populated from refreshTokenEntity, so direct save is fine.
     await this.usersService.save(user);
@@ -316,7 +346,7 @@ export class AuthService {
       throw new ForbiddenException('New registrations are currently disabled.');
     }
 
-    const { email, password, serverURLOnSignUp, timezone } = registerUserDto;
+    const { email, password, serverURLOnSignUp, timezone, locale } = registerUserDto;
 
     const existingUser = await this.userRepository.findOne({ email });
     if (existingUser) {
@@ -327,6 +357,7 @@ export class AuthService {
       email,
       serverURLOnSignUp,
       timezone,
+      locale: locale || 'en', // Default to English if no locale provided
       role: UserRole.AccountOwner,
       isActive: true,
       emailVerified: false,

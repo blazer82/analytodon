@@ -46,6 +46,9 @@ export class UserEntity extends BaseEntity {
   @Property({ nullable: true })
   timezone?: string;
 
+  @Property({ nullable: true })
+  locale?: string;
+
   // Mongoose stores ObjectId for credentials.
   @OneToOne(() => UserCredentialsEntity, (creds) => creds.user, {
     owner: false,

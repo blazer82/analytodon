@@ -75,6 +75,12 @@ export interface SessionUserDto {
      * @memberof SessionUserDto
      */
     timezone: string;
+    /**
+     * User locale/language preference
+     * @type {string}
+     * @memberof SessionUserDto
+     */
+    locale: string;
 }
 
 /**
@@ -89,6 +95,7 @@ export function instanceOfSessionUserDto(value: object): value is SessionUserDto
     if (!('maxAccounts' in value) || value['maxAccounts'] === undefined) return false;
     if (!('serverURLOnSignUp' in value) || value['serverURLOnSignUp'] === undefined) return false;
     if (!('timezone' in value) || value['timezone'] === undefined) return false;
+    if (!('locale' in value) || value['locale'] === undefined) return false;
     return true;
 }
 
@@ -110,6 +117,7 @@ export function SessionUserDtoFromJSONTyped(json: any, ignoreDiscriminator: bool
         'maxAccounts': json['maxAccounts'],
         'serverURLOnSignUp': json['serverURLOnSignUp'],
         'timezone': json['timezone'],
+        'locale': json['locale'],
     };
 }
 
@@ -132,6 +140,7 @@ export function SessionUserDtoToJSONTyped(value?: SessionUserDto | null, ignoreD
         'maxAccounts': value['maxAccounts'],
         'serverURLOnSignUp': value['serverURLOnSignUp'],
         'timezone': value['timezone'],
+        'locale': value['locale'],
     };
 }
 

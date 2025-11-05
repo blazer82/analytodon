@@ -393,7 +393,7 @@ importers:
   packages/rest-client:
     devDependencies:
       typescript:
-        specifier: ^5.9
+        specifier: ^4.0 || ^5.0
         version: 5.9.3
 
   packages/shared-orm:

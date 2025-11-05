@@ -36,4 +36,12 @@ export class RegisterUserDto {
   @IsOptional()
   @IsValidTimezone()
   timezone?: string;
+
+  @ApiPropertyOptional({
+    example: 'en',
+    description: 'User locale/language preference (optional, defaults to en)',
+  })
+  @IsOptional()
+  @IsString()
+  locale?: string;
 }
