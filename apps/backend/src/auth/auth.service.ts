@@ -70,6 +70,17 @@ export class AuthService {
   }
 
   /**
+   * Validates a locale string against supported locales
+   * Returns the validated locale or default 'en' if invalid
+   * @param locale - The locale string to validate
+   * @returns A valid locale string
+   */
+  private validateLocale(locale: string | undefined): string {
+    if (!locale) return 'en';
+    return this.supportedLocales.includes(locale) ? locale : 'en';
+  }
+
+  /**
    * Validates a user's credentials.
    * @param email - The user's email.
    * @param pass - The user's password.
@@ -122,9 +133,9 @@ export class AuthService {
     // Update last login timestamp
     user.lastLoginAt = new Date();
 
-    // Update locale if provided
+    // Update locale if provided (validate to ensure only supported locales are stored)
     if (locale) {
-      user.locale = locale;
+      user.locale = this.validateLocale(locale);
     }
 
     await this.usersService.save(user);
@@ -227,9 +238,9 @@ export class AuthService {
     // Update last login timestamp
     user.lastLoginAt = new Date();
 
-    // Update locale if provided
+    // Update locale if provided (validate to ensure only supported locales are stored)
     if (locale) {
-      user.locale = locale;
+      user.locale = this.validateLocale(locale);
     }
 
     // Note: user is already populated from refreshTokenEntity, so direct save is fine.
@@ -354,7 +365,8 @@ export class AuthService {
     }
 
     // Priority: explicit locale from DTO > detected locale from header > default to 'en'
-    const finalLocale = locale || detectedLocale || 'en';
+    // Validate locale to ensure only supported locales are stored
+    const finalLocale = this.validateLocale(locale || detectedLocale);
 
     const user = this.userRepository.create({
       email,

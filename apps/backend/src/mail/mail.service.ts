@@ -55,12 +55,20 @@ export class MailService {
   }
 
   /**
-   * Gets the user's locale, defaulting to 'en' if not set
+   * Gets the user's locale, defaulting to 'en' if not set or invalid
    * @param user - The user entity
-   * @returns The user's locale string
+   * @returns The user's locale string (guaranteed to be a supported locale)
    */
   private getUserLocale(user: UserEntity): string {
-    return user.locale || 'en';
+    const supportedLocales = ['en', 'de']; // Should match i18n config and auth service
+    const locale = user.locale;
+
+    // Validate that the locale is supported, fallback to 'en' if not
+    if (!locale || !supportedLocales.includes(locale)) {
+      return 'en';
+    }
+
+    return locale;
   }
 
   /**
