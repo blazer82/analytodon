@@ -77,6 +77,9 @@ importers:
       ms:
         specifier: ^2.1.3
         version: 2.1.3
+      nestjs-i18n:
+        specifier: ^10.5.1
+        version: 10.5.1(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)(class-validator@0.14.2)(rxjs@7.8.2)
       nestjs-pino:
         specifier: ^4.4.1
         version: 4.4.1(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@10.5.0)(pino@9.14.0)(rxjs@7.8.2)
@@ -3115,6 +3118,9 @@ packages:
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
+
+  accept-language-parser@1.5.0:
+    resolution: {integrity: sha512-QhyTbMLYo0BBGg1aWbeMG4ekWtds/31BrEU+DONOg/7ax23vxpL03Pb7/zBmha2v7vdD3AyzZVWBVGEZxKOXWw==}
 
   accepts@1.3.8:
     resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
@@ -6275,6 +6281,15 @@ packages:
   neo-async@2.6.2:
     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
 
+  nestjs-i18n@10.5.1:
+    resolution: {integrity: sha512-cJJFz+RUfav23QACpGCq1pdXNLYC3tBesrP14RGoE/YYcD4xosQPX2eyjvDNuo0Ti63Xtn6j57wDNEUKrZqmSw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@nestjs/common': '*'
+      '@nestjs/core': '*'
+      class-validator: '*'
+      rxjs: '*'
+
   nestjs-pino@4.4.1:
     resolution: {integrity: sha512-/E/JOtsUf/yHFGJx+zxBfwjCn1uJVV9AxSyx/mD0oNFCP+psvv9XE7WGh5Cebo6TwukF4qEu37eissGErVwLVg==}
     engines: {node: '>= 14'}
@@ -7542,6 +7557,9 @@ packages:
   streamsearch@1.1.0:
     resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
     engines: {node: '>=10.0.0'}
+
+  string-format@2.0.0:
+    resolution: {integrity: sha512-bbEs3scLeYNXLecRRuk6uJxdXUSj6le/8rNPHChIJTn2V79aXVTR1EH2OH5zLKKoz0V02fOUKZZcw01pLUShZA==}
 
   string-hash@1.1.3:
     resolution: {integrity: sha512-kJUvRUFK49aub+a7T1nNE66EJbZBMnBgoC1UbCZ5n6bsZKBRga4KgBRTMn/pFkeCZSYtNeSyMxPDM0AXWELk2A==}
@@ -11977,6 +11995,8 @@ snapshots:
     dependencies:
       event-target-shim: 5.0.1
 
+  accept-language-parser@1.5.0: {}
+
   accepts@1.3.8:
     dependencies:
       mime-types: 2.1.35
@@ -16183,6 +16203,19 @@ snapshots:
 
   neo-async@2.6.2: {}
 
+  nestjs-i18n@10.5.1(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)(class-validator@0.14.2)(rxjs@7.8.2):
+    dependencies:
+      '@nestjs/common': 11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.8(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      accept-language-parser: 1.5.0
+      chokidar: 3.6.0
+      class-validator: 0.14.2
+      cookie: 0.7.2
+      iterare: 1.2.1
+      js-yaml: 4.1.0
+      rxjs: 7.8.2
+      string-format: 2.0.0
+
   nestjs-pino@4.4.1(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@10.5.0)(pino@9.14.0)(rxjs@7.8.2):
     dependencies:
       '@nestjs/common': 11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -17606,6 +17639,8 @@ snapshots:
   stream-slice@0.1.2: {}
 
   streamsearch@1.1.0: {}
+
+  string-format@2.0.0: {}
 
   string-hash@1.1.3: {}
 

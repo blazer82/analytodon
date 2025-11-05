@@ -7,7 +7,8 @@
     "assets": [
       { "include": "mail/templates/**/*.hbs", "watchAssets": true },
       { "include": "mail/templates/**/*.txt", "watchAssets": true },
-      { "include": "mail/templates/assets/**/*", "watchAssets": true }
+      { "include": "mail/templates/assets/**/*", "watchAssets": true },
+      { "include": "i18n/**/*.json", "watchAssets": true }
     ]
   }
 }

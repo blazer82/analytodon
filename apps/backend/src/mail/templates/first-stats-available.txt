@@ -1,15 +1,15 @@
-Hi and thanks again for signing up to Analytodon!
+{{ t.greeting }}
 
-We completed the initial processing of your Mastodon account {{ accountName }} which means your analytics data is ready!
+{{ t.txtMessage }}
 
-Here’s the link to your dashboard:
+{{ t.txtInstruction }}
 {{ appURL }}
 
-Should you encounter any issues or have any questions don't hesitate to contact me directly by replying to this email.
+{{ t.support }}
 
-Best regards,
+{{ t.signature }}
 {{ emailSenderName }}
 
-Email: {{ supportEmail }}
-Website: {{ marketingURL }}
-Mastodon: https://undefined.social/@analytodon
+{{ t.email }} {{ supportEmail }}
+{{ t.website }} {{ marketingURL }}
+{{ t.mastodon }} https://undefined.social/@analytodon

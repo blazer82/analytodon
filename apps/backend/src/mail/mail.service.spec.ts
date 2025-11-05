@@ -6,6 +6,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { I18nService } from 'nestjs-i18n';
 
 import { BoostsService } from '../boosts/boosts.service';
 import { FavoritesService } from '../favorites/favorites.service';
@@ -69,6 +70,80 @@ describe('MailService', () => {
               throw new Error(`Config key ${key} not found`);
             }),
             get: jest.fn(), // For non-essential configs if any
+          },
+        },
+        {
+          provide: I18nService,
+          useValue: {
+            translate: jest.fn((key: string) => {
+              // Mock translations mapping - return actual English text
+              const translations: Record<string, string> = {
+                'email.passwordReset.subject': 'Reset your Analytodon password!',
+                'email.passwordReset.title': 'Password Reset Request',
+                'email.passwordReset.greeting': 'Hi,',
+                'email.passwordReset.message': 'You requested a link to reset your Analytodon password.',
+                'email.passwordReset.securityNote':
+                  "If you didn't request this password reset, you can safely ignore this email.",
+                'email.passwordReset.instruction': 'To reset your password, click the button below:',
+                'email.passwordReset.button': 'Reset Password',
+                'email.passwordReset.fallback':
+                  "If the button doesn't work, you can copy and paste this link into your browser:",
+                'email.passwordReset.signature': 'Best regards,',
+                'email.emailVerification.subject': 'Welcome to Analytodon - Please verify your email address',
+                'email.emailVerification.title': 'Verify Your Email',
+                'email.emailVerification.greeting': 'Hi and welcome to Analytodon!',
+                'email.emailVerification.instruction':
+                  'To complete your signup, please verify your email address by clicking on the button below:',
+                'email.emailVerification.button': 'Verify Email Address',
+                'email.emailVerification.fallback':
+                  "If the button doesn't work, you can copy and paste this link into your browser:",
+                'email.emailVerification.signature': 'Best regards,',
+                'email.oldAccountWarning.subject':
+                  "You haven't been on Analytodon in a while - we'll be deleting your data soon!",
+                'email.oldAccountWarning.title': 'Account Inactivity Notice',
+                'email.oldAccountWarning.greeting': 'Hi and thanks for signing up to Analytodon!',
+                'email.oldAccountWarning.warningMessage':
+                  "We haven't seen you in a while and we'll be deleting your data soon.",
+                'email.oldAccountWarning.instruction':
+                  "If you don't want your data to be deleted, simply log in to your dashboard:",
+                'email.oldAccountWarning.button': 'Log In to Dashboard',
+                'email.oldAccountWarning.noAction':
+                  "If you don't intend to use Analytodon anymore, you don't need to do anything.",
+                'email.oldAccountWarning.signature': 'Best regards,',
+                'email.firstStatsAvailable.subject': 'Your Mastodon analytics data is ready on Analytodon! 🎉',
+                'email.firstStatsAvailable.title': 'Your Analytics Are Ready!',
+                'email.firstStatsAvailable.greeting': 'Hi and thanks again for signing up to Analytodon!',
+                'email.firstStatsAvailable.message':
+                  'We completed the initial processing of your Mastodon account {accountName} which means your analytics data is ready!',
+                'email.firstStatsAvailable.instruction': 'Check out your dashboard to see your stats:',
+                'email.firstStatsAvailable.button': 'View Your Dashboard',
+                'email.firstStatsAvailable.support':
+                  "Should you encounter any issues or have any questions don't hesitate to contact me directly by replying to this email.",
+                'email.firstStatsAvailable.signature': 'Best regards,',
+                'email.signupNotification.subject': 'Analytodon: New Sign Up',
+                'email.signupNotification.title': 'New User Signup',
+                'email.signupNotification.message': 'A new user just signed up to Analytodon:',
+                'email.signupNotification.signature': 'Best regards,',
+                'email.weeklyStats.subject': 'Your Week on Mastodon',
+                'email.weeklyStats.title': 'Weekly Stats Overview for Your Mastodon Accounts',
+                'email.weeklyStats.followers': 'Followers',
+                'email.weeklyStats.followersLabel': 'gained',
+                'email.weeklyStats.replies': 'Replies',
+                'email.weeklyStats.repliesLabel': 'received',
+                'email.weeklyStats.boosts': 'Boosts',
+                'email.weeklyStats.boostsLabel': 'received',
+                'email.weeklyStats.favorites': 'Favorites',
+                'email.weeklyStats.favoritesLabel': 'received',
+                'email.weeklyStats.dashboardButton': 'Go to Dashboard',
+                'email.weeklyStats.unsubscribe': "If you don't want to receive any more messages like this you can",
+                'email.weeklyStats.unsubscribeLink': 'unsubscribe here',
+                'email.common.email': 'Email:',
+                'email.common.website': 'Website:',
+                'email.common.mastodon': 'Mastodon:',
+                'email.common.mastodonHandle': '@analytodon@undefined.social',
+              };
+              return Promise.resolve(translations[key] || key);
+            }),
           },
         },
         {
@@ -149,27 +224,29 @@ describe('MailService', () => {
       await service.sendPasswordResetEmail(mockUser, token);
 
       expect(readFileSyncSpy).toHaveBeenCalledWith(path.join(__dirname, 'templates', 'password-reset.txt'), 'utf-8');
-      expect(mailerService.sendMail).toHaveBeenCalledWith({
-        to: mockUser.email,
-        subject,
-        template: './password-reset',
-        text: expectedTextBody,
-        attachments: [
-          {
-            filename: 'logo.png',
-            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
-            cid: 'logo@analytodon.com',
-          },
-        ],
-        context: {
-          appURL: mockConfigValues.FRONTEND_URL,
-          supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
-          marketingURL: mockConfigValues.MARKETING_URL,
-          emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
-          resetLink: `${mockConfigValues.FRONTEND_URL}/reset-password?t=${token}`,
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: mockUser.email,
           subject,
-        },
-      });
+          template: './password-reset',
+          text: expectedTextBody,
+          attachments: [
+            {
+              filename: 'logo.png',
+              path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+              cid: 'logo@analytodon.com',
+            },
+          ],
+          context: expect.objectContaining({
+            appURL: mockConfigValues.FRONTEND_URL,
+            supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
+            marketingURL: mockConfigValues.MARKETING_URL,
+            emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
+            resetLink: `${mockConfigValues.FRONTEND_URL}/reset-password?t=${token}`,
+            subject,
+          }),
+        }),
+      );
       expect(loggerLogSpy).toHaveBeenCalledWith(`Password reset email sent to ${mockUser.email}`);
     });
 
@@ -201,27 +278,29 @@ describe('MailService', () => {
         path.join(__dirname, 'templates', 'email-verification.txt'),
         'utf-8',
       );
-      expect(mailerService.sendMail).toHaveBeenCalledWith({
-        to: mockUser.email,
-        subject,
-        template: './email-verification',
-        text: expectedTextBody,
-        attachments: [
-          {
-            filename: 'logo.png',
-            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
-            cid: 'logo@analytodon.com',
-          },
-        ],
-        context: {
-          appURL: mockConfigValues.FRONTEND_URL,
-          supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
-          marketingURL: mockConfigValues.MARKETING_URL,
-          emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
-          verificationLink: `${mockConfigValues.FRONTEND_URL}/register/verify?c=${verificationCode}`,
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: mockUser.email,
           subject,
-        },
-      });
+          template: './email-verification',
+          text: expectedTextBody,
+          attachments: [
+            {
+              filename: 'logo.png',
+              path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+              cid: 'logo@analytodon.com',
+            },
+          ],
+          context: expect.objectContaining({
+            appURL: mockConfigValues.FRONTEND_URL,
+            supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
+            marketingURL: mockConfigValues.MARKETING_URL,
+            emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
+            verificationLink: `${mockConfigValues.FRONTEND_URL}/register/verify?c=${verificationCode}`,
+            subject,
+          }),
+        }),
+      );
       expect(loggerLogSpy).toHaveBeenCalledWith(`Email verification mail sent to ${mockUser.email}`);
     });
 
@@ -252,26 +331,28 @@ describe('MailService', () => {
         path.join(__dirname, 'templates', 'old-account-warning.txt'),
         'utf-8',
       );
-      expect(mailerService.sendMail).toHaveBeenCalledWith({
-        to: mockUser.email,
-        subject,
-        template: './old-account-warning',
-        text: expectedTextBody,
-        attachments: [
-          {
-            filename: 'logo.png',
-            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
-            cid: 'logo@analytodon.com',
-          },
-        ],
-        context: {
-          appURL: mockConfigValues.FRONTEND_URL,
-          supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
-          marketingURL: mockConfigValues.MARKETING_URL,
-          emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: mockUser.email,
           subject,
-        },
-      });
+          template: './old-account-warning',
+          text: expectedTextBody,
+          attachments: [
+            {
+              filename: 'logo.png',
+              path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+              cid: 'logo@analytodon.com',
+            },
+          ],
+          context: expect.objectContaining({
+            appURL: mockConfigValues.FRONTEND_URL,
+            supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
+            marketingURL: mockConfigValues.MARKETING_URL,
+            emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
+            subject,
+          }),
+        }),
+      );
       expect(loggerLogSpy).toHaveBeenCalledWith(`Old account warning mail sent to ${mockUser.email}`);
     });
 
@@ -302,27 +383,29 @@ describe('MailService', () => {
         path.join(__dirname, 'templates', 'first-stats-available.txt'),
         'utf-8',
       );
-      expect(mailerService.sendMail).toHaveBeenCalledWith({
-        to: mockUser.email,
-        subject,
-        template: './first-stats-available',
-        text: expectedTextBody,
-        attachments: [
-          {
-            filename: 'logo.png',
-            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
-            cid: 'logo@analytodon.com',
-          },
-        ],
-        context: {
-          appURL: mockConfigValues.FRONTEND_URL,
-          supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
-          marketingURL: mockConfigValues.MARKETING_URL,
-          emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
-          accountName: mockAccount.accountName,
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: mockUser.email,
           subject,
-        },
-      });
+          template: './first-stats-available',
+          text: expectedTextBody,
+          attachments: [
+            {
+              filename: 'logo.png',
+              path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+              cid: 'logo@analytodon.com',
+            },
+          ],
+          context: expect.objectContaining({
+            appURL: mockConfigValues.FRONTEND_URL,
+            supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
+            marketingURL: mockConfigValues.MARKETING_URL,
+            emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
+            accountName: mockAccount.accountName,
+            subject,
+          }),
+        }),
+      );
       expect(loggerLogSpy).toHaveBeenCalledWith(
         `First stats available mail sent to ${mockUser.email} for account ${mockAccount.accountName}`,
       );
@@ -372,27 +455,29 @@ describe('MailService', () => {
         path.join(__dirname, 'templates', 'signup-notification.txt'),
         'utf-8',
       );
-      expect(mailerService.sendMail).toHaveBeenCalledWith({
-        to: mockConfigValues.EMAIL_FROM_ADDRESS, // Admin email
-        subject,
-        template: './signup-notification',
-        text: expectedTextBody,
-        attachments: [
-          {
-            filename: 'logo.png',
-            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
-            cid: 'logo@analytodon.com',
-          },
-        ],
-        context: {
-          appURL: mockConfigValues.FRONTEND_URL,
-          supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
-          marketingURL: mockConfigValues.MARKETING_URL,
-          emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
-          userEmail: mockUser.email,
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: mockConfigValues.EMAIL_FROM_ADDRESS, // Admin email
           subject,
-        },
-      });
+          template: './signup-notification',
+          text: expectedTextBody,
+          attachments: [
+            {
+              filename: 'logo.png',
+              path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+              cid: 'logo@analytodon.com',
+            },
+          ],
+          context: expect.objectContaining({
+            appURL: mockConfigValues.FRONTEND_URL,
+            supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
+            marketingURL: mockConfigValues.MARKETING_URL,
+            emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
+            userEmail: mockUser.email,
+            subject,
+          }),
+        }),
+      );
       expect(loggerLogSpy).toHaveBeenCalledWith(`Sign up notification mail sent to admin for user ${mockUser.email}`);
     });
 
@@ -426,20 +511,22 @@ describe('MailService', () => {
       await service.sendWeeklyStatsMail(mockUser, mockStats);
       const unsubscribeURL = `${mockConfigValues.FRONTEND_URL}/unsubscribe/weekly?u=${encodeURIComponent(mockUser.id)}&e=${encodeURIComponent(mockUser.email)}`;
 
-      expect(mailerService.sendMail).toHaveBeenCalledWith({
-        to: mockUser.email,
-        subject,
-        template: './weekly-stats',
-        context: {
-          appURL: mockConfigValues.FRONTEND_URL,
-          supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
-          marketingURL: mockConfigValues.MARKETING_URL,
-          emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
-          stats: mockStats,
-          unsubscribeURL,
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: mockUser.email,
           subject,
-        },
-      });
+          template: './weekly-stats',
+          context: expect.objectContaining({
+            appURL: mockConfigValues.FRONTEND_URL,
+            supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
+            marketingURL: mockConfigValues.MARKETING_URL,
+            emailSenderName: mockConfigValues.EMAIL_FROM_NAME,
+            stats: mockStats,
+            unsubscribeURL,
+            subject,
+          }),
+        }),
+      );
       expect(loggerLogSpy).toHaveBeenCalledWith(
         `Weekly stats mail sent to ${mockUser.email} (User: ${mockUser.email})`,
       );

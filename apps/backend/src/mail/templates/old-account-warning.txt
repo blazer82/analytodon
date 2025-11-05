@@ -1,14 +1,14 @@
-Hi and thanks for signing up to Analytodon!
+{{ t.greeting }}
 
-We haven't seen you in a while and we'll be deleting your data soon.
-If you don't want your data to be deleted just log in to your dashboard:
+{{ t.txtWarning }}
+{{ t.txtInstruction }}
 {{ appURL }}
 
-If you don't intend to use Analytodon anymore you don't need to do anything.
+{{ t.noAction }}
 
-Best regards,
+{{ t.signature }}
 {{ emailSenderName }}
 
-Email: {{ supportEmail }}
-Website: {{ marketingURL }}
-Mastodon: https://undefined.social/@analytodon
+{{ t.email }} {{ supportEmail }}
+{{ t.website }} {{ marketingURL }}
+{{ t.mastodon }} https://undefined.social/@analytodon

@@ -1,10 +1,10 @@
-A new user just signed up to Analytodon
+{{ t.txtMessage }}
 
 {{ userEmail }}
 
-Best regards,
+{{ t.signature }}
 {{ emailSenderName }}
 
-Email: {{ supportEmail }}
-Website: {{ marketingURL }}
-Mastodon: https://undefined.social/@analytodon
+{{ t.email }} {{ supportEmail }}
+{{ t.website }} {{ marketingURL }}
+{{ t.mastodon }} https://undefined.social/@analytodon
