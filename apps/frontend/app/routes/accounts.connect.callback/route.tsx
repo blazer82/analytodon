@@ -45,7 +45,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     // After successful connection, refresh the session to get updated user data (e.g., new account in user.accounts)
     const currentRefreshToken = session.get('refreshToken');
     if (currentRefreshToken) {
-      const newAuthResponse = await refreshAccessToken(currentRefreshToken);
+      const acceptLanguage = request.headers.get('accept-language') || undefined;
+      const newAuthResponse = await refreshAccessToken(currentRefreshToken, acceptLanguage);
       if (newAuthResponse) {
         // Session is already request.__apiClientSession from HOF
         session.set('accessToken', newAuthResponse.token);

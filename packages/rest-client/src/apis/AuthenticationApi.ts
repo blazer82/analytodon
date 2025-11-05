@@ -52,6 +52,7 @@ export interface AuthControllerRefreshTokensRequest {
 
 export interface AuthControllerRegisterRequest {
     registerUserDto: RegisterUserDto;
+    acceptLanguage?: string;
 }
 
 export interface AuthControllerRequestPasswordResetRequest {
@@ -234,6 +235,10 @@ export class AuthenticationApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['acceptLanguage'] != null) {
+            headerParameters['accept-language'] = String(requestParameters['acceptLanguage']);
+        }
 
         const response = await this.request({
             path: `/auth/register`,

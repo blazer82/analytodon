@@ -340,7 +340,7 @@ export class AuthService {
    * @throws ConflictException if a user with the given email already exists.
    * @throws ForbiddenException if new registrations are disabled.
    */
-  async registerUser(registerUserDto: RegisterUserDto): Promise<AuthOperationResult> {
+  async registerUser(registerUserDto: RegisterUserDto, detectedLocale?: string): Promise<AuthOperationResult> {
     const isRegistrationDisabled = this.configService.get<string>('DISABLE_NEW_REGISTRATIONS') === 'true';
     if (isRegistrationDisabled) {
       throw new ForbiddenException('New registrations are currently disabled.');
@@ -353,11 +353,14 @@ export class AuthService {
       throw new ConflictException('A user with this email address already exists.');
     }
 
+    // Priority: explicit locale from DTO > detected locale from header > default to 'en'
+    const finalLocale = locale || detectedLocale || 'en';
+
     const user = this.userRepository.create({
       email,
       serverURLOnSignUp,
       timezone,
-      locale: locale || 'en', // Default to English if no locale provided
+      locale: finalLocale,
       role: UserRole.AccountOwner,
       isActive: true,
       emailVerified: false,
@@ -398,8 +401,8 @@ export class AuthService {
       throw error; // Rethrow other errors
     }
 
-    // Log in the user after successful registration
-    return this.login(user);
+    // Log in the user after successful registration, passing the locale for consistency
+    return this.login(user, finalLocale);
   }
 
   /**

@@ -33,7 +33,7 @@
     "delete": {
       "title": "Konto löschen",
       "description": "Dies löscht das Konto {{name}} und alle zugehörigen Analysedaten. Diese Aktion kann nicht rückgängig gemacht werden!",
-      "instruction": "Um fortzufahren, geben Sie „delete" in das Feld unten ein:",
+      "instruction": "Um fortzufahren, geben Sie \"delete\" in das Feld unten ein:",
       "cancel": "Abbrechen",
       "confirm": "Konto löschen",
       "confirming": "Lösche..."

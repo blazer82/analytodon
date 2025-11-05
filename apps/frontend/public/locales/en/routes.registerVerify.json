@@ -7,6 +7,10 @@
     "failed": "Verification Failed",
     "required": "Email Verification Required"
   },
+  "alert": {
+    "successMessage": "Your email has been successfully verified!",
+    "errorMessage": "Failed to verify your email. The verification code may be invalid or expired."
+  },
   "messages": {
     "success": "You can now continue setting up your Analytodon account.",
     "checkInbox": "Please check your inbox for an email sent to {{email}} and click the verification link to complete your registration."

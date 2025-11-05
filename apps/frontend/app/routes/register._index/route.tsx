@@ -109,6 +109,11 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const authApi = createAuthApi();
+
+    // Extract accept-language header from browser request to pass to backend
+    const acceptLanguage = request.headers.get('accept-language') || undefined;
+
+    // After REST client regeneration, acceptLanguage will be a proper parameter
     const authResponse = await authApi.authControllerRegister({
       registerUserDto: {
         email,
@@ -116,6 +121,7 @@ export async function action({ request }: ActionFunctionArgs) {
         serverURLOnSignUp: serverURL,
         timezone,
       },
+      acceptLanguage,
     });
 
     return createUserSession(authResponse, '/');

@@ -52,8 +52,14 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     // Call the API to login
     const authApi = createAuthApi();
+
+    // Extract accept-language header from browser request to pass to backend
+    const acceptLanguage = request.headers.get('accept-language') || undefined;
+
+    // Use the proper acceptLanguage parameter (already in REST client)
     const authResponse = await authApi.authControllerLogin({
       loginDto: { email, password },
+      acceptLanguage,
     });
 
     // Create a session and redirect to the dashboard
