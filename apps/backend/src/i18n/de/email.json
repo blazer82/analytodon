@@ -1,0 +1,76 @@
+{
+  "emailVerification": {
+    "subject": "Willkommen bei Analytodon - Bitte bestätigen Sie Ihre E-Mail-Adresse",
+    "title": "E-Mail-Adresse bestätigen",
+    "greeting": "Hallo und willkommen bei Analytodon!",
+    "instruction": "Um Ihre Registrierung abzuschließen, bestätigen Sie bitte Ihre E-Mail-Adresse, indem Sie auf die Schaltfläche unten klicken:",
+    "button": "E-Mail-Adresse bestätigen",
+    "fallback": "Falls die Schaltfläche nicht funktioniert, können Sie diesen Link in Ihren Browser kopieren:",
+    "signature": "Beste Grüße,"
+  },
+  "passwordReset": {
+    "subject": "Setzen Sie Ihr Analytodon-Passwort zurück!",
+    "title": "Anfrage zum Zurücksetzen des Passworts",
+    "greeting": "Hallo,",
+    "message": "Sie haben einen Link zum Zurücksetzen Ihres Analytodon-Passworts angefordert.",
+    "securityNote": "Falls Sie diese Anfrage zum Zurücksetzen des Passworts nicht gestellt haben, können Sie diese E-Mail einfach ignorieren.",
+    "instruction": "Um Ihr Passwort zurückzusetzen, klicken Sie auf die Schaltfläche unten:",
+    "button": "Passwort zurücksetzen",
+    "fallback": "Falls die Schaltfläche nicht funktioniert, können Sie diesen Link in Ihren Browser kopieren:",
+    "signature": "Beste Grüße,",
+    "txtSecurityNote": "Falls Sie das nicht waren, können Sie diese E-Mail einfach ignorieren.",
+    "txtInstruction": "Klicken Sie hier, um Ihr Passwort zurückzusetzen:"
+  },
+  "firstStatsAvailable": {
+    "subject": "Ihre Mastodon-Analysedaten sind auf Analytodon bereit! 🎉",
+    "title": "Ihre Analysen sind bereit!",
+    "greeting": "Hallo und vielen Dank für Ihre Registrierung bei Analytodon!",
+    "message": "Wir haben die erste Verarbeitung Ihres Mastodon-Kontos {accountName} abgeschlossen, was bedeutet, dass Ihre Analysedaten bereit sind!",
+    "instruction": "Schauen Sie sich Ihr Dashboard an, um Ihre Statistiken zu sehen:",
+    "button": "Dashboard ansehen",
+    "support": "Sollten Sie auf Probleme stoßen oder Fragen haben, zögern Sie nicht, mich direkt durch Antworten auf diese E-Mail zu kontaktieren.",
+    "signature": "Beste Grüße,",
+    "txtMessage": "Wir haben die erste Verarbeitung Ihres Mastodon-Kontos {accountName} abgeschlossen, was bedeutet, dass Ihre Analysedaten bereit sind!",
+    "txtInstruction": "Hier ist der Link zu Ihrem Dashboard:"
+  },
+  "oldAccountWarning": {
+    "subject": "Sie waren eine Weile nicht auf Analytodon - wir werden Ihre Daten bald löschen!",
+    "title": "Hinweis zur Kontoinaktivität",
+    "greeting": "Hallo und danke für Ihre Registrierung bei Analytodon!",
+    "warningMessage": "Wir haben Sie eine Weile nicht gesehen und werden Ihre Daten bald löschen.",
+    "instruction": "Falls Sie nicht möchten, dass Ihre Daten gelöscht werden, melden Sie sich einfach bei Ihrem Dashboard an:",
+    "button": "Bei Dashboard anmelden",
+    "noAction": "Falls Sie Analytodon nicht mehr nutzen möchten, müssen Sie nichts tun.",
+    "signature": "Beste Grüße,",
+    "txtWarning": "Wir haben Sie eine Weile nicht gesehen und werden Ihre Daten bald löschen.",
+    "txtInstruction": "Falls Sie nicht möchten, dass Ihre Daten gelöscht werden, melden Sie sich einfach bei Ihrem Dashboard an:"
+  },
+  "weeklyStats": {
+    "subject": "Ihre Woche auf Mastodon",
+    "title": "Wöchentliche Statistikübersicht für Ihre Mastodon-Konten",
+    "followers": "Follower",
+    "followersLabel": "gewonnen",
+    "replies": "Antworten",
+    "repliesLabel": "erhalten",
+    "boosts": "Boosts",
+    "boostsLabel": "erhalten",
+    "favorites": "Favoriten",
+    "favoritesLabel": "erhalten",
+    "dashboardButton": "Zum Dashboard",
+    "unsubscribe": "Falls Sie keine weiteren Nachrichten dieser Art erhalten möchten, können Sie",
+    "unsubscribeLink": "hier abbestellen"
+  },
+  "signupNotification": {
+    "subject": "Analytodon: Neue Registrierung",
+    "title": "Neue Benutzerregistrierung",
+    "message": "Ein neuer Benutzer hat sich gerade bei Analytodon registriert:",
+    "signature": "Beste Grüße,",
+    "txtMessage": "Ein neuer Benutzer hat sich gerade bei Analytodon registriert"
+  },
+  "common": {
+    "email": "E-Mail:",
+    "website": "Website:",
+    "mastodon": "Mastodon:",
+    "mastodonHandle": "@analytodon@undefined.social"
+  }
+}

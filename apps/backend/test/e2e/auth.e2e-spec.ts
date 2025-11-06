@@ -32,6 +32,7 @@ describe('AuthController (e2e)', () => {
     password: 'Password123!',
     serverURLOnSignUp: 'mastodon.social',
     timezone: 'Europe/Berlin',
+    locale: 'de',
   };
 
   const secondUser = {
@@ -128,6 +129,7 @@ describe('AuthController (e2e)', () => {
       expect(dbUser?.emailVerificationCode).toBeDefined();
       expect(dbUser?.serverURLOnSignUp).toBe(testUser.serverURLOnSignUp);
       expect(dbUser?.timezone).toBe(testUser.timezone);
+      expect(dbUser?.locale).toBe(testUser.locale);
 
       const dbRefreshToken = await entityManager.findOne(RefreshTokenEntity, { user: dbUser?.id });
       expect(dbRefreshToken).not.toBeNull();
@@ -226,6 +228,19 @@ describe('AuthController (e2e)', () => {
       const loginDto: LoginDto = { email: 'nonexistent@example.com', password: 'Password123!' };
       await request(app.getHttpServer()).post('/auth/login').send(loginDto).expect(HttpStatus.UNAUTHORIZED);
     });
+
+    it('should update user locale from Accept-Language header on login', async () => {
+      const loginDto: LoginDto = { email: testUser.email, password: testUser.password };
+
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .set('Accept-Language', 'en-US,en;q=0.9')
+        .send(loginDto)
+        .expect(HttpStatus.OK);
+
+      const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email });
+      expect(dbUser?.locale).toBe('en'); // Should be updated from 'de' to 'en'
+    });
   });
 
   describe('/auth/refresh (POST)', () => {
@@ -296,6 +311,17 @@ describe('AuthController (e2e)', () => {
       await entityManager.persistAndFlush(user);
 
       await request(app.getHttpServer()).post('/auth/refresh').send({ refreshToken }).expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should update user locale from Accept-Language header on token refresh', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Accept-Language', 'de-DE,de;q=0.9')
+        .send({ refreshToken })
+        .expect(HttpStatus.OK);
+
+      const dbUser = await entityManager.findOne(UserEntity, { email: testUser.email });
+      expect(dbUser?.locale).toBe('de');
     });
   });
 

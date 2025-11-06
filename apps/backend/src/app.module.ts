@@ -1,7 +1,10 @@
+import * as path from 'path';
+
 import { MongoDriver } from '@mikro-orm/mongodb';
 import { MikroOrmModule, MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { LoggerModule } from 'nestjs-pino';
 
 import { AccountsModule } from './accounts/accounts.module';
@@ -35,6 +38,14 @@ import { UsersModule } from './users/users.module';
     ConfigModule.forRoot({
       isGlobal: true, // Makes ConfigService available throughout the app
       envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver, new HeaderResolver(['x-lang'])],
     }),
     MikroOrmModule.forRootAsync({
       imports: [ConfigModule],

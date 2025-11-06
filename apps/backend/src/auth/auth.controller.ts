@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Logger,
@@ -12,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { GetUser } from './decorators/get-user.decorator';
@@ -40,6 +41,11 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({ type: RegisterUserDto })
+  @ApiHeader({
+    name: 'accept-language',
+    required: false,
+    description: 'Browser language preference (e.g., en, de)',
+  })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'User successfully registered and logged in.',
@@ -48,14 +54,18 @@ export class AuthController {
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email already exists.' })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'New registrations are currently disabled.' })
-  async register(@Body() registerUserDto: RegisterUserDto): Promise<AuthResponseDto> {
+  async register(
+    @Body() registerUserDto: RegisterUserDto,
+    @Headers('accept-language') acceptLanguage?: string,
+  ): Promise<AuthResponseDto> {
     const isRegistrationDisabled = this.configService.get<string>('DISABLE_NEW_REGISTRATIONS') === 'true';
     if (isRegistrationDisabled) {
       throw new ForbiddenException('New registrations are currently disabled.');
     }
 
     this.logger.log(`Registering user with email: ${registerUserDto.email}`);
-    const result = await this.authService.registerUser(registerUserDto);
+    const locale = this.authService.extractLocaleFromHeader(acceptLanguage);
+    const result = await this.authService.registerUser(registerUserDto, locale);
     await result.user.accounts.init(); // Ensure accounts are loaded for SessionUserDto
     const sessionUser = new SessionUserDto(result.user);
     sessionUser.accounts = result.user.accounts
@@ -75,6 +85,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Log in a user' })
   @ApiBody({ type: LoginDto }) // Keep ApiBody to describe the expected request payload
+  @ApiHeader({
+    name: 'accept-language',
+    required: false,
+    description: 'Browser language preference (e.g., en, de)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully logged in.',
@@ -84,9 +99,13 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid credentials.',
   })
-  async login(@GetUser() user: UserEntity): Promise<AuthResponseDto> {
+  async login(
+    @GetUser() user: UserEntity,
+    @Headers('accept-language') acceptLanguage?: string,
+  ): Promise<AuthResponseDto> {
     this.logger.log(`User login attempt for user ID: ${user.id}`);
-    const result = await this.authService.login(user);
+    const locale = this.authService.extractLocaleFromHeader(acceptLanguage);
+    const result = await this.authService.login(user, locale);
     await result.user.accounts.init(); // Ensure accounts are loaded for SessionUserDto
     const sessionUser = new SessionUserDto(result.user);
     sessionUser.accounts = result.user.accounts
@@ -131,6 +150,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiBody({ type: RefreshTokenDto })
+  @ApiHeader({
+    name: 'accept-language',
+    required: false,
+    description: 'Browser language preference (e.g., en, de)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Tokens refreshed successfully.',
@@ -140,9 +164,13 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid refresh token.',
   })
-  async refreshTokens(@Body() refreshTokenDto: RefreshTokenDto): Promise<AuthResponseDto> {
+  async refreshTokens(
+    @Body() refreshTokenDto: RefreshTokenDto,
+    @Headers('accept-language') acceptLanguage?: string,
+  ): Promise<AuthResponseDto> {
     this.logger.log(`Refreshing token`);
-    const result = await this.authService.refreshTokens(refreshTokenDto.refreshToken);
+    const locale = this.authService.extractLocaleFromHeader(acceptLanguage);
+    const result = await this.authService.refreshTokens(refreshTokenDto.refreshToken, locale);
     await result.user.accounts.init(); // Ensure accounts are loaded for SessionUserDto
     const sessionUser = new SessionUserDto(result.user);
     sessionUser.accounts = result.user.accounts

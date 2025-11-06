@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "title": "Bestätigen Sie Ihre E-Mail"
+  },
+  "dialog": {
+    "verified": "E-Mail bestätigt",
+    "failed": "Bestätigung fehlgeschlagen",
+    "required": "E-Mail-Bestätigung erforderlich"
+  },
+  "alert": {
+    "successMessage": "Ihre E-Mail wurde erfolgreich bestätigt!",
+    "errorMessage": "Die Bestätigung Ihrer E-Mail ist fehlgeschlagen. Der Bestätigungscode ist möglicherweise ungültig oder abgelaufen."
+  },
+  "messages": {
+    "success": "Sie können jetzt mit der Einrichtung Ihres Analytodon-Kontos fortfahren.",
+    "checkInbox": "Bitte überprüfen Sie Ihren Posteingang auf eine E-Mail an {{email}} und klicken Sie auf den Bestätigungslink, um Ihre Registrierung abzuschließen."
+  },
+  "actions": {
+    "contactSupport": "Support kontaktieren",
+    "goToAnalytodon": "Zu Analytodon gehen"
+  }
+}

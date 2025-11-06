@@ -325,7 +325,7 @@
                                                                         letter-spacing: inherit; ;;
                                                                     " data-style="padding:0px;" class="cr-text editable" data-name="Text">
                                                                     <h1 style="color: #082137; text-align: center" align="left">
-                                                                        <span style="font-family: arial, helvetica, sans-serif"><strong>Weekly Stats Overview for Your Mastodon Accounts</strong></span>
+                                                                        <span style="font-family: arial, helvetica, sans-serif"><strong>{{ t.title }}</strong></span>
                                                                     </h1>
                                                                 </td>
                                                             </tr>
@@ -393,7 +393,7 @@
                                                                     " data-style="padding:0px;" class="cr-text editable" data-name="Text">
                                                                     <div align="left">
                                                                         <p class="false" style="text-align: center" align="left">
-                                                                            <span style="font-size: 15px"><span style="font-size: 18px"><strong>Followers</strong> gained</span><br></span><br>
+                                                                            <span style="font-size: 15px"><span style="font-size: 18px"><strong>{{ t.followers }}</strong> {{ t.followersLabel }}</span><br></span><br>
                                                                             <span style="font-size: 36px">{{this.followers.value}} {{{this.followers.change}}}</span>
                                                                         </p>
                                                                     </div>
@@ -471,7 +471,7 @@
                                                                     " data-style="padding:0px;" class="cr-text editable" data-name="Text">
                                                                     <div align="left">
                                                                         <p class="false" style="text-align: center" align="left">
-                                                                            <span style="font-size: 18px"><strong>Replies</strong> received<br></span><br>
+                                                                            <span style="font-size: 18px"><strong>{{ t.replies }}</strong> {{ t.repliesLabel }}<br></span><br>
                                                                             <span style="font-size: 36px">{{this.replies.value}} {{{this.replies.change}}}</span>
                                                                         </p>
                                                                     </div>
@@ -549,7 +549,7 @@
                                                                     " data-style="padding:0px;" class="cr-text editable" data-name="Text">
                                                                     <div align="left">
                                                                         <p class="false" style="text-align: center" align="left">
-                                                                            <span style="font-size: 18px"><strong>Boosts</strong> received<br></span><br>
+                                                                            <span style="font-size: 18px"><strong>{{ t.boosts }}</strong> {{ t.boostsLabel }}<br></span><br>
                                                                             <span style="font-size: 36px">{{this.boosts.value}} {{{this.boosts.change}}}</span>
                                                                         </p>
                                                                     </div>
@@ -627,7 +627,7 @@
                                                                     " data-style="padding:0px;" class="cr-text editable" data-name="Text">
                                                                     <div align="left">
                                                                         <p class="false" style="text-align: center" align="left">
-                                                                            <span style="font-size: 18px"><strong>Favorites</strong> received<br></span><br>
+                                                                            <span style="font-size: 18px"><strong>{{ t.favorites }}</strong> {{ t.favoritesLabel }}<br></span><br>
                                                                             <span style="font-size: 36px">{{this.favorites.value}} {{{this.favorites.change}}}</span>
                                                                         </p>
                                                                     </div>
@@ -713,7 +713,7 @@
                                                                                                     "
                                                                                                     title="Analytodon Dashboard"
                                                                                                     class="color2"
-                                                                                                    >Go to Dashboard</a
+                                                                                                    >{{ t.dashboardButton }}</a
                                                                                                 >
                                                                                             </td>
                                                                                         </tr>
@@ -772,8 +772,8 @@
                                                                 >
                                                                     <div align="center">
                                                                         <div>
-                                                                            If you don't want to receive any more messages like this you can
-                                                                            <a href="{{ unsubscribeURL }}" target="_blank" style="color: #1976d2; text-decoration: none ;;">unsubscribe here</a>.
+                                                                            {{ t.unsubscribe }}
+                                                                            <a href="{{ unsubscribeURL }}" target="_blank" style="color: #1976d2; text-decoration: none ;;">{{ t.unsubscribeLink }}</a>.
                                                                         </div>
                                                                     </div>
                                                                 </td>

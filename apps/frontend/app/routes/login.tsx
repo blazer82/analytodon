@@ -9,6 +9,11 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Sign in to Analytodon' }];
 };
 
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.login',
+};
+
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // Check if user is already authenticated and redirect to dashboard if so
   const user = await getUser(request);
@@ -47,8 +52,14 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     // Call the API to login
     const authApi = createAuthApi();
+
+    // Extract accept-language header from browser request to pass to backend
+    const acceptLanguage = request.headers.get('accept-language') || undefined;
+
+    // Use the proper acceptLanguage parameter (already in REST client)
     const authResponse = await authApi.authControllerLogin({
       loginDto: { email, password },
+      acceptLanguage,
     });
 
     // Create a session and redirect to the dashboard

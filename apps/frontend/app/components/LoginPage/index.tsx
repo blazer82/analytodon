@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -25,13 +26,12 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ error, message, isRegistrationDisabled = false }) => {
+  const { t } = useTranslation('routes.login');
   const theme = useTheme();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting' || navigation.state === 'loading';
 
   const [showPassword, setShowPassword] = React.useState(false);
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -63,10 +63,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ error, message, isRegistrationDis
         <HeroContent>
           <Logo size="large" color={theme.palette.primary.contrastText} />
           <Typography variant="h4" component="h1" sx={{ mt: 3, fontWeight: 700 }}>
-            Welcome Back!
+            {t('hero.title')}
           </Typography>
           <Typography variant="body1" sx={{ mt: 2, mb: 4, opacity: 0.9 }}>
-            Track your Mastodon analytics and gain valuable insights about your audience and content performance.
+            {t('hero.subtitle')}
           </Typography>
         </HeroContent>
       </HeroSection>
@@ -74,7 +74,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ error, message, isRegistrationDis
       <FormSection>
         <FormCard>
           <Typography variant="h5" component="h2" align="center" sx={{ mb: 3, fontWeight: 600 }}>
-            Sign in to your account
+            {t('form.title')}
           </Typography>
 
           <Box component={Form} method="post" noValidate>
@@ -82,11 +82,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ error, message, isRegistrationDis
               required
               fullWidth
               id="email"
-              label="Email Address"
+              label={t('form.emailLabel')}
               name="email"
               autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               sx={{ mb: 3 }}
             />
 
@@ -94,26 +92,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ error, message, isRegistrationDis
               required
               fullWidth
               name="password"
-              label="Password"
+              label={t('form.passwordLabel')}
               type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               sx={{ mb: 3 }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={showPassword ? t('form.hidePassword') : t('form.showPassword')}
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
 
@@ -137,24 +135,24 @@ const LoginPage: React.FC<LoginPageProps> = ({ error, message, isRegistrationDis
               sx={{ mt: 2, mb: 3 }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Signing In...' : 'Sign In'}
+              {isSubmitting ? t('form.submitting') : t('form.submit')}
             </StyledButton>
 
             <LinksContainer>
               {!isRegistrationDisabled ? (
                 <Typography variant="body2" align="center">
                   <MuiLink component={Link} to="/register" underline="hover">
-                    New to Analytodon? Create an account
+                    {t('links.register')}
                   </MuiLink>
                 </Typography>
               ) : (
                 <Typography variant="body2" align="center" color="textSecondary">
-                  New registrations are currently closed
+                  {t('links.registrationsClosed')}
                 </Typography>
               )}
               <Typography variant="body2" align="center">
                 <MuiLink component={Link} to="/reset-password" underline="hover">
-                  Forgot your password?
+                  {t('links.forgotPassword')}
                 </MuiLink>
               </Typography>
             </LinksContainer>

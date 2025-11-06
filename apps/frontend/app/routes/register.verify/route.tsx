@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useTheme } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
@@ -15,6 +16,7 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
+import i18next from '~/services/i18n/i18next.server';
 import logger from '~/services/logger.server';
 import { refreshAccessToken, requireUser, withSessionHandling } from '~/utils/session.server'; // Import withSessionHandling
 
@@ -22,10 +24,18 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Verify Your Email' }];
 };
 
+// Declare i18n namespace for this route
+export const handle = {
+  i18n: 'routes.registerVerify',
+};
+
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   // request.__apiClientSession is guaranteed to be set by withSessionHandling
   const session = request.__apiClientSession!;
   let user = await requireUser(request); // Use let as user object might be updated after token refresh
+
+  // Get translation function for this route's namespace
+  const t = await i18next.getFixedT(request, 'routes.registerVerify');
 
   const url = new URL(request.url);
   const verificationCode = url.searchParams.get('c');
@@ -51,7 +61,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       // After successful verification, refresh the session to get updated user data
       const currentRefreshToken = session.get('refreshToken');
       if (currentRefreshToken) {
-        const newAuthResponse = await refreshAccessToken(currentRefreshToken);
+        const acceptLanguage = request.headers.get('accept-language') || undefined;
+        const newAuthResponse = await refreshAccessToken(currentRefreshToken, acceptLanguage);
         if (newAuthResponse) {
           // Session is already request.__apiClientSession from HOF
           session.set('accessToken', newAuthResponse.token);
@@ -68,7 +79,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
         throw redirect('/logout'); // HOF will handle cookie for redirect
       }
 
-      verificationStatus = { success: true, message: 'Your email has been successfully verified!' };
+      verificationStatus = { success: true, message: t('alert.successMessage') };
     } catch (error) {
       if (error instanceof Response) {
         // Re-throw redirects, HOF will handle cookie
@@ -77,7 +88,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       logger.error('Email verification error:', error, { verificationCode });
       verificationStatus = {
         success: false,
-        message: 'Failed to verify your email. The verification code may be invalid or expired.',
+        message: t('alert.errorMessage'),
       };
     }
   }
@@ -91,6 +102,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 });
 
 export default function VerifyEmailPage() {
+  const { t } = useTranslation('routes.registerVerify');
   const { email, verificationStatus } = useLoaderData<typeof loader>();
   const theme = useTheme();
 
@@ -130,9 +142,9 @@ export default function VerifyEmailPage() {
             <DialogTitle>
               {verificationStatus
                 ? verificationStatus.success
-                  ? 'Email Verified'
-                  : 'Verification Failed'
-                : 'Email Verification Required'}
+                  ? t('dialog.verified')
+                  : t('dialog.failed')
+                : t('dialog.required')}
             </DialogTitle>
             <DialogContent>
               {verificationStatus ? (
@@ -141,25 +153,20 @@ export default function VerifyEmailPage() {
                     {verificationStatus.message}
                   </Alert>
                   <DialogContentText>
-                    {verificationStatus.success
-                      ? 'You can now continue setting up your Analytodon account.'
-                      : `Please check your inbox for an email sent to ${email} and click the verification link to complete your registration.`}
+                    {verificationStatus.success ? t('messages.success') : t('messages.checkInbox', { email })}
                   </DialogContentText>
                 </>
               ) : (
-                <DialogContentText>
-                  Please check your inbox for an email sent to <strong>{email}</strong> and click the verification link
-                  to complete your registration.
-                </DialogContentText>
+                <DialogContentText>{t('messages.checkInbox', { email })}</DialogContentText>
               )}
             </DialogContent>
             <DialogActions sx={{ display: 'flex', justifyContent: 'space-between', px: 2, pb: 2 }}>
               <StyledButton variant="text" href={`mailto:${supportEmail}?subject=Support`}>
-                Contact Support
+                {t('actions.contactSupport')}
               </StyledButton>
               {verificationStatus?.success && (
                 <StyledButton component={RemixLink} to="/" variant="contained" color="primary">
-                  Go to Analytodon
+                  {t('actions.goToAnalytodon')}
                 </StyledButton>
               )}
             </DialogActions>

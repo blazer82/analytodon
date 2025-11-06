@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Favorites Analytics - Analytodon"
+  },
+  "kpi": {
+    "favorites": "favorites",
+    "totalFavorites": "Total Favorites"
+  },
+  "topPosts": {
+    "title": "Top Posts by Favorites"
+  },
+  "messages": {
+    "selectAccount": "Please select an account to view favorites analytics."
+  }
+}

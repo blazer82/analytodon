@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Boosts Analytics - Analytodon"
+  },
+  "kpi": {
+    "boostedPosts": "boosted posts",
+    "totalBoosts": "Total Boosts"
+  },
+  "topPosts": {
+    "title": "Top Posts by Boosts"
+  },
+  "messages": {
+    "selectAccount": "Please select an account to view boosts analytics."
+  }
+}

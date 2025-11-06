@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AccountResponseDto } from '@analytodon/rest-client';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -39,6 +40,11 @@ import { stripSchema } from '~/utils/url';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Accounts - Analytodon' }];
+};
+
+// Declare i18n namespaces for this route
+export const handle = {
+  i18n: ['routes.accounts', 'components.accountSetup', 'components.accountSetupComplete'],
 };
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
@@ -83,7 +89,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
     }
 
     if (!serverURL || !timezone) {
-      return { error: 'Server URL and Timezone are required.' };
+      return { error: 'errors.serverUrlAndTimezoneRequired' };
     }
 
     try {
@@ -104,21 +110,21 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
       }
       logger.error('Error connecting account in settings:', error, { serverURL, timezone });
       return {
-        error: 'Failed to connect to Mastodon server. Please check the server URL and try again.',
+        error: 'errors.failedToConnect',
       };
     }
   } else {
     // Existing logic for delete/reconnect based on accountId
     const accountId = formData.get('accountId') as string;
     if (!accountId) {
-      return { error: 'Account ID is required for this action' };
+      return { error: 'errors.accountIdRequired' };
     }
 
     const accountsApi = await createAccountsApiWithAuth(request);
     try {
       if (formAction === 'delete') {
         await accountsApi.accountsControllerRemove({ accountId });
-        return { success: 'Account deleted successfully' };
+        return { success: 'success.accountDeleted' };
       } else if (formAction === 'reconnect') {
         const response = await accountsApi.accountsControllerConnect({
           accountId,
@@ -128,16 +134,16 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
           // withSessionHandling HOF will add cookie to this redirect
           throw redirect(response.redirectUrl);
         }
-        return { error: 'Failed to get reconnection URL' };
+        return { error: 'errors.failedToGetReconnectionUrl' };
       }
-      return { error: 'Invalid action specified.' };
+      return { error: 'errors.invalidAction' };
     } catch (error) {
       if (error instanceof Response) {
         // Re-throw redirects to be handled by withSessionHandling
         throw error;
       }
       logger.error(`Failed to ${formAction} account:`, error, { accountId });
-      return { error: `Failed to ${formAction} account. Please try again.` };
+      return { error: 'errors.failedToAction', action: formAction };
     }
   }
 });
@@ -145,6 +151,7 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
 export default function AccountsPage() {
   const { accounts, user, canAddAccount, showSetupCompleteDialog } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const { t } = useTranslation('routes.accounts');
   const theme = useTheme();
   const navigate = useNavigate();
   const submit = useSubmit();
@@ -209,7 +216,7 @@ export default function AccountsPage() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Title>Manage Your Accounts</Title>
+      <Title>{t('title')}</Title>
 
       <DataTablePaper>
         <TableContainer>
@@ -222,7 +229,7 @@ export default function AccountsPage() {
                     borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                   }}
                 >
-                  Name
+                  {t('table.headers.name')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -230,7 +237,7 @@ export default function AccountsPage() {
                     borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                   }}
                 >
-                  Username
+                  {t('table.headers.username')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -238,7 +245,7 @@ export default function AccountsPage() {
                     borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                   }}
                 >
-                  Server
+                  {t('table.headers.server')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -246,7 +253,7 @@ export default function AccountsPage() {
                     borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                   }}
                 >
-                  Timezone
+                  {t('table.headers.timezone')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -254,7 +261,7 @@ export default function AccountsPage() {
                     borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
                   }}
                 >
-                  Added
+                  {t('table.headers.added')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -283,7 +290,7 @@ export default function AccountsPage() {
                   <TableCell>{formatDate(account.createdAt, user.timezone)}</TableCell>
                   <TableCell align="right">
                     <IconButton
-                      title="Reconnect"
+                      title={t('table.actions.reconnect')}
                       onClick={() => openReconnectDialog(account)}
                       sx={{
                         transition: 'transform 0.2s ease',
@@ -293,7 +300,7 @@ export default function AccountsPage() {
                       <ReconnectIcon />
                     </IconButton>
                     <IconButton
-                      title="Edit"
+                      title={t('table.actions.edit')}
                       onClick={() => handleEdit(account.id)}
                       sx={{
                         transition: 'transform 0.2s ease',
@@ -303,7 +310,7 @@ export default function AccountsPage() {
                       <EditIcon />
                     </IconButton>
                     <IconButton
-                      title="Delete"
+                      title={t('table.actions.delete')}
                       onClick={() => openDeleteDialog(account)}
                       sx={{
                         transition: 'transform 0.2s ease',
@@ -323,7 +330,7 @@ export default function AccountsPage() {
       {canAddAccount && (
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-start' }}>
           <StyledButton variant="contained" onClick={() => setAddAccountDialogOpen(true)}>
-            Add Account
+            {t('actions.addAccount')}
           </StyledButton>
         </Box>
       )}
@@ -337,7 +344,7 @@ export default function AccountsPage() {
           fontWeight: 500,
         }}
       >
-        {accounts.length} / {user.maxAccounts} accounts used
+        {t('usage', { used: accounts.length, max: user.maxAccounts })}
       </Typography>
 
       {/* Add Account Dialog */}
@@ -373,20 +380,18 @@ export default function AccountsPage() {
           },
         }}
       >
-        <DialogTitle>Reconnect Account</DialogTitle>
+        <DialogTitle>{t('dialogs.reconnect.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            You are about to reconnect your account{' '}
-            <strong>{accountToReconnect?.name || accountToReconnect?.accountName}</strong>. This will redirect you to
-            your Mastodon server where you&apos;ll need to authorize Analytodon again.
+            {t('dialogs.reconnect.description', {
+              name: accountToReconnect?.name || accountToReconnect?.accountName,
+            })}
           </DialogContentText>
-          <DialogContentText sx={{ mt: 2 }}>
-            This is useful if your authorization has expired or if you&apos;ve revoked access on your Mastodon server.
-          </DialogContentText>
+          <DialogContentText sx={{ mt: 2 }}>{t('dialogs.reconnect.helper')}</DialogContentText>
         </DialogContent>
         <DialogActions sx={{ mb: 1, mr: 2 }}>
           <StyledButton variant="outlined" onClick={() => setReconnectDialogOpen(false)}>
-            Cancel
+            {t('dialogs.reconnect.cancel')}
           </StyledButton>
           <StyledButton
             variant="contained"
@@ -394,7 +399,9 @@ export default function AccountsPage() {
             color="primary"
             disabled={isSubmitting && navigation.formData?.get('_action') === 'reconnect'}
           >
-            {isSubmitting && navigation.formData?.get('_action') === 'reconnect' ? 'Reconnecting...' : 'Reconnect'}
+            {isSubmitting && navigation.formData?.get('_action') === 'reconnect'
+              ? t('dialogs.reconnect.confirming')
+              : t('dialogs.reconnect.confirm')}
           </StyledButton>
         </DialogActions>
       </Dialog>
@@ -410,16 +417,14 @@ export default function AccountsPage() {
           },
         }}
       >
-        <DialogTitle>Delete Account</DialogTitle>
+        <DialogTitle>{t('dialogs.delete.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This will delete the account{' '}
-            <strong>{accountToDelete?.name || accountToDelete?.accountName || accountToDelete?.id}</strong> and all
-            related analytics data. This operation cannot be undone!
+            {t('dialogs.delete.description', {
+              name: accountToDelete?.name || accountToDelete?.accountName || accountToDelete?.id,
+            })}
           </DialogContentText>
-          <DialogContentText sx={{ mt: 1 }}>
-            To continue type <strong>delete</strong> into the field below:
-          </DialogContentText>
+          <DialogContentText sx={{ mt: 1 }}>{t('dialogs.delete.instruction')}</DialogContentText>
           <FormGroup>
             <StyledTextField
               margin="normal"
@@ -431,13 +436,13 @@ export default function AccountsPage() {
           </FormGroup>
           {actionData?.error && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              {actionData.error}
+              {t(actionData.error, { action: actionData.action })}
             </Alert>
           )}
         </DialogContent>
         <DialogActions sx={{ mb: 1, mr: 2 }}>
           <StyledButton variant="outlined" onClick={() => setDeleteDialogOpen(false)}>
-            Cancel
+            {t('dialogs.delete.cancel')}
           </StyledButton>
           <StyledButton
             variant="contained"
@@ -447,7 +452,9 @@ export default function AccountsPage() {
             }
             color="error"
           >
-            {isSubmitting && navigation.formData?.get('_action') === 'delete' ? 'Deleting...' : 'Delete Account'}
+            {isSubmitting && navigation.formData?.get('_action') === 'delete'
+              ? t('dialogs.delete.confirming')
+              : t('dialogs.delete.confirm')}
           </StyledButton>
         </DialogActions>
       </Dialog>

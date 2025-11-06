@@ -42,14 +42,17 @@ import {
 
 export interface AuthControllerLoginRequest {
     loginDto: LoginDto;
+    acceptLanguage?: string;
 }
 
 export interface AuthControllerRefreshTokensRequest {
     refreshTokenDto: RefreshTokenDto;
+    acceptLanguage?: string;
 }
 
 export interface AuthControllerRegisterRequest {
     registerUserDto: RegisterUserDto;
+    acceptLanguage?: string;
 }
 
 export interface AuthControllerRequestPasswordResetRequest {
@@ -120,6 +123,10 @@ export class AuthenticationApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['acceptLanguage'] != null) {
+            headerParameters['accept-language'] = String(requestParameters['acceptLanguage']);
+        }
+
         const response = await this.request({
             path: `/auth/login`,
             method: 'POST',
@@ -189,6 +196,10 @@ export class AuthenticationApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['acceptLanguage'] != null) {
+            headerParameters['accept-language'] = String(requestParameters['acceptLanguage']);
+        }
+
         const response = await this.request({
             path: `/auth/refresh`,
             method: 'POST',
@@ -224,6 +235,10 @@ export class AuthenticationApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['acceptLanguage'] != null) {
+            headerParameters['accept-language'] = String(requestParameters['acceptLanguage']);
+        }
 
         const response = await this.request({
             path: `/auth/register`,

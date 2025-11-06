@@ -1,0 +1,79 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "download": "Download",
+    "downloadCsv": "Download CSV",
+    "viewMore": "View More",
+    "backToDashboard": "Back to Dashboard",
+    "retry": "Retry",
+    "close": "Close"
+  },
+  "labels": {
+    "name": "Name",
+    "description": "Description",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "status": "Status",
+    "period": "Period",
+    "timeframe": "Timeframe",
+    "language": "Language"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "setupComplete": "Setup Complete"
+  },
+  "timeframes": {
+    "last7days": "Last 7 Days",
+    "last30days": "Last 30 Days",
+    "last90days": "Last 90 Days",
+    "allTime": "All Time"
+  },
+  "periods": {
+    "lastWeek": "Last Week",
+    "thisWeek": "This Week",
+    "lastMonth": "Last Month",
+    "thisMonth": "This Month",
+    "lastYear": "Last Year",
+    "thisYear": "This Year"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "loadingChart": "Loading chart data...",
+    "noData": "No data available",
+    "noDataDescription": "If you've just set up your account this message is expected. We'll send you an email once your data is ready.",
+    "noDataForTimeframe": "No data available for the selected timeframe.",
+    "noWeeklyData": "No weekly data.",
+    "noMonthlyData": "No monthly data.",
+    "noYearlyData": "No yearly data.",
+    "noTotalData": "No total data.",
+    "setupExpected": "If you've just set up your account this message is expected.",
+    "emailNotification": "We'll send you an email once your data is ready.",
+    "persistentIssue": "If this message persists please",
+    "contactSupport": "contact support",
+    "selectAnother": "Please select another time frame.",
+    "selectAccount": "Please select an account to continue.",
+    "success": "Operation successful",
+    "error": "An error occurred",
+    "saved": "Changes saved successfully",
+    "deleted": "Deleted successfully"
+  },
+  "analytics": {
+    "followers": "Followers",
+    "boosts": "Boosts",
+    "replies": "Replies",
+    "favorites": "Favorites",
+    "posts": "Posts",
+    "engagement": "Engagement"
+  }
+}

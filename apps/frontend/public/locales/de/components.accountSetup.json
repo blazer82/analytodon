@@ -1,0 +1,29 @@
+{
+  "steps": {
+    "connect": "Verbinden",
+    "authorize": "Autorisieren",
+    "complete": "Fertig"
+  },
+  "dialog": {
+    "title": "Richten Sie Ihr Mastodon-Konto ein",
+    "description": "Um Analytodon zu verwenden, müssen Sie Ihr Mastodon-Konto verbinden."
+  },
+  "form": {
+    "serverUrl": {
+      "label": "Server-URL (z.B. mastodon.social)",
+      "helperText": "Die URL der Mastodon-Instanz, auf der sich Ihr Konto befindet."
+    },
+    "timezone": {
+      "label": "Zeitzone",
+      "helperText": "Die Zeitzone, in der Sie Ihre Analyseberichte erhalten möchten."
+    },
+    "validationError": "Bitte geben Sie gültige Werte in alle Formularfelder ein.",
+    "cancel": "Abbrechen",
+    "connect": "Konto verbinden",
+    "connecting": "Verbinde..."
+  },
+  "authorize": {
+    "description": "Für den nächsten Schritt müssen Sie Analytodon mit Ihrem Mastodon-Konto autorisieren. Klicken Sie auf die Schaltfläche unten, um zu Ihrer Instanz zu gehen und Analytodon zu autorisieren.",
+    "button": "Analytodon autorisieren"
+  }
+}

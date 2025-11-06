@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "title": "Registrieren Sie sich bei Analytodon"
+  },
+  "hero": {
+    "title": "Jetzt bei Analytodon registrieren",
+    "subtitle": "Beginnen Sie noch heute mit der Verfolgung Ihrer Mastodon-Analysen und gewinnen Sie wertvolle Einblicke in Ihr Publikum und die Performance Ihrer Inhalte."
+  },
+  "form": {
+    "title": "Erstellen Sie Ihr Konto",
+    "emailLabel": "Ihre E-Mail-Adresse",
+    "passwordLabel": "Wählen Sie ein Passwort",
+    "serverUrlLabel": "Mastodon-Server-URL",
+    "serverUrlPlaceholder": "mastodon.social",
+    "serverUrlHelper": "Die URL der Mastodon-Instanz, auf der sich Ihr Konto befindet",
+    "timezoneLabel": "Ihre Zeitzone",
+    "timezoneHelper": "Die Zeitzone, in der Sie Ihre Analyseberichte erhalten möchten",
+    "submit": "Konto erstellen",
+    "submitting": "Erstelle Konto..."
+  },
+  "links": {
+    "login": "Haben Sie bereits ein Konto? Anmelden"
+  },
+  "messages": {
+    "registrationDisabled": "Neue Registrierungen sind derzeit deaktiviert"
+  },
+  "errors": {
+    "allFieldsRequired": "Alle Felder sind erforderlich",
+    "passwordTooShort": "Das Passwort muss mindestens 8 Zeichen lang sein",
+    "emailAlreadyRegistered": "E-Mail bereits registriert. Bitte versuchen Sie sich anzumelden.",
+    "invalidData": "Ungültige Daten: {{errorMessage}}",
+    "generic": "Bei der Registrierung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "unexpected": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+  }
+}

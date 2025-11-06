@@ -84,7 +84,8 @@ export async function getUser(request: Request): Promise<SessionUserDto | null> 
     const error = e as { response?: { status: number } };
     if (error && error.response && error.response.status === 401 && refreshToken) {
       logger.info('Access token expired in getUser, attempting refresh...');
-      const newAuthResponse = await refreshAccessToken(refreshToken);
+      const acceptLanguage = request.headers.get('accept-language') || undefined;
+      const newAuthResponse = await refreshAccessToken(refreshToken, acceptLanguage);
 
       if (newAuthResponse) {
         // Token refreshed successfully, update the session
@@ -170,11 +171,16 @@ export async function logout(request: Request, redirectTo: string = '/login'): P
  * Refresh the access token using the refresh token
  * Returns the new auth response or null if refresh failed
  */
-export async function refreshAccessToken(refreshToken: string): Promise<AuthResponseDto | null> {
+export async function refreshAccessToken(
+  refreshToken: string,
+  acceptLanguage?: string,
+): Promise<AuthResponseDto | null> {
   try {
     const authApi = createAuthApi();
+    // Use the proper acceptLanguage parameter (already in REST client)
     const response = await authApi.authControllerRefreshTokens({
       refreshTokenDto: { refreshToken },
+      acceptLanguage,
     });
 
     return response;

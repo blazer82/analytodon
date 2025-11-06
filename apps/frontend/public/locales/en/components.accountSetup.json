@@ -1,0 +1,29 @@
+{
+  "steps": {
+    "connect": "Connect",
+    "authorize": "Authorize",
+    "complete": "Complete"
+  },
+  "dialog": {
+    "title": "Set Up Your Mastodon Account",
+    "description": "In order to use Analytodon, you need to connect your Mastodon account."
+  },
+  "form": {
+    "serverUrl": {
+      "label": "Server URL (e.g. mastodon.social)",
+      "helperText": "The URL of the Mastodon instance your account is on."
+    },
+    "timezone": {
+      "label": "Timezone",
+      "helperText": "The timezone you want your analytics reports to be in."
+    },
+    "validationError": "Please enter valid values into all form fields.",
+    "cancel": "Cancel",
+    "connect": "Connect Account",
+    "connecting": "Connecting..."
+  },
+  "authorize": {
+    "description": "For this next step you'll need to authorize Analytodon with your Mastodon account. Click on the button below to go to your instance and authorize Analytodon.",
+    "button": "Authorize Analytodon"
+  }
+}

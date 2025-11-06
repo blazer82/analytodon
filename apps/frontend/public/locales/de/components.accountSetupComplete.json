@@ -1,0 +1,8 @@
+{
+  "title": "Richten Sie Ihr Mastodon-Konto ein",
+  "success": "Alles fertig. Ihr Konto wurde erfolgreich verbunden.",
+  "waitMessage": "Es kann ein paar Minuten dauern, bis Sie Analysen für dieses Konto sehen.",
+  "emailNotification": "Wir senden Ihnen eine E-Mail, sobald Ihre Daten bereit sind.",
+  "close": "Schließen",
+  "goToDashboard": "Zum Dashboard"
+}

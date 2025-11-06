@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { SessionUserDto } from '@analytodon/rest-client';
 import AccountIcon from '@mui/icons-material/AccountCircle';
@@ -38,6 +39,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username, avatarURL }) => {
+  const { t } = useTranslation('components.layout');
   const theme = useTheme();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
@@ -89,7 +91,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
             <IconButton
               edge="start"
               color="inherit"
-              aria-label="open drawer"
+              aria-label={t('drawer.openAriaLabel')}
               onClick={toggleDrawer}
               sx={{
                 marginRight: '24px',
@@ -108,7 +110,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
               <Typography component="h1" variant="h6" color="inherit" noWrap>
                 {title}
                 <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
-                  &nbsp;for {accountName || 'Your Account'}
+                  &nbsp;{accountName ? t('accountFor', { accountName }) : t('accountForDefault')}
                 </Box>
               </Typography>
             </AppBarTitle>
@@ -120,11 +122,11 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                 noWrap
                 sx={{ opacity: 0.9, display: { xs: 'none', md: 'block' } }}
               >
-                {username || 'Username'}
+                {username || t('username')}
               </Typography>
               <IconButton
                 size="medium"
-                aria-label="account of current user"
+                aria-label={t('accountMenu.ariaLabel')}
                 aria-controls="menu-appbar"
                 aria-haspopup="true"
                 onClick={handleMenu}
@@ -225,7 +227,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                             {isSubmitting &&
                             navigation.formAction === '/api/switch-account' &&
                             navigation.formData?.get('accountId') === item.id
-                              ? 'Switching...'
+                              ? t('accountMenu.switching')
                               : item.accountName || item.name}
                           </Button>
                         </Form>
@@ -244,7 +246,9 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                       }}
                       disabled={isSubmitting && navigation.formAction === '/logout'}
                     >
-                      {isSubmitting && navigation.formAction === '/logout' ? 'Logging out...' : 'Logout'}
+                      {isSubmitting && navigation.formAction === '/logout'
+                        ? t('logout.loggingOut')
+                        : t('logout.button')}
                     </Button>
                   </Form>
                 </MenuItem>
@@ -270,7 +274,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                   backgroundClip: 'text',
                 }}
               >
-                Analytodon
+                {t('branding')}
               </Typography>
             </Box>
           )}

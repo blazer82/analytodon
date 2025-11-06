@@ -111,24 +111,24 @@
       <div class="logo">
         <img src="cid:logo@analytodon.com" alt="Analytodon Logo" width="120" height="77" style="width:120px; height:77px">
       </div>
-      <h1>New User Signup</h1>
+      <h1>{{ t.title }}</h1>
     </div>
-    
+
     <div class="content">
-      <p>A new user just signed up to Analytodon:</p>
-      
+      <p>{{ t.message }}</p>
+
       <div class="user-email">
         {{ userEmail }}
       </div>
-      
-      <p>Best regards,<br>{{ emailSenderName }}</p>
+
+      <p>{{ t.signature }}<br>{{ emailSenderName }}</p>
     </div>
-    
+
     <div class="footer">
       <p>
-        Email: <a href="mailto:{{ supportEmail }}" class="social-link">{{ supportEmail }}</a><br>
-        Website: <a href="{{ marketingURL }}" class="social-link">{{ marketingURL }}</a><br>
-        Mastodon: <a href="https://undefined.social/@analytodon" class="social-link">@analytodon@undefined.social</a>
+        {{ t.email }} <a href="mailto:{{ supportEmail }}" class="social-link">{{ supportEmail }}</a><br>
+        {{ t.website }} <a href="{{ marketingURL }}" class="social-link">{{ marketingURL }}</a><br>
+        {{ t.mastodon }} <a href="https://undefined.social/@analytodon" class="social-link">{{ t.mastodonHandle }}</a>
       </p>
     </div>
   </div>

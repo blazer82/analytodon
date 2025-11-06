@@ -37,6 +37,9 @@ export class SessionUserDto {
   @ApiProperty({ example: 'Europe/Berlin', description: 'User timezone' })
   timezone?: string;
 
+  @ApiProperty({ example: 'en', description: 'User locale/language preference' })
+  locale?: string;
+
   constructor(user: UserEntity) {
     this._id = user.id;
     this.role = user.role;
@@ -45,6 +48,7 @@ export class SessionUserDto {
     this.maxAccounts = user.maxAccounts;
     this.serverURLOnSignUp = user.serverURLOnSignUp;
     this.timezone = user.timezone;
+    this.locale = user.locale;
 
     // Accounts will be populated separately if needed
   }

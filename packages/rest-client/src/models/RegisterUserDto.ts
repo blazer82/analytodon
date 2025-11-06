@@ -43,6 +43,12 @@ export interface RegisterUserDto {
      * @memberof RegisterUserDto
      */
     timezone?: string;
+    /**
+     * User locale/language preference (optional, defaults to en)
+     * @type {string}
+     * @memberof RegisterUserDto
+     */
+    locale?: string;
 }
 
 /**
@@ -68,6 +74,7 @@ export function RegisterUserDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
         'password': json['password'],
         'serverURLOnSignUp': json['serverURLOnSignUp'] == null ? undefined : json['serverURLOnSignUp'],
         'timezone': json['timezone'] == null ? undefined : json['timezone'],
+        'locale': json['locale'] == null ? undefined : json['locale'],
     };
 }
 
@@ -86,6 +93,7 @@ export function RegisterUserDtoToJSONTyped(value?: RegisterUserDto | null, ignor
         'password': value['password'],
         'serverURLOnSignUp': value['serverURLOnSignUp'],
         'timezone': value['timezone'],
+        'locale': value['locale'],
     };
 }
 

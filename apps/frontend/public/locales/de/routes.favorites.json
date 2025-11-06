@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "Favoriten-Analytik - Analytodon"
+  },
+  "kpi": {
+    "favorites": "Favoriten",
+    "totalFavorites": "Favoriten gesamt"
+  },
+  "topPosts": {
+    "title": "Top-Beiträge nach Favoriten"
+  },
+  "messages": {
+    "selectAccount": "Bitte wählen Sie ein Konto aus, um Favoriten-Analytik anzuzeigen."
+  }
+}

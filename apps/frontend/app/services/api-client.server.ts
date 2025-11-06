@@ -116,7 +116,8 @@ export async function createApiClientWithAuth(request: Request) {
           throw redirect('/login');
         }
 
-        const newAuthResponse = await refreshAccessToken(currentRefreshToken);
+        const acceptLanguage = request.headers.get('accept-language') || undefined;
+        const newAuthResponse = await refreshAccessToken(currentRefreshToken, acceptLanguage);
 
         if (!newAuthResponse) {
           // Refresh failed

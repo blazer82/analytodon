@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Typography from '@mui/material/Typography';
 import Title from '~/components/Title';
@@ -22,12 +23,14 @@ const TrendBox: React.FunctionComponent<{
   trend?: number | null;
   isLoading?: boolean;
 }> = ({ title, subtitle, amount, trend, isLoading }) => {
+  const { t } = useTranslation('components.trendBox');
+
   if (isLoading) {
     return (
       <React.Fragment>
         <Title>{title}</Title>
         <Typography component="p" variant="h4" sx={{ opacity: 0.5 }}>
-          Loading...
+          {t('loading')}
         </Typography>
         <Typography color="text.secondary" sx={{ flex: 1, opacity: 0.5 }}>
           {subtitle}

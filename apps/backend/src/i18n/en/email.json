@@ -1,0 +1,76 @@
+{
+  "emailVerification": {
+    "subject": "Welcome to Analytodon - Please verify your email address",
+    "title": "Verify Your Email",
+    "greeting": "Hi and welcome to Analytodon!",
+    "instruction": "To complete your signup, please verify your email address by clicking on the button below:",
+    "button": "Verify Email Address",
+    "fallback": "If the button doesn't work, you can copy and paste this link into your browser:",
+    "signature": "Best regards,"
+   },
+  "passwordReset": {
+    "subject": "Reset your Analytodon password!",
+    "title": "Password Reset Request",
+    "greeting": "Hi,",
+    "message": "You requested a link to reset your Analytodon password.",
+    "securityNote": "If you didn't request this password reset, you can safely ignore this email.",
+    "instruction": "To reset your password, click the button below:",
+    "button": "Reset Password",
+    "fallback": "If the button doesn't work, you can copy and paste this link into your browser:",
+    "signature": "Best regards,",
+    "txtSecurityNote": "If this wasn't you then you can just ignore this email.",
+    "txtInstruction": "Click here to reset your password:"
+  },
+  "firstStatsAvailable": {
+    "subject": "Your Mastodon analytics data is ready on Analytodon! 🎉",
+    "title": "Your Analytics Are Ready!",
+    "greeting": "Hi and thanks again for signing up to Analytodon!",
+    "message": "We completed the initial processing of your Mastodon account {accountName} which means your analytics data is ready!",
+    "instruction": "Check out your dashboard to see your stats:",
+    "button": "View Your Dashboard",
+    "support": "Should you encounter any issues or have any questions don't hesitate to contact me directly by replying to this email.",
+    "signature": "Best regards,",
+    "txtMessage": "We completed the initial processing of your Mastodon account {accountName} which means your analytics data is ready!",
+    "txtInstruction": "Here's the link to your dashboard:"
+  },
+  "oldAccountWarning": {
+    "subject": "You haven't been on Analytodon in a while - we'll be deleting your data soon!",
+    "title": "Account Inactivity Notice",
+    "greeting": "Hi and thanks for signing up to Analytodon!",
+    "warningMessage": "We haven't seen you in a while and we'll be deleting your data soon.",
+    "instruction": "If you don't want your data to be deleted, simply log in to your dashboard:",
+    "button": "Log In to Dashboard",
+    "noAction": "If you don't intend to use Analytodon anymore, you don't need to do anything.",
+    "signature": "Best regards,",
+    "txtWarning": "We haven't seen you in a while and we'll be deleting your data soon.",
+    "txtInstruction": "If you don't want your data to be deleted just log in to your dashboard:"
+  },
+  "weeklyStats": {
+    "subject": "Your Week on Mastodon",
+    "title": "Weekly Stats Overview for Your Mastodon Accounts",
+    "followers": "Followers",
+    "followersLabel": "gained",
+    "replies": "Replies",
+    "repliesLabel": "received",
+    "boosts": "Boosts",
+    "boostsLabel": "received",
+    "favorites": "Favorites",
+    "favoritesLabel": "received",
+    "dashboardButton": "Go to Dashboard",
+    "unsubscribe": "If you don't want to receive any more messages like this you can",
+    "unsubscribeLink": "unsubscribe here"
+  },
+  "signupNotification": {
+    "subject": "Analytodon: New Sign Up",
+    "title": "New User Signup",
+    "message": "A new user just signed up to Analytodon:",
+    "signature": "Best regards,",
+    "txtMessage": "A new user just signed up to Analytodon"
+  },
+  "common": {
+    "email": "Email:",
+    "website": "Website:",
+    "mastodon": "Mastodon:",
+    "mastodonHandle": "@analytodon@undefined.social"
+  }
+}

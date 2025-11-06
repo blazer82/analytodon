@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "title": "Analytodon Dashboard"
+  },
+  "chart": {
+    "followersTitle": "Followers Last 30 Days"
+  },
+  "totalBox": {
+    "followersTitle": "Total Followers",
+    "viewStats": "View follower stats"
+  },
+  "topPosts": {
+    "title": "Top Posts Last 30 Days",
+    "viewMore": "See more top posts"
+  },
+  "dataLabels": {
+    "followers": "Followers"
+  },
+  "messages": {
+    "noData": "No data available."
+  }
+}

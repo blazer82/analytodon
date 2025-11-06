@@ -172,6 +172,33 @@ describe('AuthService', () => {
     });
   });
 
+  describe('extractLocaleFromHeader', () => {
+    it('should extract the first supported locale from Accept-Language header', () => {
+      const result = service.extractLocaleFromHeader('de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7');
+      expect(result).toBe('de');
+    });
+
+    it('should return the first supported locale even if others are present', () => {
+      const result = service.extractLocaleFromHeader('fr-FR,en-US;q=0.9,de;q=0.8');
+      expect(result).toBe('en');
+    });
+
+    it('should return undefined if no supported locale is found', () => {
+      const result = service.extractLocaleFromHeader('fr-FR,es-ES,it-IT');
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined if Accept-Language header is not provided', () => {
+      const result = service.extractLocaleFromHeader(undefined);
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle simple language codes without region', () => {
+      const result = service.extractLocaleFromHeader('en,de;q=0.8');
+      expect(result).toBe('en');
+    });
+  });
+
   describe('login', () => {
     let mockUser: UserEntity;
     let mockRefreshToken: RefreshTokenEntity;
@@ -243,6 +270,21 @@ describe('AuthService', () => {
       expect(savedUser.lastLoginAt.getTime()).toBeGreaterThanOrEqual(beforeLogin.getTime());
     });
 
+    it('should update user locale if provided', async () => {
+      await service.login(mockUser, 'de');
+      expect(mockUsersService.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'de',
+        }),
+      );
+    });
+
+    it('should not update user locale if not provided', async () => {
+      await service.login(mockUser);
+      const savedUser = mockUsersService.save.mock.calls[0][0] as UserEntity;
+      expect(savedUser.locale).toBeUndefined();
+    });
+
     // No longer relevant as credentials are not directly checked in login for refresh token
     // it('should throw UnauthorizedException if credentials not loaded', async () => {
     //   mockUser.credentials = undefined;
@@ -256,6 +298,7 @@ describe('AuthService', () => {
       password: 'password123',
       serverURLOnSignUp: 'server.com',
       timezone: 'UTC',
+      locale: 'de',
     };
     let mockCreatedUser: UserEntity;
     let mockCreatedCredentials: UserCredentialsEntity;
@@ -271,6 +314,7 @@ describe('AuthService', () => {
         maxAccounts: 10,
         serverURLOnSignUp: registerUserDto.serverURLOnSignUp,
         timezone: registerUserDto.timezone,
+        locale: registerUserDto.locale,
       } as UserEntity;
 
       mockCreatedCredentials = {
@@ -460,6 +504,21 @@ describe('AuthService', () => {
       );
       const savedUser = mockUsersService.save.mock.calls[0][0] as UserEntity;
       expect(savedUser.lastLoginAt.getTime()).toBeGreaterThanOrEqual(beforeRefresh.getTime());
+    });
+
+    it('should update user locale if provided', async () => {
+      await service.refreshTokens(oldRefreshTokenString, 'en');
+      expect(mockUsersService.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'en',
+        }),
+      );
+    });
+
+    it('should not update user locale if not provided', async () => {
+      await service.refreshTokens(oldRefreshTokenString);
+      const savedUser = mockUsersService.save.mock.calls[0][0] as UserEntity;
+      expect(savedUser.locale).toBeUndefined();
     });
   });
 
