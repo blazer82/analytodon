@@ -4,6 +4,7 @@
  * For more information, see https://remix.run/file-conventions/entry.server
  */
 
+import { statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { renderToPipeableStream } from 'react-dom/server';
@@ -23,6 +24,25 @@ import { isbot } from 'isbot';
 import { createEmotionCache } from './utils/createEmotionCache';
 
 const ABORT_DELAY = 5_000;
+
+/**
+ * Get the correct path to translation files based on environment
+ * In development: ./public/locales/
+ * In production: ./build/client/locales/
+ */
+function getLocalesPath(): string {
+  const prodPath = resolve('./build/client/locales');
+  const devPath = resolve('./public/locales');
+
+  // Try production path first (check if it exists)
+  try {
+    statSync(prodPath);
+    return prodPath;
+  } catch {
+    // Fall back to dev path
+    return devPath;
+  }
+}
 
 export default function handleRequest(
   request: Request,
@@ -55,7 +75,7 @@ async function handleBotRequest(
       lng,
       ns,
       backend: {
-        loadPath: resolve('./public/locales/{{lng}}/{{ns}}.json'),
+        loadPath: resolve(getLocalesPath(), '{{lng}}', '{{ns}}.json'),
       },
     });
 
@@ -139,7 +159,7 @@ async function handleBrowserRequest(
       lng,
       ns,
       backend: {
-        loadPath: resolve('./public/locales/{{lng}}/{{ns}}.json'),
+        loadPath: resolve(getLocalesPath(), '{{lng}}', '{{ns}}.json'),
       },
     });
 

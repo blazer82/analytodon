@@ -1,4 +1,5 @@
 // @server-only
+import { statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import logger from '~/services/logger.server';
@@ -7,6 +8,25 @@ import Backend from 'i18next-fs-backend';
 import { RemixI18Next } from 'remix-i18next/server';
 
 import i18nextConfig from './i18n';
+
+/**
+ * Get the correct path to translation files based on environment
+ * In development: ./public/locales/
+ * In production: ./build/client/locales/
+ */
+function getLocalesPath(): string {
+  const prodPath = resolve('./build/client/locales');
+  const devPath = resolve('./public/locales');
+
+  // Try production path first (check if it exists)
+  try {
+    statSync(prodPath);
+    return prodPath;
+  } catch {
+    // Fall back to dev path
+    return devPath;
+  }
+}
 
 // Version for cache busting when translations update
 const TRANSLATIONS_VERSION = '1.0.0';
@@ -103,8 +123,8 @@ export default new CustomI18Next({
   i18next: {
     ...i18nextConfig,
     backend: {
-      // Path to translation files
-      loadPath: resolve('./public/locales/{{lng}}/{{ns}}.json'),
+      // Path to translation files (supports both dev and production)
+      loadPath: resolve(getLocalesPath(), '{{lng}}', '{{ns}}.json'),
     },
   },
 
