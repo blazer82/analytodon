@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "title": "Plattformübersicht"
+  },
+  "sections": {
+    "overview": "Übersicht",
+    "users": "Benutzer",
+    "accounts": "Konten",
+    "dataVolume": "Datenvolumen",
+    "registrations": "Registrierungstrend (30 Tage)",
+    "loginActivity": "Anmeldeaktivität",
+    "serverDistribution": "Serververteilung"
+  },
+  "kpi": {
+    "totalUsers": "Benutzer gesamt",
+    "activeUsers": "Aktive Benutzer",
+    "connectedAccounts": "Verbundene Konten",
+    "trackedToots": "Erfasste Toots"
+  },
+  "labels": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "emailVerified": "E-Mail bestätigt",
+    "admins": "Admins",
+    "accountOwners": "Kontoinhaber",
+    "setupComplete": "Einrichtung abgeschlossen",
+    "setupIncomplete": "Einrichtung unvollständig",
+    "last7Days": "Letzte 7 Tage",
+    "last30Days": "Letzte 30 Tage",
+    "last90Days": "Letzte 90 Tage",
+    "dailyAccountStats": "Tägliche Kontostatistiken",
+    "dailyTootStats": "Tägliche Toot-Statistiken",
+    "toots": "Toots",
+    "registrations": "Registrierungen",
+    "server": "Server",
+    "count": "Konten",
+    "lastUpdated": "Zuletzt aktualisiert: {{date}}"
+  },
+  "messages": {
+    "noData": "Keine Daten verfügbar.",
+    "loadError": "Plattformstatistiken konnten nicht geladen werden."
+  }
+}

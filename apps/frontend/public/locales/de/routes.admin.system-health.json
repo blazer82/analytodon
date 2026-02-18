@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "title": "Systemstatus"
+  },
+  "status": {
+    "healthy": "Alle Systeme arbeiten normal.",
+    "warning": "Einige Jobs sind überfällig, fehlgeschlagen oder Daten sind veraltet.",
+    "critical": "Ein oder mehrere Jobs scheinen blockiert zu sein. Sofortige Aufmerksamkeit erforderlich."
+  },
+  "sections": {
+    "jobStatuses": "Job-Status",
+    "timingMargins": "Zeitliche Abstände",
+    "dataFreshness": "Datenaktualität",
+    "collectionSizes": "Sammlungsgrößen",
+    "recentFailures": "Letzte Fehler",
+    "marginDetails": "Ausführungsdetails"
+  },
+  "columns": {
+    "jobName": "Job",
+    "lastRun": "Letzter Lauf",
+    "status": "Status",
+    "duration": "Dauer",
+    "records": "Datensätze",
+    "overdue": "Überfällig",
+    "fetchJob": "Abruf-Job",
+    "aggregateJob": "Aggregations-Job",
+    "avgMargin": "Ø Abstand",
+    "minMargin": "Min. Abstand",
+    "overlaps": "Überlappungen",
+    "samples": "Stichproben",
+    "aggregateStart": "Aggregationsstart",
+    "fetchEnd": "Abrufende",
+    "margin": "Abstand",
+    "overlap": "Überlappung",
+    "time": "Zeit",
+    "error": "Fehler"
+  },
+  "labels": {
+    "lastUpdated": "Zuletzt aktualisiert: {{date}}",
+    "overdue": "Überfällig",
+    "stale": "Veraltet",
+    "fresh": "Aktuell",
+    "yes": "Ja",
+    "no": "Nein",
+    "dailyAccountStats": "Tägliche Kontostatistiken",
+    "dailyTootStats": "Tägliche Toot-Statistiken",
+    "toots": "Toots"
+  },
+  "collections": {
+    "users": "Benutzer",
+    "accounts": "Konten",
+    "toots": "Toots",
+    "dailyAccountStats": "Tägliche Kontostatistiken",
+    "dailyTootStats": "Tägliche Toot-Statistiken",
+    "refreshTokens": "Aktualisierungstoken",
+    "mastodonApps": "Mastodon-Apps",
+    "cliJobRuns": "CLI-Jobausführungen"
+  },
+  "messages": {
+    "loadError": "Systemstatusdaten konnten nicht geladen werden.",
+    "noJobData": "Noch keine Job-Daten verfügbar."
+  }
+}
