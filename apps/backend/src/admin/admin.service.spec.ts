@@ -278,6 +278,7 @@ describe('AdminService', () => {
       await service.getStats();
 
       // Backdate the cache past the TTL
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any).cachedAt = Date.now() - STATS_CACHE_TTL_MS - 1;
 
       userRepository.count.mockClear();

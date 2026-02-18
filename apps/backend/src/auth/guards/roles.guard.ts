@@ -20,6 +20,6 @@ export class RolesGuard implements CanActivate {
     if (!user || !user.role) {
       return false; // No user or user role, access denied
     }
-    return requiredRoles.some((role) => user.role === role);
+    return user.role === UserRole.Admin || requiredRoles.some((role) => user.role === role);
   }
 }
