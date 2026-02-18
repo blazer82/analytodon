@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "title": "Platform Overview"
+  },
+  "sections": {
+    "overview": "Overview",
+    "users": "Users",
+    "accounts": "Accounts",
+    "dataVolume": "Data Volume",
+    "registrations": "Registration Trend (30 Days)",
+    "loginActivity": "Login Activity",
+    "serverDistribution": "Server Distribution"
+  },
+  "kpi": {
+    "totalUsers": "Total Users",
+    "activeUsers": "Active Users",
+    "connectedAccounts": "Connected Accounts",
+    "trackedToots": "Tracked Toots"
+  },
+  "labels": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "emailVerified": "Email Verified",
+    "admins": "Admins",
+    "accountOwners": "Account Owners",
+    "setupComplete": "Setup Complete",
+    "setupIncomplete": "Setup Incomplete",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last90Days": "Last 90 Days",
+    "dailyAccountStats": "Daily Account Stats",
+    "dailyTootStats": "Daily Toot Stats",
+    "toots": "Toots",
+    "registrations": "Registrations",
+    "server": "Server",
+    "count": "Accounts"
+  },
+  "messages": {
+    "noData": "No data available.",
+    "loadError": "Failed to load platform statistics."
+  }
+}

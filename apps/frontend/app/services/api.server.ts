@@ -1,5 +1,6 @@
 import {
   AccountsApi,
+  AdminApi,
   AuthenticationApi,
   BoostsApi,
   Configuration,
@@ -99,4 +100,12 @@ export async function createRepliesApiWithAuth(request: Request): Promise<Replie
 export async function createFavoritesApiWithAuth(request: Request): Promise<FavoritesApi> {
   const { config } = await createApiClientWithAuth(request);
   return new FavoritesApi(config);
+}
+
+/**
+ * Creates an authenticated instance of the Admin API client with token refresh
+ */
+export async function createAdminApiWithAuth(request: Request): Promise<AdminApi> {
+  const { config } = await createApiClientWithAuth(request);
+  return new AdminApi(config);
 }

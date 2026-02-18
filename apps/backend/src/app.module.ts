@@ -8,6 +8,7 @@ import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } fro
 import { LoggerModule } from 'nestjs-pino';
 
 import { AccountsModule } from './accounts/accounts.module';
+import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -61,6 +62,7 @@ import { UsersModule } from './users/users.module';
         debug: process.env.NODE_ENV === 'development', // Enable debug logging in dev
       }),
     }),
+    AdminModule,
     AuthModule,
     UsersModule,
     AccountsModule,

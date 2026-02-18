@@ -75,6 +75,7 @@ export default function AppLayout() {
     if (path === '/favorites') return 'Favorites';
     if (path === '/top-posts') return 'Top Posts';
     if (path.includes('/settings')) return 'Settings';
+    if (path.includes('/admin')) return 'Admin';
 
     return 'Dashboard';
   };
