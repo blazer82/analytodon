@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { SessionUserDto } from '@analytodon/rest-client';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import BoostsIcon from '@mui/icons-material/Cached';
 import RepliesIcon from '@mui/icons-material/Comment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -9,16 +11,18 @@ import FollowersIcon from '@mui/icons-material/Group';
 import FavoritesIcon from '@mui/icons-material/Star';
 import AccountsIcon from '@mui/icons-material/SupervisedUserCircle';
 import { Box, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
-import { Link, useLocation } from '@remix-run/react';
+import { Link, useLocation, useRouteLoaderData } from '@remix-run/react';
 
 import { NavItemContainer } from '../Layout/styles';
 
 const AccountOwnerNavigation: React.FunctionComponent = () => {
   const { t } = useTranslation('components.navigation');
   const location = useLocation();
+  const routeLoaderData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto } | undefined;
+  const user = routeLoaderData?.user;
 
-  const navigation = React.useMemo(
-    () => [
+  const navigation = React.useMemo(() => {
+    const sections = [
       {
         label: t('sections.analytics'),
         items: [
@@ -34,9 +38,17 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
         label: t('sections.settings'),
         items: [{ label: t('items.accounts'), link: '/settings/accounts', icon: <AccountsIcon /> }],
       },
-    ],
-    [t],
-  );
+    ];
+
+    if (user?.role === 'admin') {
+      sections.push({
+        label: t('sections.admin'),
+        items: [{ label: t('items.adminDashboard'), link: '/admin/dashboard', icon: <AdminPanelSettingsIcon /> }],
+      });
+    }
+
+    return sections;
+  }, [t, user?.role]);
 
   return (
     <NavItemContainer>

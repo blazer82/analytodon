@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './AccountsApi';
+export * from './AdminApi';
 export * from './AuthenticationApi';
 export * from './BoostsApi';
 export * from './FavoritesApi';
