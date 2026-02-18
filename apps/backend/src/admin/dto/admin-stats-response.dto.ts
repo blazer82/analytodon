@@ -98,6 +98,13 @@ export class DataVolumeMetricsDto {
 }
 
 export class AdminStatsResponseDto {
+  @ApiProperty({
+    example: '2026-02-18T03:00:00.000Z',
+    description: 'When the stats snapshot was generated',
+    required: false,
+  })
+  generatedAt?: string;
+
   @ApiProperty({ type: UserMetricsDto, description: 'User-related metrics' })
   users: UserMetricsDto;
 

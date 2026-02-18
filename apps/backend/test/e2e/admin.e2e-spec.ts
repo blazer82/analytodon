@@ -1,4 +1,4 @@
-import { AccountEntity, UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
+import { AdminStatsSnapshotEntity, UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -20,12 +20,42 @@ describe('AdminController (e2e)', () => {
   let usersService: UsersService;
 
   let adminAccessToken: string;
-  let adminUser: UserEntity;
   let nonAdminAccessToken: string;
 
   const adminCredentials = {
     email: 'admin@example.com',
     password: 'AdminPassword123!',
+  };
+
+  const snapshotData = {
+    users: {
+      totalCount: 3,
+      activeCount: 2,
+      inactiveCount: 1,
+      emailVerifiedCount: 2,
+      roleBreakdown: { admin: 1, accountOwner: 2 },
+      registrations: {
+        last30DaysCount: 3,
+        dailyBreakdown: [{ date: '2026-02-15', count: 3 }],
+      },
+      loginActivity: { last7Days: 1, last30Days: 2, last90Days: 3 },
+    },
+    accounts: {
+      totalCount: 3,
+      setupCompleteCount: 2,
+      setupIncompleteCount: 1,
+      activeCount: 2,
+      inactiveCount: 1,
+      serverDistribution: [
+        { serverURL: 'mastodon.social', count: 2 },
+        { serverURL: 'mastodon.online', count: 1 },
+      ],
+    },
+    dataVolume: {
+      totalToots: 500,
+      totalDailyAccountStats: 100,
+      totalDailyTootStats: 200,
+    },
   };
 
   beforeAll(async () => {
@@ -52,7 +82,7 @@ describe('AdminController (e2e)', () => {
     await clearDatabase();
 
     // Create admin user
-    adminUser = await usersService.create({
+    const adminUser = await usersService.create({
       ...adminCredentials,
       role: UserRole.Admin,
       isActive: true,
@@ -80,45 +110,12 @@ describe('AdminController (e2e)', () => {
       expiresIn: configService.get<StringValue>(authConstants.JWT_EXPIRES_IN_KEY, authConstants.JWT_DEFAULT_EXPIRES_IN),
     });
 
-    // Seed additional test data
-    const user2 = await usersService.create({
-      email: 'user2@example.com',
-      password: 'User2Password123!',
-      role: UserRole.AccountOwner,
-      isActive: false,
+    // Seed admin stats snapshot
+    const snapshot = entityManager.create(AdminStatsSnapshotEntity, {
+      generatedAt: new Date('2026-02-18T03:00:00.000Z'),
+      data: snapshotData,
     });
-    user2.emailVerified = true;
-    await entityManager.persistAndFlush(user2);
-
-    // Create test accounts
-    const account1 = entityManager.create(AccountEntity, {
-      serverURL: 'mastodon.social',
-      isActive: true,
-      setupComplete: true,
-      owner: adminUser,
-      utcOffset: '+00:00',
-      timezone: 'UTC',
-    });
-
-    const account2 = entityManager.create(AccountEntity, {
-      serverURL: 'mastodon.social',
-      isActive: true,
-      setupComplete: true,
-      owner: nonAdminUser,
-      utcOffset: '+01:00',
-      timezone: 'Europe/Berlin',
-    });
-
-    const account3 = entityManager.create(AccountEntity, {
-      serverURL: 'mastodon.online',
-      isActive: false,
-      setupComplete: false,
-      owner: user2,
-      utcOffset: '+00:00',
-      timezone: 'UTC',
-    });
-
-    await entityManager.persistAndFlush([account1, account2, account3]);
+    await entityManager.persistAndFlush(snapshot);
   });
 
   afterAll(async () => {
@@ -127,7 +124,7 @@ describe('AdminController (e2e)', () => {
   });
 
   const clearDatabase = async () => {
-    await entityManager.nativeDelete(AccountEntity, {});
+    await entityManager.nativeDelete(AdminStatsSnapshotEntity, {});
     await entityManager.nativeDelete(UserCredentialsEntity, {});
     await entityManager.nativeDelete(UserEntity, {});
   };
@@ -140,6 +137,7 @@ describe('AdminController (e2e)', () => {
         .expect(HttpStatus.OK);
 
       // Verify top-level structure
+      expect(response.body).toHaveProperty('generatedAt');
       expect(response.body).toHaveProperty('users');
       expect(response.body).toHaveProperty('accounts');
       expect(response.body).toHaveProperty('dataVolume');
@@ -177,39 +175,38 @@ describe('AdminController (e2e)', () => {
       expect(dataVolume).toHaveProperty('totalDailyTootStats');
     });
 
-    it('should return correct counts matching seeded data', async () => {
+    it('should return correct counts matching seeded snapshot data', async () => {
       const response = await request(app.getHttpServer())
         .get('/admin/stats')
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(HttpStatus.OK);
 
-      const { users, accounts } = response.body;
+      expect(response.body.generatedAt).toBe('2026-02-18T03:00:00.000Z');
 
-      // 3 users total: admin, user@example.com, user2@example.com
+      const { users, accounts, dataVolume } = response.body;
+
       expect(users.totalCount).toBe(3);
-      // 2 active (admin + user@example.com), 1 inactive (user2)
       expect(users.activeCount).toBe(2);
       expect(users.inactiveCount).toBe(1);
-      // 1 admin, 2 account owners
       expect(users.roleBreakdown.admin).toBe(1);
       expect(users.roleBreakdown.accountOwner).toBe(2);
 
-      // 3 accounts total
       expect(accounts.totalCount).toBe(3);
-      // 2 setup complete, 1 incomplete
       expect(accounts.setupCompleteCount).toBe(2);
       expect(accounts.setupIncompleteCount).toBe(1);
-      // 2 active, 1 inactive
       expect(accounts.activeCount).toBe(2);
       expect(accounts.inactiveCount).toBe(1);
 
-      // Server distribution: 2 on mastodon.social, 1 on mastodon.online
       expect(accounts.serverDistribution).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ serverURL: 'mastodon.social', count: 2 }),
           expect.objectContaining({ serverURL: 'mastodon.online', count: 1 }),
         ]),
       );
+
+      expect(dataVolume.totalToots).toBe(500);
+      expect(dataVolume.totalDailyAccountStats).toBe(100);
+      expect(dataVolume.totalDailyTootStats).toBe(200);
     });
 
     it('should return 401 without authentication', async () => {

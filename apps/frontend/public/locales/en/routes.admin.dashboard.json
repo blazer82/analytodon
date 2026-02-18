@@ -33,7 +33,8 @@
     "toots": "Toots",
     "registrations": "Registrations",
     "server": "Server",
-    "count": "Accounts"
+    "count": "Accounts",
+    "lastUpdated": "Last updated: {{date}}"
   },
   "messages": {
     "noData": "No data available.",
