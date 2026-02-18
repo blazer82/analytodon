@@ -13,6 +13,7 @@
     "topPosts": "Top Posts",
     "accounts": "Accounts",
     "adminDashboard": "Platform Overview",
-    "accountHealth": "Account Health"
+    "accountHealth": "Account Health",
+    "systemHealth": "System Health"
   }
 }

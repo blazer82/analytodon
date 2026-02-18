@@ -15,6 +15,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 3 * * * * analytodon /app/apps/cli/bin/run.js aggregate dailytootstats > /tmp/cron_job_pipe 2>&1
 15 3 * * * analytodon /app/apps/cli/bin/run.js aggregate adminstats > /tmp/cron_job_pipe 2>&1
 16 3 * * * analytodon /app/apps/cli/bin/run.js aggregate accounthealth > /tmp/cron_job_pipe 2>&1
+17 * * * * analytodon /app/apps/cli/bin/run.js aggregate systemhealth > /tmp/cron_job_pipe 2>&1
 
 # analytodon weekly mail
 0 19,20,21,22,23 * * 0 analytodon /app/apps/cli/bin/run.js mail weeklystats > /tmp/cron_job_pipe 2>&1
@@ -31,5 +32,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 40 2 * * * analytodon /app/apps/cli/bin/run.js cleanup tootstats > /tmp/cron_job_pipe 2>&1
 5 17 * * * analytodon /app/apps/cli/bin/run.js cleanup oldaccounts > /tmp/cron_job_pipe 2>&1
 7 17 * * * analytodon /app/apps/cli/bin/run.js cleanup refreshtokens > /tmp/cron_job_pipe 2>&1
+8 17 * * * analytodon /app/apps/cli/bin/run.js cleanup jobruns > /tmp/cron_job_pipe 2>&1
 
 # An empty line is required at the end of this file for a valid cron file.

@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb';
 
 import { BaseCommand } from '../../base';
 import { getTimezones } from '../../helpers/getTimezones';
+import { trackJobRun } from '../../helpers/trackJobRun';
 import { generateDailyTootstats } from '../../service/tootstats/generateDailyTootstats';
 
 export default class DailyTootStats extends BaseCommand {
@@ -42,24 +43,32 @@ export default class DailyTootStats extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const accounts = await db
-      .collection('accounts')
-      .find({
-        isActive: true,
-        timezone: { $in: timezones },
-      })
-      .toArray();
+    try {
+      await trackJobRun({ db, jobName: 'aggregate:dailytootstats', logger: this }, async () => {
+        const accounts = await db
+          .collection('accounts')
+          .find({
+            isActive: true,
+            timezone: { $in: timezones },
+          })
+          .toArray();
 
-    for (const account of accounts) {
-      try {
-        await generateDailyTootstats(db, account);
-      } catch (error: any) {
-        this.logError(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
-      }
+        let processed = 0;
+
+        for (const account of accounts) {
+          try {
+            await generateDailyTootstats(db, account);
+            processed++;
+          } catch (error: any) {
+            this.logError(`Daily toot stats: Failed for ${account.name}: ${error?.message}`);
+          }
+        }
+
+        this.log('Daily toot stats: Aggregation done.');
+        return { recordsProcessed: processed };
+      });
+    } finally {
+      await connection.close();
     }
-
-    this.log('Daily toot stats: Aggregation done.');
-
-    await connection.close();
   }
 }

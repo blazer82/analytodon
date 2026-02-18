@@ -3,6 +3,7 @@ import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 
 import { BaseCommand } from '../../base';
 import { processInBatches } from '../../helpers/processInBatches';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 const BATCH_SIZE = 5;
 
@@ -43,36 +44,41 @@ export default class Users extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    // Get all distinct owner IDs from the accounts collection that are valid ObjectIds
-    const activeAccountOwnerIds = (
-      await db.collection('accounts').distinct('owner', { owner: { $exists: true, $ne: null } })
-    )
-      .filter((id) => ObjectId.isValid(id as string | ObjectId)) // Filter out invalid representations if any
-      .map((id) => new ObjectId(id as string | ObjectId)); // Ensure they are ObjectId instances
+    try {
+      await trackJobRun({ db, jobName: 'cleanup:users', logger: this }, async () => {
+        // Get all distinct owner IDs from the accounts collection that are valid ObjectIds
+        const activeAccountOwnerIds = (
+          await db.collection('accounts').distinct('owner', { owner: { $exists: true, $ne: null } })
+        )
+          .filter((id) => ObjectId.isValid(id as string | ObjectId)) // Filter out invalid representations if any
+          .map((id) => new ObjectId(id as string | ObjectId)); // Ensure they are ObjectId instances
 
-    const usersQuery: Filter<Document> = {
-      _id: { $nin: activeAccountOwnerIds }, // User's _id is not in the list of owners from accounts
-      role: 'account-owner',
-      createdAt: { $lt: cutoffDate },
-    };
+        const usersQuery: Filter<Document> = {
+          _id: { $nin: activeAccountOwnerIds }, // User's _id is not in the list of owners from accounts
+          role: 'account-owner',
+          createdAt: { $lt: cutoffDate },
+        };
 
-    const userList = await db
-      .collection('users')
-      .find(usersQuery, { projection: { _id: 1 } })
-      .toArray();
+        const userList = await db
+          .collection('users')
+          .find(usersQuery, { projection: { _id: 1 } })
+          .toArray();
 
-    this.log(`Clean up users: ${userList.length} users to clean up.`);
+        this.log(`Clean up users: ${userList.length} users to clean up.`);
 
-    await processInBatches(BATCH_SIZE, userList, async (user) => {
-      this.log(`Clean up users: Remove user ${user._id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
-      if (!flags.dryRun) {
-        await db.collection('users').deleteOne({ _id: user._id });
-        await db.collection('usercredentials').deleteOne({ user: user._id });
-      }
-    });
+        await processInBatches(BATCH_SIZE, userList, async (user) => {
+          this.log(`Clean up users: Remove user ${user._id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+          if (!flags.dryRun) {
+            await db.collection('users').deleteOne({ _id: user._id });
+            await db.collection('usercredentials').deleteOne({ user: user._id });
+          }
+        });
 
-    this.log('Clean up users: Done');
-
-    await connection.close();
+        this.log('Clean up users: Done');
+        return { recordsProcessed: userList.length };
+      });
+    } finally {
+      await connection.close();
+    }
   }
 }

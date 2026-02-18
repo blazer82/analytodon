@@ -9,6 +9,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import TopIcon from '@mui/icons-material/EmojiEvents';
 import FollowersIcon from '@mui/icons-material/Group';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import FavoritesIcon from '@mui/icons-material/Star';
 import AccountsIcon from '@mui/icons-material/SupervisedUserCircle';
 import { Box, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
@@ -47,6 +48,7 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
         items: [
           { label: t('items.adminDashboard'), link: '/admin/dashboard', icon: <AdminPanelSettingsIcon /> },
           { label: t('items.accountHealth'), link: '/admin/accounts-health', icon: <HealthAndSafetyIcon /> },
+          { label: t('items.systemHealth'), link: '/admin/system-health', icon: <MonitorHeartIcon /> },
         ],
       });
     }

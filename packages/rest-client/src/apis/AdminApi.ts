@@ -17,12 +17,15 @@ import * as runtime from '../runtime';
 import type {
   AccountHealthResponseDto,
   AdminStatsResponseDto,
+  SystemHealthResponseDto,
 } from '../models/index';
 import {
     AccountHealthResponseDtoFromJSON,
     AccountHealthResponseDtoToJSON,
     AdminStatsResponseDtoFromJSON,
     AdminStatsResponseDtoToJSON,
+    SystemHealthResponseDtoFromJSON,
+    SystemHealthResponseDtoToJSON,
 } from '../models/index';
 
 /**
@@ -95,6 +98,40 @@ export class AdminApi extends runtime.BaseAPI {
      */
     async adminControllerGetStats(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdminStatsResponseDto> {
         const response = await this.adminControllerGetStatsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get system health report (Admin)
+     */
+    async adminControllerGetSystemHealthRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SystemHealthResponseDto>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/admin/system/health`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SystemHealthResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Get system health report (Admin)
+     */
+    async adminControllerGetSystemHealth(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SystemHealthResponseDto> {
+        const response = await this.adminControllerGetSystemHealthRaw(initOverrides);
         return await response.value();
     }
 

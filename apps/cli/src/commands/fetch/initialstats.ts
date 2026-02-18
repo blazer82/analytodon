@@ -6,6 +6,7 @@ import { BaseCommand } from '../../base';
 import { createInitialAccountStats } from '../../helpers/createInitialAccountStats';
 import { createInitialTootStats } from '../../helpers/createInitialTootStats';
 import { fetchTootstatsForAccount } from '../../helpers/fetchTootstatsForAccount';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class InitialStats extends BaseCommand {
   static description = 'Gather initial stats for all accounts (only 1 per call)';
@@ -65,90 +66,98 @@ export default class InitialStats extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const accountQuery: Filter<Document> = {
-      isActive: true,
-      requestedScope: { $all: ['read:accounts', 'read:statuses', 'read:notifications'] },
-    };
+    try {
+      await trackJobRun({ db, jobName: 'fetch:initialstats', logger: this }, async () => {
+        const accountQuery: Filter<Document> = {
+          isActive: true,
+          requestedScope: { $all: ['read:accounts', 'read:statuses', 'read:notifications'] },
+        };
 
-    if (flags.account) {
-      this.log(`Fetching initial stats: Only process account ${flags.account}`);
-      accountQuery['_id'] = new ObjectId(flags.account);
-    } else {
-      // Only check initialStatsFetched when no specific account is provided
-      accountQuery['initialStatsFetched'] = { $ne: true };
-    }
-
-    const account = await db.collection('accounts').findOne(accountQuery);
-
-    if (account) {
-      this.log(`Fetching initial stats: Processing account ${account.name} (ID: ${account._id})`);
-
-      // Check if credentials exist for this account
-      const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
-      if (!credentials) {
-        this.logWarning(
-          `Fetching initial stats: No credentials found for account ${account.name} (ID: ${account._id}). Skipping.`,
-        );
-        await connection.close();
-        return;
-      }
-
-      if (!account.owner) {
-        this.logWarning(
-          `Fetching initial stats: Account ${account._id} (${account.name}) does not have an owner field. Skipping.`,
-        );
-        await connection.close();
-        return;
-      }
-      const user = await db.collection('users').findOne({ _id: account.owner as ObjectId });
-
-      if (user) {
-        this.log(`Fetching initial stats: Found owner ${user._id} for account ${account.name}`);
-        await db.collection('accounts').updateOne({ _id: account._id }, { $set: { initialStatsFetched: true } });
-
-        if (flags.tootStats) {
-          this.log(`Fetching initial stats: Fetch toot history for account ${account.name}`);
-          await fetchTootstatsForAccount(db, account);
-
-          this.log(`Fetching initial stats: Create initial toot stats for account ${account.name}`);
-          await createInitialTootStats(db, account);
+        if (flags.account) {
+          this.log(`Fetching initial stats: Only process account ${flags.account}`);
+          accountQuery['_id'] = new ObjectId(flags.account);
         } else {
-          this.log(`Fetching initial stats: Skipping toot stats (--no-toot-stats flag)`);
+          // Only check initialStatsFetched when no specific account is provided
+          accountQuery['initialStatsFetched'] = { $ne: true };
         }
 
-        if (flags.accountStats) {
-          this.log(`Fetching initial stats: Create initial account stats for account ${account.name}`);
-          await createInitialAccountStats(db, account);
-        } else {
-          this.log(`Fetching initial stats: Skipping account stats (--no-account-stats flag)`);
-        }
+        const account = await db.collection('accounts').findOne(accountQuery);
 
-        if (!flags.skipEmail) {
-          try {
-            await axios.post(
-              `${flags.host}/mail/first-stats`,
-              { userID: `${user._id}`, accounts: [account._id] },
-              {
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: flags.authorization,
-                },
-              },
+        if (account) {
+          this.log(`Fetching initial stats: Processing account ${account.name} (ID: ${account._id})`);
+
+          // Check if credentials exist for this account
+          const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
+          if (!credentials) {
+            this.logWarning(
+              `Fetching initial stats: No credentials found for account ${account.name} (ID: ${account._id}). Skipping.`,
             );
-            this.log(`Fetching initial stats: Email notification sent to user ${user._id}`);
-          } catch (error) {
-            this.logError(`Fetching initial stats: Failed to send email notification for user ${user._id}: ${error}`);
+            return { recordsProcessed: 0 };
+          }
+
+          if (!account.owner) {
+            this.logWarning(
+              `Fetching initial stats: Account ${account._id} (${account.name}) does not have an owner field. Skipping.`,
+            );
+            return { recordsProcessed: 0 };
+          }
+          const user = await db.collection('users').findOne({ _id: account.owner as ObjectId });
+
+          if (user) {
+            this.log(`Fetching initial stats: Found owner ${user._id} for account ${account.name}`);
+            await db.collection('accounts').updateOne({ _id: account._id }, { $set: { initialStatsFetched: true } });
+
+            if (flags.tootStats) {
+              this.log(`Fetching initial stats: Fetch toot history for account ${account.name}`);
+              await fetchTootstatsForAccount(db, account);
+
+              this.log(`Fetching initial stats: Create initial toot stats for account ${account.name}`);
+              await createInitialTootStats(db, account);
+            } else {
+              this.log(`Fetching initial stats: Skipping toot stats (--no-toot-stats flag)`);
+            }
+
+            if (flags.accountStats) {
+              this.log(`Fetching initial stats: Create initial account stats for account ${account.name}`);
+              await createInitialAccountStats(db, account);
+            } else {
+              this.log(`Fetching initial stats: Skipping account stats (--no-account-stats flag)`);
+            }
+
+            if (!flags.skipEmail) {
+              try {
+                await axios.post(
+                  `${flags.host}/mail/first-stats`,
+                  { userID: `${user._id}`, accounts: [account._id] },
+                  {
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: flags.authorization,
+                    },
+                  },
+                );
+                this.log(`Fetching initial stats: Email notification sent to user ${user._id}`);
+              } catch (error) {
+                this.logError(
+                  `Fetching initial stats: Failed to send email notification for user ${user._id}: ${error}`,
+                );
+              }
+            } else {
+              this.log(`Fetching initial stats: Skipping email notification (--skip-email flag)`);
+            }
+
+            return { recordsProcessed: 1 };
+          } else {
+            this.logWarning(`Fetching initial stats: Owner of account ${account._id} not found.`);
           }
         } else {
-          this.log(`Fetching initial stats: Skipping email notification (--skip-email flag)`);
+          this.log('Fetching initial stats: Nothing to do.');
         }
-      } else {
-        this.logWarning(`Fetching initial stats: Owner of account ${account._id} not found.`);
-      }
-    } else {
-      this.log('Fetching initial stats: Nothing to do.');
-    }
 
-    await connection.close();
+        return { recordsProcessed: 0 };
+      });
+    } finally {
+      await connection.close();
+    }
   }
 }

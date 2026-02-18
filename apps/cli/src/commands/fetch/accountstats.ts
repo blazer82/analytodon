@@ -5,6 +5,7 @@ import { MongoClient } from 'mongodb';
 import { BaseCommand } from '../../base';
 import { decryptText } from '../../helpers/encryption';
 import { getTimezones } from '../../helpers/getTimezones';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class AccountStats extends BaseCommand {
   static description = 'Gather account stats for all accounts';
@@ -43,54 +44,62 @@ export default class AccountStats extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const accounts = await db
-      .collection('accounts')
-      .find({
-        isActive: true,
-        timezone: { $in: timezones },
-      })
-      .toArray();
+    try {
+      await trackJobRun({ db, jobName: 'fetch:accountstats', logger: this }, async () => {
+        const accounts = await db
+          .collection('accounts')
+          .find({
+            isActive: true,
+            timezone: { $in: timezones },
+          })
+          .toArray();
 
-    for (const account of accounts) {
-      this.log(`Fetching account stats: Processing account ${account.name}`);
+        let processed = 0;
 
-      try {
-        const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
+        for (const account of accounts) {
+          this.log(`Fetching account stats: Processing account ${account.name}`);
 
-        if (!credentials?.accessToken) {
-          this.logWarning(`Fetching account stats: Access token not found for ${account.name}`);
-          continue;
+          try {
+            const credentials = await db.collection('accountcredentials').findOne({ account: account._id });
+
+            if (!credentials?.accessToken) {
+              this.logWarning(`Fetching account stats: Access token not found for ${account.name}`);
+              continue;
+            }
+
+            const decryptedAccessToken = decryptText(credentials.accessToken);
+            if (!decryptedAccessToken) {
+              this.logWarning(`Fetching account stats: Failed to decrypt access token for ${account.name}. Skipping.`);
+              continue;
+            }
+            const mastodon = generator('mastodon', account.serverURL, decryptedAccessToken);
+
+            const userInfo = await mastodon.verifyAccountCredentials();
+
+            const accountStats = {
+              followersCount: userInfo.data.followers_count ?? 0,
+              followingCount: userInfo.data.following_count ?? 0,
+              statusesCount: userInfo.data.statuses_count ?? 0,
+            };
+
+            await db.collection('accountstats').insertOne({
+              account: account._id,
+              ...accountStats,
+              fetchedAt: new Date(),
+            });
+
+            processed++;
+            this.log(`Fetching account stats: Done for ${account.name}`);
+          } catch (error: any) {
+            this.logError(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
+          }
         }
 
-        const decryptedAccessToken = decryptText(credentials.accessToken);
-        if (!decryptedAccessToken) {
-          this.logWarning(`Fetching account stats: Failed to decrypt access token for ${account.name}. Skipping.`);
-          continue;
-        }
-        const mastodon = generator('mastodon', account.serverURL, decryptedAccessToken);
-
-        const userInfo = await mastodon.verifyAccountCredentials();
-
-        const accountStats = {
-          followersCount: userInfo.data.followers_count ?? 0,
-          followingCount: userInfo.data.following_count ?? 0,
-          statusesCount: userInfo.data.statuses_count ?? 0,
-        };
-
-        await db.collection('accountstats').insertOne({
-          account: account._id,
-          ...accountStats,
-          fetchedAt: new Date(),
-        });
-
-        this.log(`Fetching account stats: Done for ${account.name}`);
-      } catch (error: any) {
-        this.logError(`Fetching account stats: Error while processing ${account.name}: ${error?.message}`);
-      }
+        this.log('Fetching account stats: Done');
+        return { recordsProcessed: processed };
+      });
+    } finally {
+      await connection.close();
     }
-
-    this.log('Fetching account stats: Done');
-
-    await connection.close();
   }
 }

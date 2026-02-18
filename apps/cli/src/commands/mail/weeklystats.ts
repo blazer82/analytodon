@@ -4,6 +4,7 @@ import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 
 import { BaseCommand } from '../../base';
 import { getTimezones } from '../../helpers/getTimezones';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class WeeklyStats extends BaseCommand {
   static args = {};
@@ -45,80 +46,84 @@ export default class WeeklyStats extends BaseCommand {
   async run(): Promise<void> {
     this.log('Send weekly stats email to users');
 
+    const { flags } = await this.parse(WeeklyStats);
+
+    // Connect to database
+    const connection = await new MongoClient(flags.connectionString).connect();
+    const db = connection.db(flags.database);
+
     try {
-      const { flags } = await this.parse(WeeklyStats);
+      await trackJobRun({ db, jobName: 'mail:weeklystats', logger: this }, async () => {
+        const timezones = flags.timezone ? [flags.timezone] : getTimezones([6]); // run at 06:00
+        this.log(`Send weekly stats: Timezones: ${timezones.join(',')}`);
 
-      const timezones = flags.timezone ? [flags.timezone] : getTimezones([6]); // run at 06:00
-      this.log(`Send weekly stats: Timezones: ${timezones.join(',')}`);
+        const accountsQuery: Filter<Document> = {
+          isActive: true,
+          setupComplete: true,
+          timezone: { $in: timezones },
+          createdAt: {
+            $lt: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 7),
+          },
+        };
 
-      const accountsQuery: Filter<Document> = {
-        isActive: true,
-        setupComplete: true,
-        timezone: { $in: timezones },
-        createdAt: {
-          $lt: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 7),
-        },
-      };
-
-      if (flags.user) {
-        this.log(`Send weekly stats: Only process user ${flags.user}`);
-        accountsQuery['owner'] = new ObjectId(flags.user);
-      }
-
-      // Connect to database
-      const connection = await new MongoClient(flags.connectionString).connect();
-      const db = connection.db(flags.database);
-
-      const ownerList = await db.collection('accounts').find(accountsQuery).project({ owner: 1 }).toArray();
-
-      const ownerSet = new Set(ownerList.map(({ owner }) => `${owner}`));
-
-      for (const owner of ownerSet) {
-        try {
-          // Verify user
-          const user = await db.collection('users').findOne({
-            _id: new ObjectId(owner),
-            emailVerified: true,
-            role: 'account-owner',
-            isActive: true,
-            unsubscribed: { $nin: ['weekly'] },
-          });
-
-          if (user) {
-            const accounts = await db
-              .collection('accounts')
-              .find({
-                ...accountsQuery,
-                owner: user._id,
-              })
-              .toArray();
-
-            if (accounts.length > 0) {
-              const accountIds = accounts.map(({ _id }) => `${_id}`);
-              this.log(`Send weekly stats: Trigger mail for user ${user._id} with accounts ${accountIds.join(',')}`);
-
-              await axios.post(
-                `${flags.host}/mail/weekly-stats`,
-                { userID: `${user._id}`, accounts: accountIds },
-                {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: flags.authorization,
-                  },
-                },
-              );
-            }
-          } else {
-            this.log(`Send weekly stats: Skipping user ${owner}`);
-          }
-        } catch (error: any) {
-          this.logError(`Send weekly stats: Failed for user ${owner} with error ${error?.message}`);
+        if (flags.user) {
+          this.log(`Send weekly stats: Only process user ${flags.user}`);
+          accountsQuery['owner'] = new ObjectId(flags.user);
         }
-      }
 
+        const ownerList = await db.collection('accounts').find(accountsQuery).project({ owner: 1 }).toArray();
+
+        const ownerSet = new Set(ownerList.map(({ owner }) => `${owner}`));
+        let processed = 0;
+
+        for (const owner of ownerSet) {
+          try {
+            // Verify user
+            const user = await db.collection('users').findOne({
+              _id: new ObjectId(owner),
+              emailVerified: true,
+              role: 'account-owner',
+              isActive: true,
+              unsubscribed: { $nin: ['weekly'] },
+            });
+
+            if (user) {
+              const accounts = await db
+                .collection('accounts')
+                .find({
+                  ...accountsQuery,
+                  owner: user._id,
+                })
+                .toArray();
+
+              if (accounts.length > 0) {
+                const accountIds = accounts.map(({ _id }) => `${_id}`);
+                this.log(`Send weekly stats: Trigger mail for user ${user._id} with accounts ${accountIds.join(',')}`);
+
+                await axios.post(
+                  `${flags.host}/mail/weekly-stats`,
+                  { userID: `${user._id}`, accounts: accountIds },
+                  {
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: flags.authorization,
+                    },
+                  },
+                );
+                processed++;
+              }
+            } else {
+              this.log(`Send weekly stats: Skipping user ${owner}`);
+            }
+          } catch (error: any) {
+            this.logError(`Send weekly stats: Failed for user ${owner} with error ${error?.message}`);
+          }
+        }
+
+        return { recordsProcessed: processed };
+      });
+    } finally {
       await connection.close();
-    } catch (error: any) {
-      this.logError(`Send weekly stats: Failed with error ${error?.message}`);
     }
   }
 }

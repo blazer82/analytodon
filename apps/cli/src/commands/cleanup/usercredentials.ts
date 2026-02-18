@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb';
 
 import { BaseCommand } from '../../base';
 import { processInBatches } from '../../helpers/processInBatches';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 const BATCH_SIZE = 5;
 
@@ -40,34 +41,39 @@ export default class Usercredentials extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const userIds = (
-      await db
-        .collection('users')
-        .find({}, { projection: { _id: 1 } })
-        .toArray()
-    ).map(({ _id }) => _id);
+    try {
+      await trackJobRun({ db, jobName: 'cleanup:usercredentials', logger: this }, async () => {
+        const userIds = (
+          await db
+            .collection('users')
+            .find({}, { projection: { _id: 1 } })
+            .toArray()
+        ).map(({ _id }) => _id);
 
-    const credentials = await db
-      .collection('usercredentials')
-      .find(
-        {
-          user: { $nin: userIds },
-        },
-        { projection: { _id: 1 } },
-      )
-      .toArray();
+        const credentials = await db
+          .collection('usercredentials')
+          .find(
+            {
+              user: { $nin: userIds },
+            },
+            { projection: { _id: 1 } },
+          )
+          .toArray();
 
-    this.log(`Clean up user credentials: ${credentials.length} credentials to clean up.`);
+        this.log(`Clean up user credentials: ${credentials.length} credentials to clean up.`);
 
-    await processInBatches(BATCH_SIZE, credentials, async (doc) => {
-      this.log(`Clean up user credentials: Remove credentials ${doc._id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
-      if (!flags.dryRun) {
-        await db.collection('usercredentials').deleteOne({ _id: doc._id });
-      }
-    });
+        await processInBatches(BATCH_SIZE, credentials, async (doc) => {
+          this.log(`Clean up user credentials: Remove credentials ${doc._id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+          if (!flags.dryRun) {
+            await db.collection('usercredentials').deleteOne({ _id: doc._id });
+          }
+        });
 
-    this.log('Clean up user credentials: Done');
-
-    await connection.close();
+        this.log('Clean up user credentials: Done');
+        return { recordsProcessed: credentials.length };
+      });
+    } finally {
+      await connection.close();
+    }
   }
 }

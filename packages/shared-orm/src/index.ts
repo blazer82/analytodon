@@ -2,6 +2,8 @@ export * from './entities/account-credentials.entity';
 export * from './entities/account-health-snapshot.entity';
 export * from './entities/account.entity';
 export * from './entities/admin-stats-snapshot.entity';
+export * from './entities/cli-job-run.entity';
+export * from './entities/system-health-snapshot.entity';
 export * from './entities/daily-account-stats.entity';
 export * from './entities/daily-toot-stats.entity';
 export * from './entities/mastodon-app.entity';

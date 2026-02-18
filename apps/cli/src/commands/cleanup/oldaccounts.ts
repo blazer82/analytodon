@@ -2,6 +2,7 @@ import { Flags } from '@oclif/core';
 import { Document, Filter, MongoClient } from 'mongodb';
 
 import { BaseCommand } from '../../base';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class OldAccounts extends BaseCommand {
   static args = {};
@@ -33,48 +34,51 @@ export default class OldAccounts extends BaseCommand {
   };
 
   async run(): Promise<void> {
+    const { flags } = await this.parse(OldAccounts);
+
     this.log('Cleanup old accounts started.');
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 120);
 
+    // Connect to database
+    const connection = await new MongoClient(flags.connectionString).connect();
+    const db = connection.db(flags.database);
+
     try {
-      const { flags } = await this.parse(OldAccounts);
+      await trackJobRun({ db, jobName: 'cleanup:oldaccounts', logger: this }, async () => {
+        // Find users who haven't logged in for 120+ days AND were already sent deletion notice
+        const usersQuery: Filter<Document> = {
+          lastLoginAt: {
+            $lt: cutoffDate,
+          },
+          oldAccountDeletionNoticeSent: true,
+        };
 
-      // Connect to database
-      const connection = await new MongoClient(flags.connectionString).connect();
-      const db = connection.db(flags.database);
+        const userList = await db.collection('users').find(usersQuery).project({ _id: 1 }).toArray();
 
-      // Find users who haven't logged in for 120+ days AND were already sent deletion notice
-      const usersQuery: Filter<Document> = {
-        lastLoginAt: {
-          $lt: cutoffDate,
-        },
-        oldAccountDeletionNoticeSent: true,
-      };
+        const userSet = new Set(userList.map(({ _id }) => _id));
+        let processed = 0;
 
-      const userList = await db.collection('users').find(usersQuery).project({ _id: 1 }).toArray();
-
-      const userSet = new Set(userList.map(({ _id }) => _id));
-
-      for (const userID of userSet) {
-        try {
-          if (!flags.dryRun) {
-            this.log(`Cleanup old accounts: Delete user ${userID}`);
-            await db.collection('users').deleteOne({ _id: userID });
-          } else {
-            this.log(`Cleanup old accounts: Delete user ${userID} (DRY RUN)`);
+        for (const userID of userSet) {
+          try {
+            if (!flags.dryRun) {
+              this.log(`Cleanup old accounts: Delete user ${userID}`);
+              await db.collection('users').deleteOne({ _id: userID });
+            } else {
+              this.log(`Cleanup old accounts: Delete user ${userID} (DRY RUN)`);
+            }
+            processed++;
+          } catch (error: any) {
+            this.logError(`Cleanup old accounts: Failed for user ${userID} with error ${error?.message}`);
           }
-        } catch (error: any) {
-          this.logError(`Cleanup old accounts: Failed for user ${userID} with error ${error?.message}`);
         }
-      }
 
+        this.log('Cleanup old accounts done.');
+        return { recordsProcessed: processed };
+      });
+    } finally {
       await connection.close();
-    } catch (error: any) {
-      this.logError(`Cleanup old accounts: Failed with error ${error?.message}`);
     }
-
-    this.log('Cleanup old accounts done.');
   }
 }
