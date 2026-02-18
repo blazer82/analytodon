@@ -42,6 +42,12 @@ import {
  */
 export interface AdminStatsResponseDto {
     /**
+     * When the stats snapshot was generated
+     * @type {string}
+     * @memberof AdminStatsResponseDto
+     */
+    generatedAt?: string;
+    /**
      * User-related metrics
      * @type {UserMetricsDto}
      * @memberof AdminStatsResponseDto
@@ -81,6 +87,7 @@ export function AdminStatsResponseDtoFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
+        'generatedAt': json['generatedAt'] == null ? undefined : json['generatedAt'],
         'users': UserMetricsDtoFromJSON(json['users']),
         'accounts': AccountMetricsDtoFromJSON(json['accounts']),
         'dataVolume': DataVolumeMetricsDtoFromJSON(json['dataVolume']),
@@ -98,6 +105,7 @@ export function AdminStatsResponseDtoToJSONTyped(value?: AdminStatsResponseDto |
 
     return {
         
+        'generatedAt': value['generatedAt'],
         'users': UserMetricsDtoToJSON(value['users']),
         'accounts': AccountMetricsDtoToJSON(value['accounts']),
         'dataVolume': DataVolumeMetricsDtoToJSON(value['dataVolume']),

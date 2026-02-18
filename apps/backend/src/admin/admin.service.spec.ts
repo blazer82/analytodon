@@ -1,79 +1,65 @@
-import {
-  AccountEntity,
-  DailyAccountStatsEntity,
-  DailyTootStatsEntity,
-  TootEntity,
-  UserEntity,
-  UserRole,
-} from '@analytodon/shared-orm';
+import { AdminStatsSnapshotEntity } from '@analytodon/shared-orm';
 import { EntityRepository } from '@mikro-orm/mongodb';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AdminService, STATS_CACHE_TTL_MS } from './admin.service';
+import { AdminService } from './admin.service';
 
 describe('AdminService', () => {
   let service: AdminService;
-  let userRepository: jest.Mocked<EntityRepository<UserEntity>>;
-  let accountRepository: jest.Mocked<EntityRepository<AccountEntity>>;
-  let tootRepository: jest.Mocked<EntityRepository<TootEntity>>;
-  let dailyAccountStatsRepository: jest.Mocked<EntityRepository<DailyAccountStatsEntity>>;
-  let dailyTootStatsRepository: jest.Mocked<EntityRepository<DailyTootStatsEntity>>;
+  let snapshotRepository: jest.Mocked<EntityRepository<AdminStatsSnapshotEntity>>;
 
-  let mockUsersCollection: { aggregate: jest.Mock };
-  let mockAccountsCollection: { aggregate: jest.Mock };
+  const mockStatsData = {
+    users: {
+      totalCount: 100,
+      activeCount: 85,
+      inactiveCount: 15,
+      emailVerifiedCount: 90,
+      roleBreakdown: { admin: 3, accountOwner: 97 },
+      registrations: {
+        last30DaysCount: 10,
+        dailyBreakdown: [
+          { date: '2026-02-01', count: 3 },
+          { date: '2026-02-02', count: 7 },
+        ],
+      },
+      loginActivity: { last7Days: 20, last30Days: 50, last90Days: 75 },
+    },
+    accounts: {
+      totalCount: 150,
+      setupCompleteCount: 120,
+      setupIncompleteCount: 30,
+      activeCount: 100,
+      inactiveCount: 50,
+      serverDistribution: [
+        { serverURL: 'mastodon.social', count: 25 },
+        { serverURL: 'mastodon.online', count: 10 },
+      ],
+    },
+    dataVolume: {
+      totalToots: 50000,
+      totalDailyAccountStats: 10000,
+      totalDailyTootStats: 25000,
+    },
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    mockUsersCollection = {
-      aggregate: jest.fn().mockReturnValue({
-        toArray: jest.fn().mockResolvedValue([]),
-      }),
-    };
-
-    mockAccountsCollection = {
-      aggregate: jest.fn().mockReturnValue({
-        toArray: jest.fn().mockResolvedValue([]),
-      }),
-    };
-
-    const mockGetCollection = (name: string) => {
-      if (name === 'users') return mockUsersCollection;
-      if (name === 'accounts') return mockAccountsCollection;
-      return { aggregate: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) }) };
-    };
-
-    const mockEntityManager = {
-      getDriver: jest.fn().mockReturnValue({
-        getConnection: jest.fn().mockReturnValue({
-          getCollection: jest.fn().mockImplementation(mockGetCollection),
-        }),
-      }),
-    };
-
-    const createMockRepository = () => ({
-      count: jest.fn().mockResolvedValue(0),
-      getEntityManager: jest.fn().mockReturnValue(mockEntityManager),
-    });
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
-        { provide: getRepositoryToken(UserEntity), useValue: createMockRepository() },
-        { provide: getRepositoryToken(AccountEntity), useValue: createMockRepository() },
-        { provide: getRepositoryToken(TootEntity), useValue: createMockRepository() },
-        { provide: getRepositoryToken(DailyAccountStatsEntity), useValue: createMockRepository() },
-        { provide: getRepositoryToken(DailyTootStatsEntity), useValue: createMockRepository() },
+        {
+          provide: getRepositoryToken(AdminStatsSnapshotEntity),
+          useValue: {
+            find: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<AdminService>(AdminService);
-    userRepository = module.get(getRepositoryToken(UserEntity));
-    accountRepository = module.get(getRepositoryToken(AccountEntity));
-    tootRepository = module.get(getRepositoryToken(TootEntity));
-    dailyAccountStatsRepository = module.get(getRepositoryToken(DailyAccountStatsEntity));
-    dailyTootStatsRepository = module.get(getRepositoryToken(DailyTootStatsEntity));
+    snapshotRepository = module.get(getRepositoryToken(AdminStatsSnapshotEntity));
   });
 
   it('should be defined', () => {
@@ -81,219 +67,73 @@ describe('AdminService', () => {
   });
 
   describe('getStats', () => {
-    it('should return complete stats structure with all sections', async () => {
+    it('should return snapshot data with generatedAt when snapshot exists', async () => {
+      const generatedAt = new Date('2026-02-18T03:00:00.000Z');
+      snapshotRepository.find.mockResolvedValue([
+        {
+          generatedAt,
+          data: mockStatsData,
+        } as unknown as AdminStatsSnapshotEntity,
+      ]);
+
       const result = await service.getStats();
 
+      expect(result.generatedAt).toBe('2026-02-18T03:00:00.000Z');
+      expect(result.users).toEqual(mockStatsData.users);
+      expect(result.accounts).toEqual(mockStatsData.accounts);
+      expect(result.dataVolume).toEqual(mockStatsData.dataVolume);
+    });
+
+    it('should query with orderBy generatedAt DESC and limit 1', async () => {
+      snapshotRepository.find.mockResolvedValue([]);
+
+      await service.getStats();
+
+      expect(snapshotRepository.find).toHaveBeenCalledWith(
+        { generatedAt: { $ne: null } },
+        { orderBy: { generatedAt: 'DESC' }, limit: 1 },
+      );
+    });
+
+    it('should return empty stats without generatedAt when no snapshot exists', async () => {
+      snapshotRepository.find.mockResolvedValue([]);
+
+      const result = await service.getStats();
+
+      expect(result.generatedAt).toBeUndefined();
+      expect(result.users.totalCount).toBe(0);
+      expect(result.users.activeCount).toBe(0);
+      expect(result.users.inactiveCount).toBe(0);
+      expect(result.users.emailVerifiedCount).toBe(0);
+      expect(result.users.roleBreakdown).toEqual({ admin: 0, accountOwner: 0 });
+      expect(result.users.registrations).toEqual({ last30DaysCount: 0, dailyBreakdown: [] });
+      expect(result.users.loginActivity).toEqual({ last7Days: 0, last30Days: 0, last90Days: 0 });
+      expect(result.accounts.totalCount).toBe(0);
+      expect(result.accounts.serverDistribution).toEqual([]);
+      expect(result.dataVolume.totalToots).toBe(0);
+    });
+
+    it('should return complete stats structure with all sections', async () => {
+      snapshotRepository.find.mockResolvedValue([
+        {
+          generatedAt: new Date(),
+          data: mockStatsData,
+        } as unknown as AdminStatsSnapshotEntity,
+      ]);
+
+      const result = await service.getStats();
+
+      expect(result).toHaveProperty('generatedAt');
       expect(result).toHaveProperty('users');
       expect(result).toHaveProperty('accounts');
       expect(result).toHaveProperty('dataVolume');
       expect(result.users).toHaveProperty('totalCount');
       expect(result.users).toHaveProperty('activeCount');
-      expect(result.users).toHaveProperty('inactiveCount');
-      expect(result.users).toHaveProperty('emailVerifiedCount');
       expect(result.users).toHaveProperty('roleBreakdown');
       expect(result.users).toHaveProperty('registrations');
       expect(result.users).toHaveProperty('loginActivity');
-      expect(result.accounts).toHaveProperty('totalCount');
-      expect(result.accounts).toHaveProperty('setupCompleteCount');
-      expect(result.accounts).toHaveProperty('setupIncompleteCount');
-      expect(result.accounts).toHaveProperty('activeCount');
-      expect(result.accounts).toHaveProperty('inactiveCount');
       expect(result.accounts).toHaveProperty('serverDistribution');
       expect(result.dataVolume).toHaveProperty('totalToots');
-      expect(result.dataVolume).toHaveProperty('totalDailyAccountStats');
-      expect(result.dataVolume).toHaveProperty('totalDailyTootStats');
-    });
-
-    it('should return correct user counts by status and role', async () => {
-      // Set up specific return values for each count call
-      userRepository.count
-        .mockResolvedValueOnce(100) // totalUsers
-        .mockResolvedValueOnce(85) // activeUsers
-        .mockResolvedValueOnce(15) // inactiveUsers
-        .mockResolvedValueOnce(90) // emailVerifiedUsers
-        .mockResolvedValueOnce(3) // adminUsers
-        .mockResolvedValueOnce(97) // accountOwnerUsers
-        .mockResolvedValueOnce(20) // loginLast7Days
-        .mockResolvedValueOnce(50) // loginLast30Days
-        .mockResolvedValueOnce(75); // loginLast90Days
-
-      const result = await service.getStats();
-
-      expect(result.users.totalCount).toBe(100);
-      expect(result.users.activeCount).toBe(85);
-      expect(result.users.inactiveCount).toBe(15);
-      expect(result.users.emailVerifiedCount).toBe(90);
-      expect(result.users.roleBreakdown.admin).toBe(3);
-      expect(result.users.roleBreakdown.accountOwner).toBe(97);
-    });
-
-    it('should query user counts with correct filters', async () => {
-      await service.getStats();
-
-      // Verify the filter arguments passed to count()
-      expect(userRepository.count).toHaveBeenCalledWith({});
-      expect(userRepository.count).toHaveBeenCalledWith({ isActive: true });
-      expect(userRepository.count).toHaveBeenCalledWith({ isActive: false });
-      expect(userRepository.count).toHaveBeenCalledWith({ emailVerified: true });
-      expect(userRepository.count).toHaveBeenCalledWith({ role: UserRole.Admin });
-      expect(userRepository.count).toHaveBeenCalledWith({ role: UserRole.AccountOwner });
-    });
-
-    it('should return correct login activity counts', async () => {
-      userRepository.count
-        .mockResolvedValueOnce(0) // totalUsers
-        .mockResolvedValueOnce(0) // activeUsers
-        .mockResolvedValueOnce(0) // inactiveUsers
-        .mockResolvedValueOnce(0) // emailVerifiedUsers
-        .mockResolvedValueOnce(0) // adminUsers
-        .mockResolvedValueOnce(0) // accountOwnerUsers
-        .mockResolvedValueOnce(10) // loginLast7Days
-        .mockResolvedValueOnce(25) // loginLast30Days
-        .mockResolvedValueOnce(40); // loginLast90Days
-
-      const result = await service.getStats();
-
-      expect(result.users.loginActivity.last7Days).toBe(10);
-      expect(result.users.loginActivity.last30Days).toBe(25);
-      expect(result.users.loginActivity.last90Days).toBe(40);
-    });
-
-    it('should query login activity with date thresholds', async () => {
-      const beforeTest = new Date();
-      await service.getStats();
-
-      // Find the login activity calls (7th, 8th, 9th calls to count)
-      const loginCalls = userRepository.count.mock.calls.filter(
-        (call) => call[0] && typeof call[0] === 'object' && 'lastLoginAt' in call[0],
-      );
-
-      expect(loginCalls).toHaveLength(3);
-
-      // Verify each call has a $gte date filter
-      for (const call of loginCalls) {
-        const filter = call[0] as Record<string, Record<string, Date>>;
-        expect(filter.lastLoginAt).toHaveProperty('$gte');
-        expect(filter.lastLoginAt.$gte).toBeInstanceOf(Date);
-        // The date should be before now
-        expect(filter.lastLoginAt.$gte.getTime()).toBeLessThanOrEqual(beforeTest.getTime());
-      }
-    });
-
-    it('should return registration trend from aggregation', async () => {
-      const mockAggResult = [
-        { _id: '2026-02-01', count: 3 },
-        { _id: '2026-02-02', count: 5 },
-        { _id: '2026-02-03', count: 2 },
-      ];
-      mockUsersCollection.aggregate.mockReturnValue({
-        toArray: jest.fn().mockResolvedValue(mockAggResult),
-      });
-
-      const result = await service.getStats();
-
-      expect(result.users.registrations.last30DaysCount).toBe(10);
-      expect(result.users.registrations.dailyBreakdown).toEqual([
-        { date: '2026-02-01', count: 3 },
-        { date: '2026-02-02', count: 5 },
-        { date: '2026-02-03', count: 2 },
-      ]);
-    });
-
-    it('should return server distribution from aggregation', async () => {
-      const mockAggResult = [
-        { _id: 'mastodon.social', count: 25 },
-        { _id: 'mastodon.online', count: 10 },
-      ];
-      mockAccountsCollection.aggregate.mockReturnValue({
-        toArray: jest.fn().mockResolvedValue(mockAggResult),
-      });
-
-      const result = await service.getStats();
-
-      expect(result.accounts.serverDistribution).toEqual([
-        { serverURL: 'mastodon.social', count: 25 },
-        { serverURL: 'mastodon.online', count: 10 },
-      ]);
-    });
-
-    it('should return correct account counts', async () => {
-      accountRepository.count
-        .mockResolvedValueOnce(150) // totalAccounts
-        .mockResolvedValueOnce(120) // setupCompleteAccounts
-        .mockResolvedValueOnce(30) // setupIncompleteAccounts
-        .mockResolvedValueOnce(100) // activeAccounts
-        .mockResolvedValueOnce(50); // inactiveAccounts
-
-      const result = await service.getStats();
-
-      expect(result.accounts.totalCount).toBe(150);
-      expect(result.accounts.setupCompleteCount).toBe(120);
-      expect(result.accounts.setupIncompleteCount).toBe(30);
-      expect(result.accounts.activeCount).toBe(100);
-      expect(result.accounts.inactiveCount).toBe(50);
-    });
-
-    it('should return correct data volume counts', async () => {
-      tootRepository.count.mockResolvedValueOnce(50000);
-      dailyAccountStatsRepository.count.mockResolvedValueOnce(10000);
-      dailyTootStatsRepository.count.mockResolvedValueOnce(25000);
-
-      const result = await service.getStats();
-
-      expect(result.dataVolume.totalToots).toBe(50000);
-      expect(result.dataVolume.totalDailyAccountStats).toBe(10000);
-      expect(result.dataVolume.totalDailyTootStats).toBe(25000);
-    });
-
-    it('should handle empty aggregation results', async () => {
-      const result = await service.getStats();
-
-      expect(result.users.registrations.last30DaysCount).toBe(0);
-      expect(result.users.registrations.dailyBreakdown).toEqual([]);
-      expect(result.accounts.serverDistribution).toEqual([]);
-    });
-
-    it('should return cached result on second call within TTL', async () => {
-      const result1 = await service.getStats();
-
-      // Clear call counts to verify no new calls are made
-      userRepository.count.mockClear();
-      accountRepository.count.mockClear();
-      tootRepository.count.mockClear();
-      dailyAccountStatsRepository.count.mockClear();
-      dailyTootStatsRepository.count.mockClear();
-
-      const result2 = await service.getStats();
-
-      expect(result2).toBe(result1);
-      expect(userRepository.count).not.toHaveBeenCalled();
-      expect(accountRepository.count).not.toHaveBeenCalled();
-      expect(tootRepository.count).not.toHaveBeenCalled();
-      expect(dailyAccountStatsRepository.count).not.toHaveBeenCalled();
-      expect(dailyTootStatsRepository.count).not.toHaveBeenCalled();
-    });
-
-    it('should re-fetch after TTL has expired', async () => {
-      await service.getStats();
-
-      // Backdate the cache past the TTL
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).cachedAt = Date.now() - STATS_CACHE_TTL_MS - 1;
-
-      userRepository.count.mockClear();
-      accountRepository.count.mockClear();
-      tootRepository.count.mockClear();
-      dailyAccountStatsRepository.count.mockClear();
-      dailyTootStatsRepository.count.mockClear();
-
-      await service.getStats();
-
-      expect(userRepository.count).toHaveBeenCalled();
-      expect(accountRepository.count).toHaveBeenCalled();
-      expect(tootRepository.count).toHaveBeenCalled();
-      expect(dailyAccountStatsRepository.count).toHaveBeenCalled();
-      expect(dailyTootStatsRepository.count).toHaveBeenCalled();
     });
   });
 });

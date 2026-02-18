@@ -113,6 +113,11 @@ export default function AdminDashboard() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {stats.generatedAt && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {t('labels.lastUpdated', { date: new Date(stats.generatedAt).toLocaleString() })}
+        </Typography>
+      )}
       <Grid container spacing={3}>
         {/* KPI Cards */}
         <Grid size={{ xs: 6, md: 3 }}>
