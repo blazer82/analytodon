@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "title": "Kontostatus"
+  },
+  "tabs": {
+    "stale": "Veraltet",
+    "incomplete": "Unvollständig",
+    "abandoned": "Aufgegeben"
+  },
+  "columns": {
+    "account": "Konto",
+    "server": "Server",
+    "owner": "Inhaber",
+    "lastStats": "Letzte Statistik",
+    "daysSinceUpdate": "Tage veraltet",
+    "createdDate": "Erstellt",
+    "daysSinceCreation": "Tage seit Erstellung",
+    "lastLogin": "Letzte Anmeldung",
+    "deletionNotice": "Löschhinweis"
+  },
+  "labels": {
+    "lastUpdated": "Zuletzt aktualisiert: {{date}}",
+    "never": "Nie",
+    "unknown": "Unbekannt",
+    "sent": "Gesendet",
+    "notSent": "Nicht gesendet",
+    "noStats": "Keine Statistiken"
+  },
+  "messages": {
+    "loadError": "Kontostatusdaten konnten nicht geladen werden.",
+    "noStaleAccounts": "Keine veralteten Konten gefunden.",
+    "noIncompleteAccounts": "Keine unvollständigen Kontoeinrichtungen gefunden.",
+    "noAbandonedAccounts": "Keine aufgegebenen Konten gefunden."
+  }
+}
