@@ -32,5 +32,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 40 2 * * * analytodon /app/apps/cli/bin/run.js cleanup tootstats > /tmp/cron_job_pipe 2>&1
 5 17 * * * analytodon /app/apps/cli/bin/run.js cleanup oldaccounts > /tmp/cron_job_pipe 2>&1
 7 17 * * * analytodon /app/apps/cli/bin/run.js cleanup refreshtokens > /tmp/cron_job_pipe 2>&1
+8 17 * * * analytodon /app/apps/cli/bin/run.js cleanup jobruns > /tmp/cron_job_pipe 2>&1
 
 # An empty line is required at the end of this file for a valid cron file.

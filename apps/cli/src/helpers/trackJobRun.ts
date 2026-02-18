@@ -62,20 +62,25 @@ export async function trackJobRun(
     const durationMs = completedAt.getTime() - startedAt.getTime();
     const errorMessage = error?.message || String(error);
 
-    await collection.updateOne(
-      { _id: insertedId },
-      {
-        $set: {
-          completedAt,
-          status: 'failure',
-          durationMs,
-          errorMessage,
-          updatedAt: completedAt,
+    try {
+      await collection.updateOne(
+        { _id: insertedId },
+        {
+          $set: {
+            completedAt,
+            status: 'failure',
+            durationMs,
+            errorMessage,
+            updatedAt: completedAt,
+          },
         },
-      },
-    );
+      );
+    } catch (updateError: any) {
+      logger.logError(
+        `Job tracking: Failed to record failure for ${jobName}: ${updateError?.message || String(updateError)}`,
+      );
+    }
 
     logger.logError(`Job tracking: ${jobName} failed (${durationMs}ms): ${errorMessage}`);
-    throw error;
   }
 }

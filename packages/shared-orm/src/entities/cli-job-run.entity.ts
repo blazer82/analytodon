@@ -9,12 +9,14 @@ export enum CliJobStatus {
 }
 
 @Entity({ collection: 'cli_job_runs' })
+@Index({ properties: ['jobName', 'status', 'startedAt'] })
 export class CliJobRunEntity extends BaseEntity {
   @Property()
   @Index()
   jobName!: string;
 
   @Property()
+  @Index()
   startedAt!: Date;
 
   @Property({ nullable: true })

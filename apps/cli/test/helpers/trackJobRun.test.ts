@@ -73,22 +73,32 @@ describe('trackJobRun', () => {
     expect(updatedDoc.$set.recordsProcessed).to.equal(42);
   });
 
-  it('should update to failure and re-throw on error', async () => {
-    const testError = new Error('test failure');
-
-    try {
-      await trackJobRun({ db: mockDb, jobName: 'test:job', logger: mockLogger }, async () => {
-        throw testError;
-      });
-      expect.fail('Should have thrown');
-    } catch (error) {
-      expect(error).to.equal(testError);
-    }
+  it('should update to failure and log error without re-throwing', async () => {
+    await trackJobRun({ db: mockDb, jobName: 'test:job', logger: mockLogger }, async () => {
+      throw new Error('test failure');
+    });
 
     expect(updatedDoc.$set.status).to.equal('failure');
     expect(updatedDoc.$set.errorMessage).to.equal('test failure');
     expect(updatedDoc.$set.completedAt).to.be.instanceOf(Date);
     expect(updatedDoc.$set.durationMs).to.be.a('number');
+    expect(errorMessages).to.have.lengthOf(1);
+    expect(errorMessages[0]).to.include('test failure');
+  });
+
+  it('should preserve original error when failure updateOne throws', async () => {
+    mockCollection.updateOne = async () => {
+      throw new Error('db connection lost');
+    };
+
+    await trackJobRun({ db: mockDb, jobName: 'test:job', logger: mockLogger }, async () => {
+      throw new Error('original error');
+    });
+
+    expect(errorMessages).to.have.lengthOf(2);
+    expect(errorMessages[0]).to.include('Failed to record failure');
+    expect(errorMessages[0]).to.include('db connection lost');
+    expect(errorMessages[1]).to.include('original error');
   });
 
   it('should compute durationMs correctly', async () => {
