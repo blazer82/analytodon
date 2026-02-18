@@ -11,7 +11,7 @@
     "jobStatuses": "Job-Status",
     "timingMargins": "Zeitliche Abstände",
     "dataFreshness": "Datenaktualität",
-    "collectionSizes": "Sammlungsgrößen",
+    "collectionSizes": "Collection-Größen",
     "recentFailures": "Letzte Fehler",
     "marginDetails": "Ausführungsdetails"
   },
@@ -43,15 +43,15 @@
     "yes": "Ja",
     "no": "Nein",
     "dailyAccountStats": "Tägliche Kontostatistiken",
-    "dailyTootStats": "Tägliche Toot-Statistiken",
-    "toots": "Toots"
+    "dailyTootStats": "Tägliche Beitragsstatistiken",
+    "toots": "Beiträge"
   },
   "collections": {
     "users": "Benutzer",
     "accounts": "Konten",
-    "toots": "Toots",
+    "toots": "Beiträge",
     "dailyAccountStats": "Tägliche Kontostatistiken",
-    "dailyTootStats": "Tägliche Toot-Statistiken",
+    "dailyTootStats": "Tägliche Beitragsstatistiken",
     "refreshTokens": "Aktualisierungstoken",
     "mastodonApps": "Mastodon-Apps",
     "cliJobRuns": "CLI-Jobausführungen"
