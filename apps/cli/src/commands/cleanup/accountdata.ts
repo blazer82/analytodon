@@ -2,6 +2,7 @@ import { Flags } from '@oclif/core';
 import { Document, Filter, MongoClient } from 'mongodb';
 
 import { BaseCommand } from '../../base';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class Accountdata extends BaseCommand {
   static description = 'Clean up orphaned account data.';
@@ -37,42 +38,52 @@ export default class Accountdata extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const accountIds = (
-      await db
-        .collection('accounts')
-        .find({}, { projection: { _id: 1 } })
-        .toArray()
-    ).map(({ _id }) => _id);
+    try {
+      await trackJobRun({ db, jobName: 'cleanup:accountdata', logger: this }, async () => {
+        const accountIds = (
+          await db
+            .collection('accounts')
+            .find({}, { projection: { _id: 1 } })
+            .toArray()
+        ).map(({ _id }) => _id);
 
-    if (accountIds.length > 0) {
-      const filter: Filter<Document> = {
-        account: { $nin: accountIds },
-      };
+        if (accountIds.length > 0) {
+          const filter: Filter<Document> = {
+            account: { $nin: accountIds },
+          };
 
-      const collections = [
-        'accountcredentials',
-        'accountstats',
-        'dailyaccountstats',
-        'dailytootstats',
-        'toots',
-        'tootstats',
-      ];
+          const collections = [
+            'accountcredentials',
+            'accountstats',
+            'dailyaccountstats',
+            'dailytootstats',
+            'toots',
+            'tootstats',
+          ];
 
-      for (const collection of collections) {
-        if (!flags.dryRun) {
-          const { deletedCount } = await db.collection(collection).deleteMany(filter);
-          this.log(`Clean up account data: Removed ${deletedCount} ${collection}`);
+          let totalDeleted = 0;
+
+          for (const collection of collections) {
+            if (!flags.dryRun) {
+              const { deletedCount } = await db.collection(collection).deleteMany(filter);
+              totalDeleted += deletedCount;
+              this.log(`Clean up account data: Removed ${deletedCount} ${collection}`);
+            } else {
+              const count = await db.collection(collection).count(filter);
+              totalDeleted += count;
+              this.log(`Clean up account data: Removed ${count} ${collection} (DRY RUN)`);
+            }
+          }
+
+          this.log('Clean up account data: Done');
+          return { recordsProcessed: totalDeleted };
         } else {
-          const count = await db.collection(collection).count(filter);
-          this.log(`Clean up account data: Removed ${count} ${collection} (DRY RUN)`);
+          this.logWarning('Clean up account data: Something went wrong, no changes made.');
+          return { recordsProcessed: 0 };
         }
-      }
-
-      this.log('Clean up account data: Done');
-    } else {
-      this.logWarning('Clean up account data: Something went wrong, no changes made.');
+      });
+    } finally {
+      await connection.close();
     }
-
-    await connection.close();
   }
 }

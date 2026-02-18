@@ -4,6 +4,7 @@ import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 import { BaseCommand } from '../../base';
 import { fetchTootstatsForAccount } from '../../helpers/fetchTootstatsForAccount';
 import { getTimezones } from '../../helpers/getTimezones';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class TootStats extends BaseCommand {
   static description = 'Gather toot stats for all accounts';
@@ -49,34 +50,42 @@ export default class TootStats extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const accountFilter: Filter<Document> = {
-      isActive: true,
-    };
+    try {
+      await trackJobRun({ db, jobName: 'fetch:tootstats', logger: this }, async () => {
+        const accountFilter: Filter<Document> = {
+          isActive: true,
+        };
 
-    if (flags.account) {
-      this.log(`Fetching toot stats: Account: ${flags.account}`);
-      accountFilter['_id'] = new ObjectId(flags.account);
-    } else {
-      this.log(`Fetching toot stats: Timezones: ${timezones.join(',')}`);
-      accountFilter['timezone'] = { $in: timezones };
+        if (flags.account) {
+          this.log(`Fetching toot stats: Account: ${flags.account}`);
+          accountFilter['_id'] = new ObjectId(flags.account);
+        } else {
+          this.log(`Fetching toot stats: Timezones: ${timezones.join(',')}`);
+          accountFilter['timezone'] = { $in: timezones };
+        }
+
+        const accounts = await db.collection('accounts').find(accountFilter).toArray();
+
+        this.log(`Fetching toot stats: Found ${accounts.length} accounts to process`);
+
+        let processed = 0;
+
+        for (const account of accounts) {
+          try {
+            await fetchTootstatsForAccount(db, account);
+            processed++;
+          } catch (error: any) {
+            this.logError(
+              `Fetching toot stats: Failed to process account ${account.name} (${account._id}): ${error?.message || error}`,
+            );
+          }
+        }
+
+        this.log('Fetching toot stats: Done');
+        return { recordsProcessed: processed };
+      });
+    } finally {
+      await connection.close();
     }
-
-    const accounts = await db.collection('accounts').find(accountFilter).toArray();
-
-    this.log(`Fetching toot stats: Found ${accounts.length} accounts to process`);
-
-    for (const account of accounts) {
-      try {
-        await fetchTootstatsForAccount(db, account);
-      } catch (error: any) {
-        this.error(
-          `Fetching toot stats: Failed to process account ${account.name} (${account._id}): ${error?.message || error}`,
-        );
-      }
-    }
-
-    this.log('Fetching toot stats: Done');
-
-    await connection.close();
   }
 }

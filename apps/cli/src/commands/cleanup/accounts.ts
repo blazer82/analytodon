@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb';
 
 import { BaseCommand } from '../../base';
 import { processInBatches } from '../../helpers/processInBatches';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 const BATCH_SIZE = 5;
 
@@ -43,37 +44,42 @@ export default class Accounts extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const userIds = (
-      await db
-        .collection('users')
-        .find({}, { projection: { _id: 1 } })
-        .toArray()
-    ).map(({ _id }) => _id);
+    try {
+      await trackJobRun({ db, jobName: 'cleanup:accounts', logger: this }, async () => {
+        const userIds = (
+          await db
+            .collection('users')
+            .find({}, { projection: { _id: 1 } })
+            .toArray()
+        ).map(({ _id }) => _id);
 
-    const accountIds = (
-      await db
-        .collection('accounts')
-        .find(
-          {
-            $or: [{ owner: { $nin: userIds } }, { setupComplete: { $ne: true }, createdAt: { $lt: cutoffDate } }],
-          },
-          { projection: { _id: 1 } },
-        )
-        .toArray()
-    ).map(({ _id }) => _id);
+        const accountIds = (
+          await db
+            .collection('accounts')
+            .find(
+              {
+                $or: [{ owner: { $nin: userIds } }, { setupComplete: { $ne: true }, createdAt: { $lt: cutoffDate } }],
+              },
+              { projection: { _id: 1 } },
+            )
+            .toArray()
+        ).map(({ _id }) => _id);
 
-    this.log(`Clean up accounts: ${accountIds.length} accounts to clean up.`);
+        this.log(`Clean up accounts: ${accountIds.length} accounts to clean up.`);
 
-    await processInBatches(BATCH_SIZE, accountIds, async (id) => {
-      this.log(`Clean up accounts: Remove account ${id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
-      if (!flags.dryRun) {
-        await db.collection('accounts').deleteOne({ _id: id });
-        await db.collection('accountcredentials').deleteOne({ account: id });
-      }
-    });
+        await processInBatches(BATCH_SIZE, accountIds, async (id) => {
+          this.log(`Clean up accounts: Remove account ${id}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+          if (!flags.dryRun) {
+            await db.collection('accounts').deleteOne({ _id: id });
+            await db.collection('accountcredentials').deleteOne({ account: id });
+          }
+        });
 
-    this.log('Clean up accounts: Done');
-
-    await connection.close();
+        this.log('Clean up accounts: Done');
+        return { recordsProcessed: accountIds.length };
+      });
+    } finally {
+      await connection.close();
+    }
   }
 }

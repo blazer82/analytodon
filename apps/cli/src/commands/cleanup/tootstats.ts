@@ -4,6 +4,7 @@ import { Document, Filter, MongoClient } from 'mongodb';
 import { BaseCommand } from '../../base';
 import { getDaysAgo } from '../../helpers/getDaysAgo';
 import { processInBatches } from '../../helpers/processInBatches';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 const BATCH_SIZE = 5;
 
@@ -46,68 +47,76 @@ export default class Tootstats extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const cutoffDate = getDaysAgo(flags.days, 'Europe/London');
+    try {
+      await trackJobRun({ db, jobName: 'cleanup:tootstats', logger: this }, async () => {
+        const cutoffDate = getDaysAgo(flags.days, 'Europe/London');
 
-    const tootstats = await db
-      .collection('tootstats')
-      .aggregate([
-        {
-          $match: {
+        const tootstats = await db
+          .collection('tootstats')
+          .aggregate([
+            {
+              $match: {
+                fetchedAt: {
+                  $lt: cutoffDate,
+                },
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  uri: '$uri',
+                  repliesCount: '$repliesCount',
+                  reblogsCount: '$reblogsCount',
+                  favouritesCount: '$favouritesCount',
+                },
+                fetchedAt: {
+                  $min: '$fetchedAt',
+                },
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  uri: '$_id.uri',
+                },
+                fetchedAt: {
+                  $addToSet: '$fetchedAt',
+                },
+              },
+            },
+          ])
+          .toArray();
+
+        this.log(`Clean up tootstats: ${tootstats.length} toots to clean up.`);
+
+        await processInBatches(BATCH_SIZE, tootstats, async (info) => {
+          this.debug(`Clean up tootstats: Clean up for toot ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+
+          const cleanupFilter: Filter<Document> = {
+            uri: info._id.uri,
             fetchedAt: {
               $lt: cutoffDate,
+              $nin: info.fetchedAt,
             },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              uri: '$uri',
-              repliesCount: '$repliesCount',
-              reblogsCount: '$reblogsCount',
-              favouritesCount: '$favouritesCount',
-            },
-            fetchedAt: {
-              $min: '$fetchedAt',
-            },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              uri: '$_id.uri',
-            },
-            fetchedAt: {
-              $addToSet: '$fetchedAt',
-            },
-          },
-        },
-      ])
-      .toArray();
+          };
 
-    this.log(`Clean up tootstats: ${tootstats.length} toots to clean up.`);
+          const count = await db.collection('tootstats').countDocuments(cleanupFilter);
 
-    await processInBatches(BATCH_SIZE, tootstats, async (info) => {
-      this.debug(`Clean up tootstats: Clean up for toot ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
+          if (count > 0) {
+            this.log(
+              `Clean up tootstats: Remove ${count} instances of ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`,
+            );
 
-      const cleanupFilter: Filter<Document> = {
-        uri: info._id.uri,
-        fetchedAt: {
-          $lt: cutoffDate,
-          $nin: info.fetchedAt,
-        },
-      };
+            if (!flags.dryRun) {
+              await db.collection('tootstats').deleteMany(cleanupFilter);
+            }
+          }
+        });
 
-      const count = await db.collection('tootstats').countDocuments(cleanupFilter);
-
-      if (count > 0) {
-        this.log(`Clean up tootstats: Remove ${count} instances of ${info._id.uri}${flags.dryRun ? ' (DRY RUN)' : ''}`);
-
-        if (!flags.dryRun) {
-          await db.collection('tootstats').deleteMany(cleanupFilter);
-        }
-      }
-    });
-
-    await connection.close();
+        return { recordsProcessed: tootstats.length };
+      });
+    } finally {
+      await connection.close();
+    }
   }
 }

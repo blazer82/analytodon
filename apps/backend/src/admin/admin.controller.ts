@@ -6,9 +6,11 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { AdminHealthService } from './admin-health.service';
+import { AdminSystemHealthService } from './admin-system-health.service';
 import { AdminService } from './admin.service';
 import { AccountHealthResponseDto } from './dto/account-health-response.dto';
 import { AdminStatsResponseDto } from './dto/admin-stats-response.dto';
+import { SystemHealthResponseDto } from './dto/system-health-response.dto';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -21,6 +23,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly adminHealthService: AdminHealthService,
+    private readonly adminSystemHealthService: AdminSystemHealthService,
   ) {}
 
   @Get('stats')
@@ -45,5 +48,19 @@ export class AdminController {
   async getAccountHealth(): Promise<AccountHealthResponseDto> {
     this.logger.log('Admin requesting account health report');
     return this.adminHealthService.getAccountHealth();
+  }
+
+  @Get('system/health')
+  @ApiOperation({ summary: 'Get system health report (Admin)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'System health report retrieved.',
+    type: SystemHealthResponseDto,
+  })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden resource.' })
+  async getSystemHealth(): Promise<SystemHealthResponseDto> {
+    this.logger.log('Admin requesting system health report');
+    return this.adminSystemHealthService.getSystemHealth();
   }
 }

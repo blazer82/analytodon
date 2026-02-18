@@ -2,6 +2,7 @@ import { Flags } from '@oclif/core';
 import { Document, Filter, MongoClient } from 'mongodb';
 
 import { BaseCommand } from '../../base';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class RefreshTokens extends BaseCommand {
   static description = 'Clean up expired refresh tokens.';
@@ -37,23 +38,30 @@ export default class RefreshTokens extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const now = new Date();
-    const query: Filter<Document> = {
-      expiresAt: { $lt: now },
-    };
+    try {
+      await trackJobRun({ db, jobName: 'cleanup:refreshtokens', logger: this }, async () => {
+        const now = new Date();
+        const query: Filter<Document> = {
+          expiresAt: { $lt: now },
+        };
 
-    const collection = db.collection('refreshtokens');
+        const collection = db.collection('refreshtokens');
+        let count = 0;
 
-    if (flags.dryRun) {
-      const count = await collection.countDocuments(query);
-      this.log(`Clean up refresh tokens: ${count} expired tokens would be removed (DRY RUN).`);
-    } else {
-      const { deletedCount } = await collection.deleteMany(query);
-      this.log(`Clean up refresh tokens: Removed ${deletedCount} expired tokens.`);
+        if (flags.dryRun) {
+          count = await collection.countDocuments(query);
+          this.log(`Clean up refresh tokens: ${count} expired tokens would be removed (DRY RUN).`);
+        } else {
+          const { deletedCount } = await collection.deleteMany(query);
+          count = deletedCount;
+          this.log(`Clean up refresh tokens: Removed ${deletedCount} expired tokens.`);
+        }
+
+        this.log('Clean up refresh tokens: Done');
+        return { recordsProcessed: count };
+      });
+    } finally {
+      await connection.close();
     }
-
-    this.log('Clean up refresh tokens: Done');
-
-    await connection.close();
   }
 }

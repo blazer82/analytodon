@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "title": "System Health"
+  },
+  "status": {
+    "healthy": "All systems are operating normally.",
+    "warning": "Some jobs are overdue, have failures, or data is stale.",
+    "critical": "One or more jobs appear to be stuck. Immediate attention required."
+  },
+  "sections": {
+    "jobStatuses": "Job Statuses",
+    "timingMargins": "Timing Margins",
+    "dataFreshness": "Data Freshness",
+    "collectionSizes": "Collection Sizes",
+    "recentFailures": "Recent Failures",
+    "marginDetails": "Run Details"
+  },
+  "columns": {
+    "jobName": "Job",
+    "lastRun": "Last Run",
+    "status": "Status",
+    "duration": "Duration",
+    "records": "Records",
+    "overdue": "Overdue",
+    "fetchJob": "Fetch Job",
+    "aggregateJob": "Aggregate Job",
+    "avgMargin": "Avg Margin",
+    "minMargin": "Min Margin",
+    "overlaps": "Overlaps",
+    "samples": "Samples",
+    "aggregateStart": "Aggregate Start",
+    "fetchEnd": "Fetch End",
+    "margin": "Margin",
+    "overlap": "Overlap",
+    "time": "Time",
+    "error": "Error"
+  },
+  "labels": {
+    "lastUpdated": "Last updated: {{date}}",
+    "overdue": "Overdue",
+    "stale": "Stale",
+    "fresh": "Fresh",
+    "yes": "Yes",
+    "no": "No",
+    "dailyAccountStats": "Daily Account Stats",
+    "dailyTootStats": "Daily Toot Stats",
+    "toots": "Toots"
+  },
+  "collections": {
+    "users": "Users",
+    "accounts": "Accounts",
+    "toots": "Toots",
+    "dailyAccountStats": "Daily Account Stats",
+    "dailyTootStats": "Daily Toot Stats",
+    "refreshTokens": "Refresh Tokens",
+    "mastodonApps": "Mastodon Apps",
+    "cliJobRuns": "CLI Job Runs"
+  },
+  "messages": {
+    "loadError": "Failed to load system health data.",
+    "noJobData": "No job data available yet."
+  }
+}

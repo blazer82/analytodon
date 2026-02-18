@@ -1,6 +1,7 @@
 import {
   AccountHealthSnapshotEntity,
   AdminStatsSnapshotEntity,
+  SystemHealthSnapshotEntity,
   UserCredentialsEntity,
   UserEntity,
   UserRole,
@@ -31,6 +32,38 @@ describe('AdminController (e2e)', () => {
   const adminCredentials = {
     email: 'admin@example.com',
     password: 'AdminPassword123!',
+  };
+
+  const systemHealthSnapshotData = {
+    jobStatuses: [
+      {
+        jobName: 'fetch:accountstats',
+        lastStartedAt: '2026-02-18T03:33:00.000Z',
+        lastCompletedAt: '2026-02-18T03:33:45.000Z',
+        lastStatus: 'success',
+        lastDurationMs: 45000,
+        lastRecordsProcessed: 10,
+        lastErrorMessage: null,
+        isOverdue: false,
+      },
+    ],
+    dataFreshness: {
+      dailyAccountStats: { latestDate: '2026-02-17T00:00:00.000Z', isStale: false },
+      dailyTootStats: { latestDate: '2026-02-17T00:00:00.000Z', isStale: false },
+      toots: { latestFetchedAt: '2026-02-18T03:33:00.000Z', isStale: false },
+    },
+    collectionSizes: {
+      users: 50,
+      accounts: 45,
+      toots: 10000,
+      dailyAccountStats: 5000,
+      dailyTootStats: 8000,
+      refreshTokens: 100,
+      mastodonApps: 5,
+      cliJobRuns: 500,
+    },
+    timingMargins: [],
+    recentFailures: [],
   };
 
   const healthSnapshotData = {
@@ -153,6 +186,13 @@ describe('AdminController (e2e)', () => {
       data: healthSnapshotData,
     });
     await entityManager.persistAndFlush(healthSnapshot);
+
+    // Seed system health snapshot
+    const systemHealthSnapshot = entityManager.create(SystemHealthSnapshotEntity, {
+      generatedAt: new Date('2026-02-18T03:17:00.000Z'),
+      data: systemHealthSnapshotData,
+    });
+    await entityManager.persistAndFlush(systemHealthSnapshot);
   });
 
   afterAll(async () => {
@@ -161,6 +201,7 @@ describe('AdminController (e2e)', () => {
   });
 
   const clearDatabase = async () => {
+    await entityManager.nativeDelete(SystemHealthSnapshotEntity, {});
     await entityManager.nativeDelete(AccountHealthSnapshotEntity, {});
     await entityManager.nativeDelete(AdminStatsSnapshotEntity, {});
     await entityManager.nativeDelete(UserCredentialsEntity, {});
@@ -297,6 +338,59 @@ describe('AdminController (e2e)', () => {
     it('should return 403 for non-admin user', async () => {
       await request(app.getHttpServer())
         .get('/admin/accounts/health')
+        .set('Authorization', `Bearer ${nonAdminAccessToken}`)
+        .expect(HttpStatus.FORBIDDEN);
+    });
+  });
+
+  describe('GET /admin/system/health', () => {
+    it('should return 200 with correct structure for admin', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/admin/system/health')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toHaveProperty('generatedAt');
+      expect(response.body).toHaveProperty('jobStatuses');
+      expect(response.body).toHaveProperty('dataFreshness');
+      expect(response.body).toHaveProperty('collectionSizes');
+      expect(response.body).toHaveProperty('timingMargins');
+      expect(response.body).toHaveProperty('recentFailures');
+      expect(Array.isArray(response.body.jobStatuses)).toBe(true);
+      expect(Array.isArray(response.body.timingMargins)).toBe(true);
+      expect(Array.isArray(response.body.recentFailures)).toBe(true);
+    });
+
+    it('should return correct data matching seeded system health snapshot', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/admin/system/health')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.generatedAt).toBe('2026-02-18T03:17:00.000Z');
+      expect(response.body.jobStatuses).toHaveLength(1);
+      expect(response.body.jobStatuses[0].jobName).toBe('fetch:accountstats');
+      expect(response.body.jobStatuses[0].lastStatus).toBe('success');
+      expect(response.body.jobStatuses[0].lastDurationMs).toBe(45000);
+
+      expect(response.body.dataFreshness.dailyAccountStats.isStale).toBe(false);
+      expect(response.body.dataFreshness.dailyTootStats.isStale).toBe(false);
+      expect(response.body.dataFreshness.toots.isStale).toBe(false);
+
+      expect(response.body.collectionSizes.users).toBe(50);
+      expect(response.body.collectionSizes.toots).toBe(10000);
+      expect(response.body.collectionSizes.cliJobRuns).toBe(500);
+
+      expect(response.body.recentFailures).toHaveLength(0);
+    });
+
+    it('should return 401 without authentication', async () => {
+      await request(app.getHttpServer()).get('/admin/system/health').expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 403 for non-admin user', async () => {
+      await request(app.getHttpServer())
+        .get('/admin/system/health')
         .set('Authorization', `Bearer ${nonAdminAccessToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });

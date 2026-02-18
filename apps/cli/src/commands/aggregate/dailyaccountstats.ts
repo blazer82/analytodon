@@ -4,6 +4,7 @@ import { MongoClient } from 'mongodb';
 import { BaseCommand } from '../../base';
 import { getTimezones } from '../../helpers/getTimezones';
 import { getYesterday } from '../../helpers/getYesterday';
+import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class DailyAccountStats extends BaseCommand {
   static description = 'Aggregate daily account stats for all accounts';
@@ -42,91 +43,99 @@ export default class DailyAccountStats extends BaseCommand {
     const connection = await new MongoClient(flags.connectionString).connect();
     const db = connection.db(flags.database);
 
-    const accounts = await db
-      .collection('accounts')
-      .find({
-        isActive: true,
-        timezone: { $in: timezones },
-      })
-      .toArray();
+    try {
+      await trackJobRun({ db, jobName: 'aggregate:dailyaccountstats', logger: this }, async () => {
+        const accounts = await db
+          .collection('accounts')
+          .find({
+            isActive: true,
+            timezone: { $in: timezones },
+          })
+          .toArray();
 
-    for (const account of accounts) {
-      this.log(`Daily account stats: Processing account ${account.name}`);
+        let processed = 0;
 
-      try {
-        const yesterday = getYesterday(account.timezone);
+        for (const account of accounts) {
+          this.log(`Daily account stats: Processing account ${account.name}`);
 
-        const accountStats = await db.collection('accountstats').aggregate([
-          {
-            $match: {
-              account: account._id,
-              fetchedAt: {
-                $gte: yesterday,
-              },
-            },
-          },
-          {
-            $addFields: {
-              day: {
-                $dateToString: {
-                  format: '%Y-%m-%d',
-                  date: '$fetchedAt',
-                  timezone: String(account.timezone).replace(' ', '_'),
+          try {
+            const yesterday = getYesterday(account.timezone);
+
+            const accountStats = await db.collection('accountstats').aggregate([
+              {
+                $match: {
+                  account: account._id,
+                  fetchedAt: {
+                    $gte: yesterday,
+                  },
                 },
               },
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateFromString: {
-                  dateString: '$day',
-                  timezone: String(account.timezone).replace(' ', '_'),
+              {
+                $addFields: {
+                  day: {
+                    $dateToString: {
+                      format: '%Y-%m-%d',
+                      date: '$fetchedAt',
+                      timezone: String(account.timezone).replace(' ', '_'),
+                    },
+                  },
                 },
               },
-              followersCount: {
-                $max: '$followersCount',
+              {
+                $group: {
+                  _id: {
+                    $dateFromString: {
+                      dateString: '$day',
+                      timezone: String(account.timezone).replace(' ', '_'),
+                    },
+                  },
+                  followersCount: {
+                    $max: '$followersCount',
+                  },
+                  followingCount: {
+                    $max: '$followingCount',
+                  },
+                  statusesCount: {
+                    $max: '$statusesCount',
+                  },
+                },
               },
-              followingCount: {
-                $max: '$followingCount',
-              },
-              statusesCount: {
-                $max: '$statusesCount',
-              },
-            },
-          },
-        ]);
+            ]);
 
-        const dbPromises = [];
+            const dbPromises = [];
 
-        while (await accountStats.hasNext()) {
-          const stats = (await accountStats.next()) as {
-            _id: Date;
-            followersCount: number;
-            followingCount: number;
-            statusesCount: number;
-          };
+            while (await accountStats.hasNext()) {
+              const stats = (await accountStats.next()) as {
+                _id: Date;
+                followersCount: number;
+                followingCount: number;
+                statusesCount: number;
+              };
 
-          dbPromises.push(
-            db.collection('dailyaccountstats').insertOne({
-              account: account._id,
-              day: stats._id,
-              followersCount: stats.followersCount,
-              followingCount: stats.followingCount,
-              statusesCount: stats.statusesCount,
-            }),
-          );
+              dbPromises.push(
+                db.collection('dailyaccountstats').insertOne({
+                  account: account._id,
+                  day: stats._id,
+                  followersCount: stats.followersCount,
+                  followingCount: stats.followingCount,
+                  statusesCount: stats.statusesCount,
+                }),
+              );
+            }
+
+            await Promise.all(dbPromises);
+            processed++;
+            this.log(`Daily account stats: Done for ${account.name}`);
+          } catch (error: any) {
+            this.logError(`Daily account stats: Failed for ${account.name}: ${error?.message}`);
+          }
         }
 
-        await Promise.all(dbPromises);
-        this.log(`Daily account stats: Done for ${account.name}`);
-      } catch (error: any) {
-        this.logError(`Daily account stats: Failed for ${account.name}: ${error?.message}`);
-      }
+        this.log('Daily account stats: Aggregation done.');
+        return { recordsProcessed: processed };
+      });
+    } finally {
+      await connection.close();
     }
-
-    this.log('Daily account stats: Aggregation done.');
-
-    await connection.close();
   }
 }
