@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "title": "Account Health"
+  },
+  "tabs": {
+    "stale": "Stale",
+    "incomplete": "Incomplete",
+    "abandoned": "Abandoned"
+  },
+  "columns": {
+    "account": "Account",
+    "server": "Server",
+    "owner": "Owner",
+    "lastStats": "Last Stats",
+    "daysSinceUpdate": "Days Stale",
+    "createdDate": "Created",
+    "daysSinceCreation": "Days Since Creation",
+    "lastLogin": "Last Login",
+    "deletionNotice": "Deletion Notice"
+  },
+  "labels": {
+    "lastUpdated": "Last updated: {{date}}",
+    "never": "Never",
+    "unknown": "Unknown",
+    "sent": "Sent",
+    "notSent": "Not Sent",
+    "noStats": "No stats"
+  },
+  "messages": {
+    "loadError": "Failed to load account health data.",
+    "noStaleAccounts": "No stale accounts found.",
+    "noIncompleteAccounts": "No incomplete account setups found.",
+    "noAbandonedAccounts": "No abandoned accounts found."
+  }
+}
