@@ -15,7 +15,7 @@
     "totalUsers": "Total Users",
     "activeUsers": "Active Users",
     "connectedAccounts": "Connected Accounts",
-    "trackedToots": "Tracked Toots"
+    "trackedToots": "Tracked Posts"
   },
   "labels": {
     "active": "Active",
@@ -29,8 +29,8 @@
     "last30Days": "Last 30 Days",
     "last90Days": "Last 90 Days",
     "dailyAccountStats": "Daily Account Stats",
-    "dailyTootStats": "Daily Toot Stats",
-    "toots": "Toots",
+    "dailyTootStats": "Daily Post Stats",
+    "toots": "Posts",
     "registrations": "Registrations",
     "server": "Server",
     "count": "Accounts",

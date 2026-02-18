@@ -15,7 +15,7 @@
     "totalUsers": "Benutzer gesamt",
     "activeUsers": "Aktive Benutzer",
     "connectedAccounts": "Verbundene Konten",
-    "trackedToots": "Erfasste Toots"
+    "trackedToots": "Erfasste Beiträge"
   },
   "labels": {
     "active": "Aktiv",
@@ -29,8 +29,8 @@
     "last30Days": "Letzte 30 Tage",
     "last90Days": "Letzte 90 Tage",
     "dailyAccountStats": "Tägliche Kontostatistiken",
-    "dailyTootStats": "Tägliche Toot-Statistiken",
-    "toots": "Toots",
+    "dailyTootStats": "Tägliche Beitragsstatistiken",
+    "toots": "Beiträge",
     "registrations": "Registrierungen",
     "server": "Server",
     "count": "Konten",

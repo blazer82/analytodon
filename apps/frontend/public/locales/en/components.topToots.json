@@ -1,7 +1,7 @@
 {
   "headers": {
     "date": "Date",
-    "toot": "Toot",
+    "toot": "Post",
     "replies": "Replies",
     "boosts": "Boosts",
     "favorites": "Favorites"

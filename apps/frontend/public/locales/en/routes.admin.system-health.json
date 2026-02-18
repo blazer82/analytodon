@@ -43,15 +43,15 @@
     "yes": "Yes",
     "no": "No",
     "dailyAccountStats": "Daily Account Stats",
-    "dailyTootStats": "Daily Toot Stats",
-    "toots": "Toots"
+    "dailyTootStats": "Daily Post Stats",
+    "toots": "Posts"
   },
   "collections": {
     "users": "Users",
     "accounts": "Accounts",
-    "toots": "Toots",
+    "toots": "Posts",
     "dailyAccountStats": "Daily Account Stats",
-    "dailyTootStats": "Daily Toot Stats",
+    "dailyTootStats": "Daily Post Stats",
     "refreshTokens": "Refresh Tokens",
     "mastodonApps": "Mastodon Apps",
     "cliJobRuns": "CLI Job Runs"
