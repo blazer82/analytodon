@@ -4,6 +4,7 @@ import { Document, Filter, MongoClient, ObjectId } from 'mongodb';
 import { BaseCommand } from '../../base';
 import { fetchTootstatsForAccount } from '../../helpers/fetchTootstatsForAccount';
 import { getTimezones } from '../../helpers/getTimezones';
+import { processInBatches } from '../../helpers/processInBatches';
 import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class TootStats extends BaseCommand {
@@ -34,6 +35,11 @@ export default class TootStats extends BaseCommand {
     account: Flags.string({
       char: 'm',
       description: 'Only process this account (disables timezone filter!)',
+    }),
+    concurrency: Flags.integer({
+      char: 'p',
+      description: 'Number of Mastodon instances to process in parallel',
+      default: 5,
     }),
   };
 
@@ -66,20 +72,38 @@ export default class TootStats extends BaseCommand {
 
         const accounts = await db.collection('accounts').find(accountFilter).toArray();
 
-        this.log(`Fetching toot stats: Found ${accounts.length} accounts to process`);
+        // Group accounts by Mastodon instance
+        const instanceMap = new Map<string, Document[]>();
+        for (const account of accounts) {
+          const key = account.serverURL as string;
+          const group = instanceMap.get(key);
+          if (group) {
+            group.push(account);
+          } else {
+            instanceMap.set(key, [account]);
+          }
+        }
+        const groups = [...instanceMap.values()];
+
+        this.log(
+          `Fetching toot stats: Processing ${accounts.length} accounts across ${groups.length} instances (concurrency: ${flags.concurrency})`,
+        );
 
         let processed = 0;
 
-        for (const account of accounts) {
-          try {
-            await fetchTootstatsForAccount(db, account);
-            processed++;
-          } catch (error: any) {
-            this.logError(
-              `Fetching toot stats: Failed to process account ${account.name} (${account._id}): ${error?.message || error}`,
-            );
+        // Parallel across instances, sequential within each instance
+        await processInBatches(flags.concurrency, groups, async (instanceAccounts) => {
+          for (const account of instanceAccounts) {
+            try {
+              await fetchTootstatsForAccount(db, account);
+              processed++;
+            } catch (error: any) {
+              this.logError(
+                `Fetching toot stats: Failed to process account ${account.name} (${account._id}): ${error?.message || error}`,
+              );
+            }
           }
-        }
+        });
 
         this.log('Fetching toot stats: Done');
         return { recordsProcessed: processed };
