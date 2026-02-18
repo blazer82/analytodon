@@ -10,7 +10,7 @@ import { EntityRepository } from '@mikro-orm/mongodb';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AdminService } from './admin.service';
+import { AdminService, STATS_CACHE_TTL_MS } from './admin.service';
 
 describe('AdminService', () => {
   let service: AdminService;
@@ -252,6 +252,47 @@ describe('AdminService', () => {
       expect(result.users.registrations.last30DaysCount).toBe(0);
       expect(result.users.registrations.dailyBreakdown).toEqual([]);
       expect(result.accounts.serverDistribution).toEqual([]);
+    });
+
+    it('should return cached result on second call within TTL', async () => {
+      const result1 = await service.getStats();
+
+      // Clear call counts to verify no new calls are made
+      userRepository.count.mockClear();
+      accountRepository.count.mockClear();
+      tootRepository.count.mockClear();
+      dailyAccountStatsRepository.count.mockClear();
+      dailyTootStatsRepository.count.mockClear();
+
+      const result2 = await service.getStats();
+
+      expect(result2).toBe(result1);
+      expect(userRepository.count).not.toHaveBeenCalled();
+      expect(accountRepository.count).not.toHaveBeenCalled();
+      expect(tootRepository.count).not.toHaveBeenCalled();
+      expect(dailyAccountStatsRepository.count).not.toHaveBeenCalled();
+      expect(dailyTootStatsRepository.count).not.toHaveBeenCalled();
+    });
+
+    it('should re-fetch after TTL has expired', async () => {
+      await service.getStats();
+
+      // Backdate the cache past the TTL
+      (service as any).cachedAt = Date.now() - STATS_CACHE_TTL_MS - 1;
+
+      userRepository.count.mockClear();
+      accountRepository.count.mockClear();
+      tootRepository.count.mockClear();
+      dailyAccountStatsRepository.count.mockClear();
+      dailyTootStatsRepository.count.mockClear();
+
+      await service.getStats();
+
+      expect(userRepository.count).toHaveBeenCalled();
+      expect(accountRepository.count).toHaveBeenCalled();
+      expect(tootRepository.count).toHaveBeenCalled();
+      expect(dailyAccountStatsRepository.count).toHaveBeenCalled();
+      expect(dailyTootStatsRepository.count).toHaveBeenCalled();
     });
   });
 });

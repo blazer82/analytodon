@@ -12,9 +12,13 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AdminStatsResponseDto, DailyCountDto, ServerDistributionDto } from './dto/admin-stats-response.dto';
 
+export const STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
+  private cachedStats: AdminStatsResponseDto | null = null;
+  private cachedAt: number | null = null;
 
   constructor(
     @InjectRepository(UserEntity)
@@ -30,6 +34,11 @@ export class AdminService {
   ) {}
 
   async getStats(): Promise<AdminStatsResponseDto> {
+    if (this.cachedStats && this.cachedAt && Date.now() - this.cachedAt < STATS_CACHE_TTL_MS) {
+      this.logger.log('Returning cached admin platform stats');
+      return this.cachedStats;
+    }
+
     this.logger.log('Fetching admin platform stats');
 
     const now = new Date();
@@ -89,7 +98,7 @@ export class AdminService {
 
     const registrationLast30DaysCount = registrationTrend.reduce((sum, day) => sum + day.count, 0);
 
-    return {
+    const result: AdminStatsResponseDto = {
       users: {
         totalCount: totalUsers,
         activeCount: activeUsers,
@@ -123,6 +132,11 @@ export class AdminService {
         totalDailyTootStats,
       },
     };
+
+    this.cachedStats = result;
+    this.cachedAt = Date.now();
+
+    return result;
   }
 
   private async getRegistrationTrend(since: Date): Promise<DailyCountDto[]> {
