@@ -8,6 +8,7 @@ import RepliesIcon from '@mui/icons-material/Comment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import TopIcon from '@mui/icons-material/EmojiEvents';
 import FollowersIcon from '@mui/icons-material/Group';
+import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import FavoritesIcon from '@mui/icons-material/Star';
 import AccountsIcon from '@mui/icons-material/SupervisedUserCircle';
 import { Box, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
@@ -43,7 +44,10 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
     if (user?.role === 'admin') {
       sections.push({
         label: t('sections.admin'),
-        items: [{ label: t('items.adminDashboard'), link: '/admin/dashboard', icon: <AdminPanelSettingsIcon /> }],
+        items: [
+          { label: t('items.adminDashboard'), link: '/admin/dashboard', icon: <AdminPanelSettingsIcon /> },
+          { label: t('items.accountHealth'), link: '/admin/accounts-health', icon: <HealthAndSafetyIcon /> },
+        ],
       });
     }
 

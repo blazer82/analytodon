@@ -1,4 +1,10 @@
-import { AdminStatsSnapshotEntity, UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
+import {
+  AccountHealthSnapshotEntity,
+  AdminStatsSnapshotEntity,
+  UserCredentialsEntity,
+  UserEntity,
+  UserRole,
+} from '@analytodon/shared-orm';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -25,6 +31,30 @@ describe('AdminController (e2e)', () => {
   const adminCredentials = {
     email: 'admin@example.com',
     password: 'AdminPassword123!',
+  };
+
+  const healthSnapshotData = {
+    staleAccounts: [
+      {
+        accountId: '507f1f77bcf86cd799439011',
+        accountName: 'stale@mastodon.social',
+        serverURL: 'mastodon.social',
+        ownerEmail: 'admin@example.com',
+        lastStatsDate: '2026-02-10T00:00:00.000Z',
+        daysSinceLastUpdate: 8,
+      },
+    ],
+    incompleteAccounts: [
+      {
+        accountId: '507f1f77bcf86cd799439012',
+        accountName: null,
+        serverURL: 'mastodon.online',
+        ownerEmail: 'user@example.com',
+        createdDate: '2026-01-15T00:00:00.000Z',
+        daysSinceCreation: 34,
+      },
+    ],
+    abandonedAccounts: [],
   };
 
   const snapshotData = {
@@ -116,6 +146,13 @@ describe('AdminController (e2e)', () => {
       data: snapshotData,
     });
     await entityManager.persistAndFlush(snapshot);
+
+    // Seed account health snapshot
+    const healthSnapshot = entityManager.create(AccountHealthSnapshotEntity, {
+      generatedAt: new Date('2026-02-18T03:00:00.000Z'),
+      data: healthSnapshotData,
+    });
+    await entityManager.persistAndFlush(healthSnapshot);
   });
 
   afterAll(async () => {
@@ -124,6 +161,7 @@ describe('AdminController (e2e)', () => {
   });
 
   const clearDatabase = async () => {
+    await entityManager.nativeDelete(AccountHealthSnapshotEntity, {});
     await entityManager.nativeDelete(AdminStatsSnapshotEntity, {});
     await entityManager.nativeDelete(UserCredentialsEntity, {});
     await entityManager.nativeDelete(UserEntity, {});
@@ -216,6 +254,49 @@ describe('AdminController (e2e)', () => {
     it('should return 403 for non-admin user', async () => {
       await request(app.getHttpServer())
         .get('/admin/stats')
+        .set('Authorization', `Bearer ${nonAdminAccessToken}`)
+        .expect(HttpStatus.FORBIDDEN);
+    });
+  });
+
+  describe('GET /admin/accounts/health', () => {
+    it('should return 200 with correct structure for admin', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/admin/accounts/health')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toHaveProperty('generatedAt');
+      expect(response.body).toHaveProperty('staleAccounts');
+      expect(response.body).toHaveProperty('incompleteAccounts');
+      expect(response.body).toHaveProperty('abandonedAccounts');
+      expect(Array.isArray(response.body.staleAccounts)).toBe(true);
+      expect(Array.isArray(response.body.incompleteAccounts)).toBe(true);
+      expect(Array.isArray(response.body.abandonedAccounts)).toBe(true);
+    });
+
+    it('should return correct data matching seeded health snapshot', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/admin/accounts/health')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.generatedAt).toBe('2026-02-18T03:00:00.000Z');
+      expect(response.body.staleAccounts).toHaveLength(1);
+      expect(response.body.staleAccounts[0].accountId).toBe('507f1f77bcf86cd799439011');
+      expect(response.body.staleAccounts[0].daysSinceLastUpdate).toBe(8);
+      expect(response.body.incompleteAccounts).toHaveLength(1);
+      expect(response.body.incompleteAccounts[0].serverURL).toBe('mastodon.online');
+      expect(response.body.abandonedAccounts).toHaveLength(0);
+    });
+
+    it('should return 401 without authentication', async () => {
+      await request(app.getHttpServer()).get('/admin/accounts/health').expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 403 for non-admin user', async () => {
+      await request(app.getHttpServer())
+        .get('/admin/accounts/health')
         .set('Authorization', `Bearer ${nonAdminAccessToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });

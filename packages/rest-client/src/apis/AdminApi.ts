@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  AccountHealthResponseDto,
   AdminStatsResponseDto,
 } from '../models/index';
 import {
+    AccountHealthResponseDtoFromJSON,
+    AccountHealthResponseDtoToJSON,
     AdminStatsResponseDtoFromJSON,
     AdminStatsResponseDtoToJSON,
 } from '../models/index';
@@ -26,6 +29,40 @@ import {
  * 
  */
 export class AdminApi extends runtime.BaseAPI {
+
+    /**
+     * Get account health report (Admin)
+     */
+    async adminControllerGetAccountHealthRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountHealthResponseDto>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/admin/accounts/health`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AccountHealthResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Get account health report (Admin)
+     */
+    async adminControllerGetAccountHealth(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountHealthResponseDto> {
+        const response = await this.adminControllerGetAccountHealthRaw(initOverrides);
+        return await response.value();
+    }
 
     /**
      * Get platform overview statistics (Admin)

@@ -15,6 +15,8 @@ src/apis/TootsApi.ts
 src/apis/UsersApi.ts
 src/apis/index.ts
 src/index.ts
+src/models/AbandonedAccountDto.ts
+src/models/AccountHealthResponseDto.ts
 src/models/AccountMetricsDto.ts
 src/models/AccountResponseDto.ts
 src/models/AdminStatsResponseDto.ts
@@ -32,6 +34,7 @@ src/models/FavoritedTootDto.ts
 src/models/FavoritesKpiDto.ts
 src/models/FirstStatsMailDto.ts
 src/models/FollowersKpiDto.ts
+src/models/IncompleteAccountDto.ts
 src/models/LoginActivityDto.ts
 src/models/LoginDto.ts
 src/models/ManageSubscriptionDto.ts
@@ -49,6 +52,7 @@ src/models/SendEmailDto.ts
 src/models/ServerDistributionDto.ts
 src/models/SessionAccountDto.ts
 src/models/SessionUserDto.ts
+src/models/StaleAccountDto.ts
 src/models/TopTootsCategoryDto.ts
 src/models/TotalSnapshotDto.ts
 src/models/UpdateAccountDto.ts
