@@ -43,7 +43,9 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
           { label: t('items.replies'), link: `/replies${viewAsSuffix}`, icon: <RepliesIcon /> },
           { label: t('items.boosts'), link: `/boosts${viewAsSuffix}`, icon: <BoostsIcon /> },
           { label: t('items.favorites'), link: `/favorites${viewAsSuffix}`, icon: <FavoritesIcon /> },
-          { label: t('items.hashtags'), link: `/hashtags${viewAsSuffix}`, icon: <TagIcon /> },
+          ...(user?.role === 'admin'
+            ? [{ label: t('items.hashtags'), link: `/hashtags${viewAsSuffix}`, icon: <TagIcon /> }]
+            : []),
           { label: t('items.topPosts'), link: `/top-posts${viewAsSuffix}`, icon: <TopIcon /> },
         ],
       },
