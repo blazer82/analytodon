@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "title": "Hashtag-Analyse - Analytodon"
+  },
+  "sections": {
+    "topHashtags": "Top-Hashtags",
+    "usageOverTime": "Nutzung im Zeitverlauf",
+    "engagement": "Interaktionen nach Hashtag",
+    "mostEffective": "Effektivste Hashtags"
+  },
+  "table": {
+    "hashtag": "Hashtag",
+    "tootCount": "Beiträge",
+    "repliesCount": "Antworten",
+    "reblogsCount": "Boosts",
+    "favouritesCount": "Favoriten",
+    "totalEngagement": "Interaktionen gesamt",
+    "avgEngagement": "Durchschn. Interaktionen / Beitrag"
+  },
+  "messages": {
+    "selectAccount": "Bitte wähle ein Konto aus, um die Hashtag-Analyse anzuzeigen.",
+    "noData": "Keine Hashtag-Daten für diesen Zeitraum verfügbar.",
+    "mostEffectiveNote": "Zeigt Hashtags, die in mindestens {{count}} Beiträgen verwendet wurden, sortiert nach durchschnittlichen Interaktionen pro Beitrag."
+  }
+}
