@@ -15,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
 import { BoostsModule } from './boosts/boosts.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { FollowersModule } from './followers/followers.module';
+import { HashtagsModule } from './hashtags/hashtags.module';
 import { MailModule } from './mail/mail.module';
 import { RepliesModule } from './replies/replies.module';
 import { SharedModule } from './shared/shared.module';
@@ -70,6 +71,7 @@ import { UsersModule } from './users/users.module';
     BoostsModule,
     RepliesModule,
     FavoritesModule,
+    HashtagsModule,
     MailModule,
     TootsModule,
     SharedModule,

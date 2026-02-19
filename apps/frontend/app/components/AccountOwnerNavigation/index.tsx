@@ -14,6 +14,7 @@ import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import PeopleIcon from '@mui/icons-material/People';
 import FavoritesIcon from '@mui/icons-material/Star';
 import AccountsIcon from '@mui/icons-material/SupervisedUserCircle';
+import TagIcon from '@mui/icons-material/Tag';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import { Box, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
 import { Link, useLocation, useRouteLoaderData } from '@remix-run/react';
@@ -42,6 +43,9 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
           { label: t('items.replies'), link: `/replies${viewAsSuffix}`, icon: <RepliesIcon /> },
           { label: t('items.boosts'), link: `/boosts${viewAsSuffix}`, icon: <BoostsIcon /> },
           { label: t('items.favorites'), link: `/favorites${viewAsSuffix}`, icon: <FavoritesIcon /> },
+          ...(user?.role === 'admin'
+            ? [{ label: t('items.hashtags'), link: `/hashtags${viewAsSuffix}`, icon: <TagIcon /> }]
+            : []),
           { label: t('items.topPosts'), link: `/top-posts${viewAsSuffix}`, icon: <TopIcon /> },
         ],
       },

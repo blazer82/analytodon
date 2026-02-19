@@ -6,6 +6,7 @@ export * from './entities/cli-job-run.entity';
 export * from './entities/system-health-snapshot.entity';
 export * from './entities/daily-account-stats.entity';
 export * from './entities/daily-toot-stats.entity';
+export * from './entities/hashtag-stats.entity';
 export * from './entities/mastodon-app.entity';
 export * from './entities/refresh-token.entity';
 export * from './entities/toot.entity';

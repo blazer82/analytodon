@@ -6,6 +6,7 @@ import {
   Configuration,
   FavoritesApi,
   FollowersApi,
+  HashtagsApi,
   RepliesApi,
   TootsApi,
   UsersApi,
@@ -100,6 +101,14 @@ export async function createRepliesApiWithAuth(request: Request): Promise<Replie
 export async function createFavoritesApiWithAuth(request: Request): Promise<FavoritesApi> {
   const { config } = await createApiClientWithAuth(request);
   return new FavoritesApi(config);
+}
+
+/**
+ * Creates an authenticated instance of the Hashtags API client with token refresh
+ */
+export async function createHashtagsApiWithAuth(request: Request): Promise<HashtagsApi> {
+  const { config } = await createApiClientWithAuth(request);
+  return new HashtagsApi(config);
 }
 
 /**

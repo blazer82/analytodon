@@ -29,7 +29,7 @@ function getLocalesPath(): string {
 }
 
 // Version for cache busting when translations update
-const TRANSLATIONS_VERSION = '1.2.0';
+const TRANSLATIONS_VERSION = '1.3.0';
 
 /**
  * Parse Accept-Language header and return languages in priority order

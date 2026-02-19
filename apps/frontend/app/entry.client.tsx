@@ -20,7 +20,7 @@ import { ClientStyleContext } from './utils/client-style-context';
 import { createEmotionCache } from './utils/createEmotionCache';
 
 // Version for cache busting when translations update
-const TRANSLATIONS_VERSION = '1.1.0';
+const TRANSLATIONS_VERSION = '1.3.0';
 
 interface ClientCacheProviderProps {
   children: React.ReactNode;
