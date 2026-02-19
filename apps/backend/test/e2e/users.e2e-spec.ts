@@ -183,6 +183,11 @@ describe('UsersController (e2e)', () => {
       expect(response.body.some((u: UserResponseDto) => u.email === testUser1Data.email)).toBe(true);
       expect(response.body.some((u: UserResponseDto) => u.email === testUser2Data.email)).toBe(true);
       expect(response.body.some((u: UserResponseDto) => u.email === adminCredentials.email)).toBe(true);
+
+      // Verify new fields are present
+      const user1 = response.body.find((u: UserResponseDto) => u.email === testUser1Data.email);
+      expect(user1.emailVerified).toBe(false);
+      expect(user1.accountsCount).toBe(0);
     });
 
     it('should fail if not authenticated (Admin)', async () => {
@@ -205,6 +210,10 @@ describe('UsersController (e2e)', () => {
 
       expect(response.body.id).toBe(createdUser.id);
       expect(response.body.email).toBe(testUser1Data.email);
+      expect(response.body.emailVerified).toBe(false);
+      expect(response.body.accounts).toBeInstanceOf(Array);
+      expect(response.body.accounts.length).toBe(0);
+      expect(response.body.accountsCount).toBe(0);
     });
 
     it('should return 404 if user not found (Admin)', async () => {

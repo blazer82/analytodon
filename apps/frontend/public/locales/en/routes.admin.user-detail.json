@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "User Detail"
+  },
+  "form": {
+    "email": "Email",
+    "role": "Role",
+    "roleAdmin": "Admin",
+    "roleAccountOwner": "Account Owner",
+    "active": "Active",
+    "activeYes": "Active",
+    "activeNo": "Inactive",
+    "emailVerified": "Email Verified",
+    "emailVerifiedYes": "Verified",
+    "emailVerifiedNo": "Not Verified",
+    "maxAccounts": "Max Accounts",
+    "timezone": "Timezone",
+    "newPassword": "New Password",
+    "newPasswordHelp": "Leave empty to keep current password",
+    "locale": "Locale",
+    "lastLogin": "Last Login",
+    "created": "Created",
+    "updated": "Updated",
+    "never": "Never"
+  },
+  "sections": {
+    "userInfo": "User Information",
+    "accounts": "Mastodon Accounts"
+  },
+  "columns": {
+    "accountName": "Account Name",
+    "serverURL": "Server URL",
+    "username": "Username",
+    "setupComplete": "Setup Complete",
+    "active": "Active",
+    "created": "Created"
+  },
+  "labels": {
+    "yes": "Yes",
+    "no": "No"
+  },
+  "actions": {
+    "save": "Save",
+    "saving": "Saving...",
+    "back": "Back"
+  },
+  "success": {
+    "userSaved": "User saved successfully."
+  },
+  "errors": {
+    "failedToUpdate": "Failed to update user.",
+    "loadError": "Failed to load user."
+  },
+  "messages": {
+    "noAccounts": "This user has no Mastodon accounts."
+  }
+}

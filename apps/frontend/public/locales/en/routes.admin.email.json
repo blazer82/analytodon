@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "title": "Email Broadcast"
+  },
+  "form": {
+    "recipientGroup": "Recipient Group",
+    "groupAll": "All Users",
+    "groupAdmins": "Admins",
+    "groupAccountOwners": "Account Owners",
+    "groupCustom": "Custom",
+    "customRecipients": "Custom Recipients",
+    "customRecipientsHelp": "Comma-separated email addresses",
+    "subject": "Subject",
+    "body": "Body",
+    "bodyHelp": "Use [[email]] and [[userid]] as placeholders",
+    "isTest": "Send as test to admin email only"
+  },
+  "actions": {
+    "send": "Send Email",
+    "sending": "Sending..."
+  },
+  "confirm": {
+    "title": "Confirm Email Broadcast",
+    "message": "Are you sure you want to send this email to the selected recipients? This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Send"
+  },
+  "success": {
+    "emailSent": "Email broadcast initiated successfully."
+  },
+  "errors": {
+    "failedToSend": "Failed to send email broadcast."
+  }
+}

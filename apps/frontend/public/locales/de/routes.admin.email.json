@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "title": "E-Mail-Rundschreiben"
+  },
+  "form": {
+    "recipientGroup": "Empfängergruppe",
+    "groupAll": "Alle Benutzer",
+    "groupAdmins": "Admins",
+    "groupAccountOwners": "Kontoinhaber",
+    "groupCustom": "Benutzerdefiniert",
+    "customRecipients": "Benutzerdefinierte Empfänger",
+    "customRecipientsHelp": "Kommagetrennte E-Mail-Adressen",
+    "subject": "Betreff",
+    "body": "Nachricht",
+    "bodyHelp": "Verwenden Sie [[email]] und [[userid]] als Platzhalter",
+    "isTest": "Als Test nur an Admin-E-Mail senden"
+  },
+  "actions": {
+    "send": "E-Mail senden",
+    "sending": "Senden..."
+  },
+  "confirm": {
+    "title": "E-Mail-Versand bestätigen",
+    "message": "Sind Sie sicher, dass Sie diese E-Mail an die ausgewählten Empfänger senden möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "cancel": "Abbrechen",
+    "confirm": "Senden"
+  },
+  "success": {
+    "emailSent": "E-Mail-Rundschreiben erfolgreich gestartet."
+  },
+  "errors": {
+    "failedToSend": "E-Mail-Rundschreiben konnte nicht gesendet werden."
+  }
+}

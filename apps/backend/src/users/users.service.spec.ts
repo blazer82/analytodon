@@ -199,7 +199,7 @@ describe('UsersService', () => {
       userRepository.findAll.mockResolvedValue(mockUsers);
       const result = await service.findAll();
       expect(result).toEqual(mockUsers);
-      expect(userRepository.findAll).toHaveBeenCalled();
+      expect(userRepository.findAll).toHaveBeenCalledWith({ populate: ['accounts'] });
     });
   });
 
@@ -211,7 +211,10 @@ describe('UsersService', () => {
       userRepository.findOne.mockResolvedValue(mockUser);
       const result = await service.findById(userId);
       expect(result).toEqual(mockUser);
-      expect(userRepository.findOne).toHaveBeenCalledWith({ _id: new ObjectId(userId) }, { populate: ['credentials'] });
+      expect(userRepository.findOne).toHaveBeenCalledWith(
+        { _id: new ObjectId(userId) },
+        { populate: ['credentials', 'accounts'] },
+      );
     });
 
     it('should return null if user not found', async () => {
