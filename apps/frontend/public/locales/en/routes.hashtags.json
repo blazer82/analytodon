@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "title": "Hashtags Analytics - Analytodon"
+  },
+  "sections": {
+    "topHashtags": "Top Hashtags",
+    "usageOverTime": "Usage Over Time",
+    "engagement": "Engagement by Hashtag",
+    "mostEffective": "Most Effective Hashtags"
+  },
+  "table": {
+    "hashtag": "Hashtag",
+    "tootCount": "Posts",
+    "repliesCount": "Replies",
+    "reblogsCount": "Boosts",
+    "favouritesCount": "Favorites",
+    "totalEngagement": "Total Engagement",
+    "avgEngagement": "Avg. Engagement / Post"
+  },
+  "messages": {
+    "selectAccount": "Please select an account to view hashtag analytics.",
+    "noData": "No hashtag data available for this timeframe.",
+    "mostEffectiveNote": "Showing hashtags used in at least {{count}} posts, ranked by average engagement per post."
+  }
+}

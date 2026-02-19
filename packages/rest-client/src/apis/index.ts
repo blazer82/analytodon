@@ -6,6 +6,7 @@ export * from './AuthenticationApi';
 export * from './BoostsApi';
 export * from './FavoritesApi';
 export * from './FollowersApi';
+export * from './HashtagsApi';
 export * from './HelloWorldApi';
 export * from './MailInternalApi';
 export * from './RepliesApi';

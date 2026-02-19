@@ -8,6 +8,7 @@ src/apis/AuthenticationApi.ts
 src/apis/BoostsApi.ts
 src/apis/FavoritesApi.ts
 src/apis/FollowersApi.ts
+src/apis/HashtagsApi.ts
 src/apis/HelloWorldApi.ts
 src/apis/MailInternalApi.ts
 src/apis/RepliesApi.ts
@@ -41,6 +42,9 @@ src/models/FavoritedTootDto.ts
 src/models/FavoritesKpiDto.ts
 src/models/FirstStatsMailDto.ts
 src/models/FollowersKpiDto.ts
+src/models/HashtagEngagementDto.ts
+src/models/HashtagOverTimeDto.ts
+src/models/HashtagTopDto.ts
 src/models/IncompleteAccountDto.ts
 src/models/JobStatusDto.ts
 src/models/LoginActivityDto.ts
