@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "title": "User Management"
+  },
+  "search": {
+    "placeholder": "Search by email..."
+  },
+  "filters": {
+    "role": "Role",
+    "roleAll": "All Roles",
+    "roleAdmin": "Admin",
+    "roleAccountOwner": "Account Owner",
+    "status": "Status",
+    "statusAll": "All",
+    "statusActive": "Active",
+    "statusInactive": "Inactive"
+  },
+  "columns": {
+    "email": "Email",
+    "role": "Role",
+    "active": "Active",
+    "emailVerified": "Email Verified",
+    "accounts": "Accounts",
+    "lastLogin": "Last Login",
+    "created": "Created"
+  },
+  "labels": {
+    "admin": "Admin",
+    "accountOwner": "Account Owner",
+    "yes": "Yes",
+    "no": "No",
+    "never": "Never"
+  },
+  "messages": {
+    "loadError": "Failed to load users.",
+    "noUsers": "No users found."
+  }
+}

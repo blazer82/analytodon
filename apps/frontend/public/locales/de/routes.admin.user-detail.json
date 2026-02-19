@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "Benutzerdetails"
+  },
+  "form": {
+    "email": "E-Mail",
+    "role": "Rolle",
+    "roleAdmin": "Admin",
+    "roleAccountOwner": "Kontoinhaber",
+    "active": "Aktiv",
+    "activeYes": "Aktiv",
+    "activeNo": "Inaktiv",
+    "emailVerified": "E-Mail verifiziert",
+    "emailVerifiedYes": "Verifiziert",
+    "emailVerifiedNo": "Nicht verifiziert",
+    "maxAccounts": "Maximale Konten",
+    "timezone": "Zeitzone",
+    "newPassword": "Neues Passwort",
+    "newPasswordHelp": "Leer lassen, um das aktuelle Passwort beizubehalten",
+    "locale": "Sprache",
+    "lastLogin": "Letzter Login",
+    "created": "Erstellt",
+    "updated": "Aktualisiert",
+    "never": "Nie"
+  },
+  "sections": {
+    "userInfo": "Benutzerinformationen",
+    "accounts": "Mastodon-Konten"
+  },
+  "columns": {
+    "accountName": "Kontoname",
+    "serverURL": "Server-URL",
+    "username": "Benutzername",
+    "setupComplete": "Einrichtung abgeschlossen",
+    "active": "Aktiv",
+    "created": "Erstellt"
+  },
+  "labels": {
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "actions": {
+    "save": "Speichern",
+    "saving": "Speichern...",
+    "back": "Zurück"
+  },
+  "success": {
+    "userSaved": "Benutzer erfolgreich gespeichert."
+  },
+  "errors": {
+    "failedToUpdate": "Benutzer konnte nicht aktualisiert werden.",
+    "loadError": "Benutzer konnte nicht geladen werden."
+  },
+  "messages": {
+    "noAccounts": "Dieser Benutzer hat keine Mastodon-Konten."
+  }
+}

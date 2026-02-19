@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "title": "Benutzerverwaltung"
+  },
+  "search": {
+    "placeholder": "Nach E-Mail suchen..."
+  },
+  "filters": {
+    "role": "Rolle",
+    "roleAll": "Alle Rollen",
+    "roleAdmin": "Admin",
+    "roleAccountOwner": "Kontoinhaber",
+    "status": "Status",
+    "statusAll": "Alle",
+    "statusActive": "Aktiv",
+    "statusInactive": "Inaktiv"
+  },
+  "columns": {
+    "email": "E-Mail",
+    "role": "Rolle",
+    "active": "Aktiv",
+    "emailVerified": "E-Mail verifiziert",
+    "accounts": "Konten",
+    "lastLogin": "Letzter Login",
+    "created": "Erstellt"
+  },
+  "labels": {
+    "admin": "Admin",
+    "accountOwner": "Kontoinhaber",
+    "yes": "Ja",
+    "no": "Nein",
+    "never": "Nie"
+  },
+  "messages": {
+    "loadError": "Benutzer konnten nicht geladen werden.",
+    "noUsers": "Keine Benutzer gefunden."
+  }
+}

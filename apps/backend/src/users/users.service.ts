@@ -73,7 +73,7 @@ export class UsersService {
    * @returns A promise that resolves to an array of user entities.
    */
   async findAll(): Promise<UserEntity[]> {
-    return this.userRepository.findAll();
+    return this.userRepository.findAll({ populate: ['accounts'] });
   }
 
   /**
@@ -86,7 +86,7 @@ export class UsersService {
       return null;
     }
     // Populate credentials for potential password updates by admin
-    return this.userRepository.findOne({ _id: new ObjectId(id) }, { populate: ['credentials'] });
+    return this.userRepository.findOne({ _id: new ObjectId(id) }, { populate: ['credentials', 'accounts'] });
   }
 
   /**

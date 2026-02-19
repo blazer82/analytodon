@@ -14,6 +14,8 @@
     "accounts": "Konten",
     "adminDashboard": "Plattformübersicht",
     "accountHealth": "Kontostatus",
-    "systemHealth": "Systemstatus"
+    "systemHealth": "Systemstatus",
+    "userManagement": "Benutzer",
+    "emailBroadcast": "E-Mail-Rundschreiben"
   }
 }

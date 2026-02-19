@@ -6,10 +6,12 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import BoostsIcon from '@mui/icons-material/Cached';
 import RepliesIcon from '@mui/icons-material/Comment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import EmailIcon from '@mui/icons-material/Email';
 import TopIcon from '@mui/icons-material/EmojiEvents';
 import FollowersIcon from '@mui/icons-material/Group';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
+import PeopleIcon from '@mui/icons-material/People';
 import FavoritesIcon from '@mui/icons-material/Star';
 import AccountsIcon from '@mui/icons-material/SupervisedUserCircle';
 import { Box, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
@@ -49,6 +51,8 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
           { label: t('items.adminDashboard'), link: '/admin/dashboard', icon: <AdminPanelSettingsIcon /> },
           { label: t('items.accountHealth'), link: '/admin/accounts-health', icon: <HealthAndSafetyIcon /> },
           { label: t('items.systemHealth'), link: '/admin/system-health', icon: <MonitorHeartIcon /> },
+          { label: t('items.userManagement'), link: '/admin/users', icon: <PeopleIcon /> },
+          { label: t('items.emailBroadcast'), link: '/admin/email', icon: <EmailIcon /> },
         ],
       });
     }
