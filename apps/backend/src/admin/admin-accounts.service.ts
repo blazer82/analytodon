@@ -35,7 +35,8 @@ export class AdminAccountsService {
     }
 
     if (search) {
-      const searchRegex = new RegExp(search, 'i');
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escaped, 'i');
 
       // Find users matching the search by email
       const matchingUsers = await this.userRepository.find({ email: searchRegex }, { fields: ['_id'] });
@@ -52,7 +53,7 @@ export class AdminAccountsService {
         orConditions.push({ owner: { $in: matchingUserIds } } as FilterQuery<AccountEntity>);
       }
 
-      where.$and = [{ $or: orConditions }];
+      where.$or = orConditions;
     }
 
     const [accounts, total] = await this.accountRepository.findAndCount(where, {

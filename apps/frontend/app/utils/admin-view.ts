@@ -2,6 +2,12 @@ import { useCallback } from 'react';
 
 import { useSearchParams } from '@remix-run/react';
 
+export interface AdminViewAsData {
+  accountId: string;
+  accountName: string;
+  ownerEmail: string;
+}
+
 /**
  * Client-side hook for admin "View As" mode.
  *

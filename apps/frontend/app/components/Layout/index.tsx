@@ -21,6 +21,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { Form, useNavigation, useRouteLoaderData } from '@remix-run/react';
+import type { AdminViewAsData } from '~/utils/admin-view';
 
 import AccountOwnerNavigation from '../AccountOwnerNavigation';
 import AdminViewBanner from '../AdminViewBanner';
@@ -30,12 +31,6 @@ import { AppBarContent, AppBarTitle, DashboardContainer, DrawerHeader, UserInfo 
 import { AppBar, Drawer } from './ux';
 
 type AccountDto = SessionUserDto['accounts'][0];
-
-interface AdminViewAsData {
-  accountId: string;
-  accountName: string;
-  ownerEmail: string;
-}
 
 interface LayoutProps {
   title: string;

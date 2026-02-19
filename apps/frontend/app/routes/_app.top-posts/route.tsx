@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next';
 import type { RankedTootDto } from '@analytodon/rest-client';
 import { Box, Container, Grid, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { useFetcher, useLoaderData, useSearchParams } from '@remix-run/react';
+import { useFetcher, useLoaderData } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
 import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
 import TopToots, { type Toot } from '~/components/TopToots';
 import { createTootsApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
 import { resolveEffectiveAccountId } from '~/utils/active-account.server';
+import { useAdminViewAs } from '~/utils/admin-view';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -88,8 +89,7 @@ export default function TopPostsPage() {
   const fetcher = useFetcher<typeof loader>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
   const { t } = useTranslation('routes.topPosts');
-  const [searchParams] = useSearchParams();
-  const viewAs = searchParams.get('viewAs');
+  const { buildLink } = useAdminViewAs();
 
   const topData = fetcher.data?.top ?? top;
   const topByRepliesData = fetcher.data?.topByReplies ?? topByReplies;
@@ -101,11 +101,10 @@ export default function TopPostsPage() {
     (newTimeframe: Timeframe) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        const viewAsParam = viewAs ? `&viewAs=${viewAs}` : '';
-        fetcher.load(`/top-posts?index&timeframe=${newTimeframe}${viewAsParam}`);
+        fetcher.load(buildLink(`/top-posts?index&timeframe=${newTimeframe}`));
       }
     },
-    [fetcher, accountId, viewAs],
+    [fetcher, accountId, buildLink],
   );
 
   if (!accountId) {

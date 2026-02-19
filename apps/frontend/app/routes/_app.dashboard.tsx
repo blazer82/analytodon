@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { ChartDataPointDto, RankedTootDto, TotalSnapshotDto } from '@analytodon/rest-client';
 import { Box, Container, Grid, Link, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { useLoaderData, useRouteLoaderData, useSearchParams } from '@remix-run/react';
+import { useLoaderData, useRouteLoaderData } from '@remix-run/react';
 import Chart from '~/components/Chart';
 import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/styles';
 import TopToots, { type Toot } from '~/components/TopToots';
@@ -12,6 +12,7 @@ import TotalBox from '~/components/TotalBox';
 import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
 import { resolveEffectiveAccountId } from '~/utils/active-account.server';
+import { useAdminViewAs } from '~/utils/admin-view';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -92,9 +93,7 @@ export default function Dashboard() {
     top: Toot[] | null;
   };
 
-  const [searchParams] = useSearchParams();
-  const viewAs = searchParams.get('viewAs');
-  const viewAsSuffix = viewAs ? `?viewAs=${viewAs}` : '';
+  const { buildLink } = useAdminViewAs();
 
   // Get ENV from the root loader data for support email
   const rootData = useRouteLoaderData<{ ENV: { SUPPORT_EMAIL: string } }>('root');
@@ -175,7 +174,7 @@ export default function Dashboard() {
                 amount={total.amount}
                 date={total.day}
                 linkText={t('totalBox.viewStats')}
-                link={`/followers${viewAsSuffix}`}
+                link={buildLink('/followers')}
               />
             )}
             {!total && (
@@ -201,7 +200,7 @@ export default function Dashboard() {
                 data={top}
                 title={t('topPosts.title')}
                 linkText={t('topPosts.viewMore')}
-                link={`/top-posts${viewAsSuffix}`}
+                link={buildLink('/top-posts')}
               />
             ) : (
               <Typography

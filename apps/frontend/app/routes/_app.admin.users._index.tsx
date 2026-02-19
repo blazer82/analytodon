@@ -28,13 +28,6 @@ import { createUsersApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-// Extended type until REST client is regenerated
-interface UserWithExtendedFields extends UserResponseDto {
-  emailVerified?: boolean;
-  lastLoginAt?: string;
-  accountsCount?: number;
-}
-
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon - User Management' }];
 };
@@ -66,7 +59,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 export default function AdminUsersIndex() {
   const { t } = useTranslation('routes.admin.users');
   const { users } = useLoaderData<typeof loader>() as {
-    users: UserWithExtendedFields[] | null;
+    users: UserResponseDto[] | null;
   };
 
   const [search, setSearch] = React.useState('');

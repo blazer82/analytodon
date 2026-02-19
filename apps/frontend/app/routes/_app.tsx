@@ -6,6 +6,7 @@ import { Outlet, useLoaderData, useLocation } from '@remix-run/react';
 import Layout from '~/components/Layout';
 import { createAdminApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
+import type { AdminViewAsData } from '~/utils/admin-view';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -41,8 +42,11 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 
   let currentAccount = activeAccountId ? user.accounts.find((acc) => acc.id === activeAccountId) : null;
 
-  // Admin "View As" mode: when admin has ?viewAs=<accountId>, fetch that account's details
-  let adminViewAs: { accountId: string; accountName: string; ownerEmail: string } | null = null;
+  // Admin "View As" mode: fetch the viewed account's details for the banner.
+  // This runs on every navigation in view-as mode. We accept this because:
+  // (a) admin-only with negligible traffic, (b) fast indexed _id lookup,
+  // (c) caching would add complexity with risk of stale banner data.
+  let adminViewAs: AdminViewAsData | null = null;
   if (user.role === 'admin') {
     const url = new URL(request.url);
     const viewAsAccountId = url.searchParams.get('viewAs');

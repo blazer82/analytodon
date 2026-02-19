@@ -55,6 +55,9 @@ jobs:
       - name: Build dependencies
         run: pnpm --filter @analytodon/shared-orm build
 
+      - name: Run frontend tests
+        run: pnpm --filter @analytodon/frontend test
+
       - name: Run unit tests
         run: pnpm --filter @analytodon/backend test:unit
 

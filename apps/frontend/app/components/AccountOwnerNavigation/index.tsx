@@ -17,14 +17,9 @@ import AccountsIcon from '@mui/icons-material/SupervisedUserCircle';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import { Box, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
 import { Link, useLocation, useRouteLoaderData } from '@remix-run/react';
+import type { AdminViewAsData } from '~/utils/admin-view';
 
 import { NavItemContainer } from '../Layout/styles';
-
-interface AdminViewAsData {
-  accountId: string;
-  accountName: string;
-  ownerEmail: string;
-}
 
 const AccountOwnerNavigation: React.FunctionComponent = () => {
   const { t } = useTranslation('components.navigation');

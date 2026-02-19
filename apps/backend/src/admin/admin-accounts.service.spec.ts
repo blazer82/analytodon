@@ -130,9 +130,20 @@ describe('AdminAccountsService', () => {
         fields: ['_id'],
       });
       expect(accountRepository.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ $and: expect.any(Array) }),
+        expect.objectContaining({ $or: expect.any(Array) }),
         expect.anything(),
       );
+    });
+
+    it('should escape regex special characters in search', async () => {
+      userRepository.find.mockResolvedValue([]);
+      accountRepository.findAndCount.mockResolvedValue([[], 0]);
+
+      await service.getAccounts({ search: 'test.user+foo@example.com', page: 1, limit: 25 });
+
+      const userFindCall = userRepository.find.mock.calls[0][0] as { email: RegExp };
+      expect(userFindCall.email.source).toContain('\\.');
+      expect(userFindCall.email.source).toContain('\\+');
     });
 
     it('should calculate pagination correctly', async () => {

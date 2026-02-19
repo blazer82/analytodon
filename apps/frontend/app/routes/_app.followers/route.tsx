@@ -5,7 +5,7 @@ import type { ChartDataPointDto, FollowersKpiDto, TotalSnapshotDto } from '@anal
 import DownloadIcon from '@mui/icons-material/Download';
 import { Box, Container, Fade, Grid, IconButton, Link, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { useFetcher, useLoaderData, useRouteLoaderData, useSearchParams } from '@remix-run/react';
+import { useFetcher, useLoaderData, useRouteLoaderData } from '@remix-run/react';
 import Chart from '~/components/Chart';
 import { ChartPaper, TotalBoxPaper } from '~/components/Layout/styles';
 import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
@@ -14,6 +14,7 @@ import TrendBox from '~/components/TrendBox';
 import { createFollowersApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
 import { resolveEffectiveAccountId } from '~/utils/active-account.server';
+import { useAdminViewAs } from '~/utils/admin-view';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -106,8 +107,7 @@ export default function FollowersPage() {
   const fetcher = useFetcher<LoaderData>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
   const { t } = useTranslation('routes.followers');
-  const [searchParams] = useSearchParams();
-  const viewAs = searchParams.get('viewAs');
+  const { buildLink } = useAdminViewAs();
 
   const rootData = useRouteLoaderData<{ ENV: { SUPPORT_EMAIL: string } }>('root');
   const supportEmail = rootData?.ENV?.SUPPORT_EMAIL || 'support@analytodon.com';
@@ -119,19 +119,17 @@ export default function FollowersPage() {
     (newTimeframe: Timeframe) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        const viewAsParam = viewAs ? `&viewAs=${viewAs}` : '';
-        fetcher.load(`/followers?index&timeframe=${newTimeframe}${viewAsParam}`);
+        fetcher.load(buildLink(`/followers?index&timeframe=${newTimeframe}`));
       }
     },
-    [fetcher, accountId, viewAs],
+    [fetcher, accountId, buildLink],
   );
 
   const handleCSVDownload = React.useCallback(() => {
     if (accountId) {
-      const viewAsParam = viewAs ? `&viewAs=${viewAs}` : '';
-      window.location.href = `/followers/csv?accountId=${accountId}&timeframe=${currentTimeframe}${viewAsParam}`;
+      window.location.href = buildLink(`/followers/csv?accountId=${accountId}&timeframe=${currentTimeframe}`);
     }
-  }, [accountId, currentTimeframe, viewAs]);
+  }, [accountId, currentTimeframe, buildLink]);
 
   const hasChartData = React.useMemo(() => (chartData?.length ?? 0) > 0, [chartData]);
 
