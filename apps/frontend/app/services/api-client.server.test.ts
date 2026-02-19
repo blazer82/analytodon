@@ -70,7 +70,7 @@ describe('customFetch (via config.fetchApi)', () => {
   beforeEach(() => {
     originalFetch = globalThis.fetch;
     mockFetch = vi.fn();
-    globalThis.fetch = mockFetch;
+    globalThis.fetch = mockFetch as typeof fetch;
 
     mocks.mockRedirect.mockImplementation((url: string) => {
       return new Response(null, { status: 302, headers: { Location: url } });
