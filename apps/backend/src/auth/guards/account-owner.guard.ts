@@ -1,4 +1,4 @@
-import { UserEntity } from '@analytodon/shared-orm';
+import { UserEntity, UserRole } from '@analytodon/shared-orm';
 import {
   BadRequestException,
   CanActivate,
@@ -53,8 +53,11 @@ export class AccountOwnerGuard implements CanActivate {
     const requireSetupComplete = options?.requireSetupComplete ?? false;
 
     try {
-      // findByIdOrFail will throw NotFoundException if not found, not owned, or setup incomplete (if required)
-      const account = await this.accountsService.findByIdOrFail(accountId, user, requireSetupComplete);
+      // Admins can read any account's data via GET endpoints without owner check
+      const isAdminGetRequest = user.role === UserRole.Admin && request.method === 'GET';
+      const account = isAdminGetRequest
+        ? await this.accountsService.findByIdAdminOrFail(accountId, requireSetupComplete)
+        : await this.accountsService.findByIdOrFail(accountId, user, requireSetupComplete);
       request.account = account; // Attach the loaded account to the request for easy access in controllers
       return true;
     } catch (error) {

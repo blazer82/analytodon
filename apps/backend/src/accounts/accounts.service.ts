@@ -389,6 +389,36 @@ export class AccountsService {
   }
 
   /**
+   * Finds an account by its ID without owner filtering (admin use only).
+   * @param id - The ID of the account.
+   * @returns A promise that resolves to the account entity with owner populated, or null if not found.
+   */
+  async findByIdAdmin(id: string): Promise<AccountEntity | null> {
+    if (!ObjectId.isValid(id)) {
+      return null;
+    }
+    return this.accountRepository.findOne({ _id: new ObjectId(id) }, { populate: ['owner'] });
+  }
+
+  /**
+   * Finds an account by its ID without owner filtering, and verifies it exists (admin use only).
+   * @param id - The ID of the account.
+   * @param requireSetupComplete - Whether to require the account setup to be complete.
+   * @returns A promise that resolves to the account entity with owner populated.
+   * @throws NotFoundException if the account is not found or setup is not complete when required.
+   */
+  async findByIdAdminOrFail(id: string, requireSetupComplete = false): Promise<Loaded<AccountEntity, 'owner'>> {
+    const account = await this.findByIdAdmin(id);
+    if (!account) {
+      throw new NotFoundException(`Account with ID ${id} not found.`);
+    }
+    if (requireSetupComplete && !account.setupComplete) {
+      throw new NotFoundException(`Account with ID ${id} setup is not complete.`);
+    }
+    return account as Loaded<AccountEntity, 'owner'>;
+  }
+
+  /**
    * Gets the UTC offset for a given timezone name.
    * @param timezoneName - The name of the timezone (e.g., "America/New_York").
    * @returns The UTC offset string (e.g., "-04:00") or undefined if not found.

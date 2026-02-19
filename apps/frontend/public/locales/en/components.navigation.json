@@ -16,6 +16,7 @@
     "accountHealth": "Account Health",
     "systemHealth": "System Health",
     "userManagement": "Users",
+    "accountBrowser": "Account Browser",
     "emailBroadcast": "Email Broadcast"
   }
 }

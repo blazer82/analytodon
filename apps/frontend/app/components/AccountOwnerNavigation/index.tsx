@@ -14,28 +14,35 @@ import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import PeopleIcon from '@mui/icons-material/People';
 import FavoritesIcon from '@mui/icons-material/Star';
 import AccountsIcon from '@mui/icons-material/SupervisedUserCircle';
+import ViewListIcon from '@mui/icons-material/ViewList';
 import { Box, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
 import { Link, useLocation, useRouteLoaderData } from '@remix-run/react';
+import type { AdminViewAsData } from '~/utils/admin-view';
 
 import { NavItemContainer } from '../Layout/styles';
 
 const AccountOwnerNavigation: React.FunctionComponent = () => {
   const { t } = useTranslation('components.navigation');
   const location = useLocation();
-  const routeLoaderData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto } | undefined;
+  const routeLoaderData = useRouteLoaderData('routes/_app') as
+    | { user?: SessionUserDto; adminViewAs?: AdminViewAsData | null }
+    | undefined;
   const user = routeLoaderData?.user;
+  const adminViewAs = routeLoaderData?.adminViewAs;
+
+  const viewAsSuffix = adminViewAs ? `?viewAs=${adminViewAs.accountId}` : '';
 
   const navigation = React.useMemo(() => {
     const sections = [
       {
         label: t('sections.analytics'),
         items: [
-          { label: t('items.dashboard'), link: `/dashboard`, icon: <DashboardIcon /> },
-          { label: t('items.followers'), link: `/followers`, icon: <FollowersIcon /> },
-          { label: t('items.replies'), link: `/replies`, icon: <RepliesIcon /> },
-          { label: t('items.boosts'), link: `/boosts`, icon: <BoostsIcon /> },
-          { label: t('items.favorites'), link: `/favorites`, icon: <FavoritesIcon /> },
-          { label: t('items.topPosts'), link: `/top-posts`, icon: <TopIcon /> },
+          { label: t('items.dashboard'), link: `/dashboard${viewAsSuffix}`, icon: <DashboardIcon /> },
+          { label: t('items.followers'), link: `/followers${viewAsSuffix}`, icon: <FollowersIcon /> },
+          { label: t('items.replies'), link: `/replies${viewAsSuffix}`, icon: <RepliesIcon /> },
+          { label: t('items.boosts'), link: `/boosts${viewAsSuffix}`, icon: <BoostsIcon /> },
+          { label: t('items.favorites'), link: `/favorites${viewAsSuffix}`, icon: <FavoritesIcon /> },
+          { label: t('items.topPosts'), link: `/top-posts${viewAsSuffix}`, icon: <TopIcon /> },
         ],
       },
       {
@@ -49,6 +56,7 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
         label: t('sections.admin'),
         items: [
           { label: t('items.adminDashboard'), link: '/admin/dashboard', icon: <AdminPanelSettingsIcon /> },
+          { label: t('items.accountBrowser'), link: '/admin/accounts', icon: <ViewListIcon /> },
           { label: t('items.accountHealth'), link: '/admin/accounts-health', icon: <HealthAndSafetyIcon /> },
           { label: t('items.systemHealth'), link: '/admin/system-health', icon: <MonitorHeartIcon /> },
           { label: t('items.userManagement'), link: '/admin/users', icon: <PeopleIcon /> },
@@ -58,7 +66,7 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
     }
 
     return sections;
-  }, [t, user?.role]);
+  }, [t, user?.role, viewAsSuffix]);
 
   return (
     <NavItemContainer>
@@ -78,42 +86,44 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
           >
             {folder.label}
           </ListSubheader>
-          {folder.items.map(({ label, link, icon }) => (
-            <Tooltip
-              key={link}
-              title={label}
-              placement="right"
-              arrow
-              disableHoverListener={true}
-              disableFocusListener={true}
-            >
-              <ListItemButton
-                component={Link}
-                to={link}
-                selected={location.pathname === link}
-                sx={{
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
+          {folder.items.map(({ label, link, icon }) => {
+            const linkPathname = link.split('?')[0];
+            const isActive = location.pathname === linkPathname;
+            return (
+              <Tooltip
+                key={link}
+                title={label}
+                placement="right"
+                arrow
+                disableHoverListener={true}
+                disableFocusListener={true}
               >
-                <ListItemIcon
+                <ListItemButton
+                  component={Link}
+                  to={link}
+                  selected={isActive}
                   sx={{
-                    minWidth: 40,
-                    transition: 'transform 0.2s ease',
-                    transform: location.pathname === link ? 'scale(1.1)' : 'scale(1)',
+                    position: 'relative',
+                    overflow: 'hidden',
                   }}
                 >
-                  {icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Box
-                      component="span"
-                      sx={{
-                        fontWeight: location.pathname === link ? 600 : 400,
-                        position: 'relative',
-                        '&::after':
-                          location.pathname === link
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 40,
+                      transition: 'transform 0.2s ease',
+                      transform: isActive ? 'scale(1.1)' : 'scale(1)',
+                    }}
+                  >
+                    {icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Box
+                        component="span"
+                        sx={{
+                          fontWeight: isActive ? 600 : 400,
+                          position: 'relative',
+                          '&::after': isActive
                             ? {
                                 content: '""',
                                 position: 'absolute',
@@ -125,15 +135,16 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
                                 borderRadius: '2px',
                               }
                             : {},
-                      }}
-                    >
-                      {label}
-                    </Box>
-                  }
-                />
-              </ListItemButton>
-            </Tooltip>
-          ))}
+                        }}
+                      >
+                        {label}
+                      </Box>
+                    }
+                  />
+                </ListItemButton>
+              </Tooltip>
+            );
+          })}
         </React.Fragment>
       ))}
     </NavItemContainer>

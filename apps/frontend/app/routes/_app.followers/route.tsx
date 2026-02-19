@@ -13,6 +13,8 @@ import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
 import { createFollowersApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
+import { resolveEffectiveAccountId } from '~/utils/active-account.server';
+import { useAdminViewAs } from '~/utils/admin-view';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -37,15 +39,9 @@ interface LoaderData {
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
   const session = request.__apiClientSession!;
-  const activeAccountId = session.get('activeAccountId') as string | undefined;
+  const accountId = resolveEffectiveAccountId(request, user, session);
 
-  const currentAccount = activeAccountId
-    ? user.accounts.find((acc) => acc.id === activeAccountId)
-    : user.accounts.length > 0
-      ? user.accounts[0]
-      : null;
-
-  if (!currentAccount || !currentAccount.id) {
+  if (!accountId) {
     return {
       weeklyKPI: null,
       monthlyKPI: null,
@@ -56,7 +52,6 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       accountId: null,
     };
   }
-  const accountId = currentAccount.id;
 
   const url = new URL(request.url);
   const timeframeParam = (url.searchParams.get('timeframe') as Timeframe) || 'last30days';
@@ -112,6 +107,7 @@ export default function FollowersPage() {
   const fetcher = useFetcher<LoaderData>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
   const { t } = useTranslation('routes.followers');
+  const { buildLink } = useAdminViewAs();
 
   const rootData = useRouteLoaderData<{ ENV: { SUPPORT_EMAIL: string } }>('root');
   const supportEmail = rootData?.ENV?.SUPPORT_EMAIL || 'support@analytodon.com';
@@ -123,17 +119,17 @@ export default function FollowersPage() {
     (newTimeframe: Timeframe) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        fetcher.load(`/followers?index&timeframe=${newTimeframe}`);
+        fetcher.load(buildLink(`/followers?index&timeframe=${newTimeframe}`));
       }
     },
-    [fetcher, accountId],
+    [fetcher, accountId, buildLink],
   );
 
   const handleCSVDownload = React.useCallback(() => {
     if (accountId) {
-      window.location.href = `/followers/csv?accountId=${accountId}&timeframe=${currentTimeframe}`;
+      window.location.href = buildLink(`/followers/csv?accountId=${accountId}&timeframe=${currentTimeframe}`);
     }
-  }, [accountId, currentTimeframe]);
+  }, [accountId, currentTimeframe, buildLink]);
 
   const hasChartData = React.useMemo(() => (chartData?.length ?? 0) > 0, [chartData]);
 

@@ -11,6 +11,8 @@ import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
+import { resolveEffectiveAccountId } from '~/utils/active-account.server';
+import { useAdminViewAs } from '~/utils/admin-view';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -25,25 +27,15 @@ export const handle = {
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
   const session = request.__apiClientSession!;
-  const activeAccountId = session.get('activeAccountId') as string | undefined;
+  const accountId = resolveEffectiveAccountId(request, user, session);
 
-  const currentAccount = activeAccountId
-    ? user.accounts.find((acc) => acc.id === activeAccountId)
-    : user.accounts.length > 0
-      ? user.accounts[0]
-      : null;
-
-  if (!currentAccount || !currentAccount.id) {
-    // This should ideally be handled by requireUser or app.tsx loader redirecting if no accounts exist or setup is incomplete.
-    // If we reach here with no currentAccount, it implies a state that should be fixed upstream or is an error.
+  if (!accountId) {
     return {
       total: null,
       chart: [],
-      top: [], // Ensure 'top' is an array as per type Toot[] | null, default to empty array
+      top: [],
     };
   }
-
-  const accountId = currentAccount.id;
 
   try {
     const followersApi = await createFollowersApiWithAuth(request);
@@ -100,6 +92,8 @@ export default function Dashboard() {
     chart: ChartDataPointDto[];
     top: Toot[] | null;
   };
+
+  const { buildLink } = useAdminViewAs();
 
   // Get ENV from the root loader data for support email
   const rootData = useRouteLoaderData<{ ENV: { SUPPORT_EMAIL: string } }>('root');
@@ -180,7 +174,7 @@ export default function Dashboard() {
                 amount={total.amount}
                 date={total.day}
                 linkText={t('totalBox.viewStats')}
-                link="/followers"
+                link={buildLink('/followers')}
               />
             )}
             {!total && (
@@ -202,7 +196,12 @@ export default function Dashboard() {
         <Grid size={{ xs: 12 }}>
           <DataTablePaper>
             {top && top.length > 0 ? (
-              <TopToots data={top} title={t('topPosts.title')} linkText={t('topPosts.viewMore')} link="/top-posts" />
+              <TopToots
+                data={top}
+                title={t('topPosts.title')}
+                linkText={t('topPosts.viewMore')}
+                link={buildLink('/top-posts')}
+              />
             ) : (
               <Typography
                 sx={{

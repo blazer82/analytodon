@@ -199,7 +199,7 @@ describe('UsersService', () => {
       userRepository.findAll.mockResolvedValue(mockUsers);
       const result = await service.findAll();
       expect(result).toEqual(mockUsers);
-      expect(userRepository.findAll).toHaveBeenCalledWith({ populate: ['accounts'] });
+      expect(userRepository.findAll).toHaveBeenCalledWith({ populate: ['accounts'], orderBy: { createdAt: 'DESC' } });
     });
   });
 

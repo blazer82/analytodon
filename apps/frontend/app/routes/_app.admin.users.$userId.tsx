@@ -2,9 +2,11 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { UserResponseDto } from '@analytodon/rest-client';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import {
   Alert,
   Box,
+  Button,
   Chip,
   Container,
   FormGroup,
@@ -27,27 +29,6 @@ import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createUsersApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
-
-// Extended type until REST client is regenerated
-interface AccountSummary {
-  id: string;
-  serverURL: string;
-  accountName?: string;
-  username?: string;
-  isActive: boolean;
-  setupComplete: boolean;
-  createdAt: string;
-}
-
-interface UserDetail extends UserResponseDto {
-  emailVerified?: boolean;
-  lastLoginAt?: string;
-  timezone?: string;
-  locale?: string;
-  maxAccounts?: number;
-  accountsCount?: number;
-  accounts?: AccountSummary[];
-}
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Analytodon - User Detail' }];
@@ -138,7 +119,7 @@ export const action = withSessionHandling(async ({ request, params }: ActionFunc
 
 export default function AdminUserDetail() {
   const { t } = useTranslation('routes.admin.user-detail');
-  const { userDetail } = useLoaderData<typeof loader>() as { userDetail: UserDetail };
+  const { userDetail } = useLoaderData<typeof loader>() as { userDetail: UserResponseDto };
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
@@ -151,7 +132,7 @@ export default function AdminUserDetail() {
     setSuccessSnackbarOpen(!!actionData?.success);
   }, [actionData]);
 
-  const accounts = (userDetail.accounts ?? []) as AccountSummary[];
+  const accounts = userDetail.accounts ?? [];
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4, animation: 'fadeIn 0.6s ease-out' }}>
@@ -286,6 +267,7 @@ export default function AdminUserDetail() {
                   <TableCell>{t('columns.setupComplete')}</TableCell>
                   <TableCell>{t('columns.active')}</TableCell>
                   <TableCell>{t('columns.created')}</TableCell>
+                  <TableCell>{t('columns.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -309,6 +291,19 @@ export default function AdminUserDetail() {
                       />
                     </TableCell>
                     <TableCell>{new Date(account.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {account.setupComplete && (
+                        <Button
+                          component={RemixLink}
+                          to={`/dashboard?viewAs=${account.id}`}
+                          size="small"
+                          variant="outlined"
+                          startIcon={<DashboardIcon />}
+                        >
+                          {t('actions.viewDashboard')}
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

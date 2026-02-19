@@ -19,6 +19,10 @@ src/models/AbandonedAccountDto.ts
 src/models/AccountHealthResponseDto.ts
 src/models/AccountMetricsDto.ts
 src/models/AccountResponseDto.ts
+src/models/AccountSummaryDto.ts
+src/models/AdminAccountItemDto.ts
+src/models/AdminAccountOwnerDto.ts
+src/models/AdminAccountsResponseDto.ts
 src/models/AdminStatsResponseDto.ts
 src/models/AllTopTootsResponseDto.ts
 src/models/AuthResponseDto.ts

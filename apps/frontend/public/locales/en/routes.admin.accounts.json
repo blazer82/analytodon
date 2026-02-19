@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "Account Browser"
+  },
+  "search": {
+    "placeholder": "Search accounts, servers, or owners..."
+  },
+  "filters": {
+    "statusAll": "All Statuses",
+    "active": "Active",
+    "inactive": "Inactive",
+    "setupAll": "All Setup States",
+    "setupComplete": "Setup Complete",
+    "setupIncomplete": "Setup Incomplete"
+  },
+  "columns": {
+    "accountName": "Account Name",
+    "serverURL": "Server URL",
+    "ownerEmail": "Owner Email",
+    "active": "Active",
+    "setupComplete": "Setup Complete",
+    "created": "Created",
+    "actions": "Actions"
+  },
+  "labels": {
+    "yes": "Yes",
+    "no": "No"
+  },
+  "actions": {
+    "viewDashboard": "View Dashboard"
+  },
+  "messages": {
+    "noAccounts": "No accounts found matching your criteria.",
+    "loadError": "Failed to load accounts."
+  }
+}

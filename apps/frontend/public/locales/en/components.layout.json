@@ -13,5 +13,9 @@
     "button": "Logout",
     "loggingOut": "Logging out..."
   },
-  "branding": "Analytodon"
+  "branding": "Analytodon",
+  "adminView": {
+    "banner": "Admin View \u2014 Viewing {{accountName}} ({{ownerEmail}}). Read-only.",
+    "exit": "Exit View Mode"
+  }
 }
