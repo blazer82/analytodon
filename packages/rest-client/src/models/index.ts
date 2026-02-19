@@ -28,6 +28,7 @@ export * from './FirstStatsMailDto';
 export * from './FollowersKpiDto';
 export * from './HashtagEngagementDto';
 export * from './HashtagOverTimeDto';
+export * from './HashtagOverTimeDtoDataInnerValue';
 export * from './HashtagTopDto';
 export * from './IncompleteAccountDto';
 export * from './JobStatusDto';

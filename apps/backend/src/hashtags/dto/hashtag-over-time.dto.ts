@@ -10,7 +10,10 @@ export class HashtagOverTimeDto {
       { day: '2024-01-16', typescript: 1, javascript: 2, rust: 1 },
     ],
     type: 'array',
-    items: { type: 'object' },
+    items: {
+      type: 'object',
+      additionalProperties: { oneOf: [{ type: 'string' }, { type: 'number' }] },
+    },
   })
   data!: Array<Record<string, string | number>>;
 }

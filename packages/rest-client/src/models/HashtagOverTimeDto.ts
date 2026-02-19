@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { HashtagOverTimeDtoDataInnerValue } from './HashtagOverTimeDtoDataInnerValue';
+import {
+    HashtagOverTimeDtoDataInnerValueFromJSON,
+    HashtagOverTimeDtoDataInnerValueFromJSONTyped,
+    HashtagOverTimeDtoDataInnerValueToJSON,
+    HashtagOverTimeDtoDataInnerValueToJSONTyped,
+} from './HashtagOverTimeDtoDataInnerValue';
+
 /**
  * 
  * @export
@@ -27,10 +35,10 @@ export interface HashtagOverTimeDto {
     hashtags: Array<string>;
     /**
      * 
-     * @type {Array<object>}
+     * @type {Array<{ [key: string]: HashtagOverTimeDtoDataInnerValue; }>}
      * @memberof HashtagOverTimeDto
      */
-    data: Array<object>;
+    data: Array<{ [key: string]: HashtagOverTimeDtoDataInnerValue; }>;
 }
 
 /**

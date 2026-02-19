@@ -44,6 +44,7 @@ src/models/FirstStatsMailDto.ts
 src/models/FollowersKpiDto.ts
 src/models/HashtagEngagementDto.ts
 src/models/HashtagOverTimeDto.ts
+src/models/HashtagOverTimeDtoDataInnerValue.ts
 src/models/HashtagTopDto.ts
 src/models/IncompleteAccountDto.ts
 src/models/JobStatusDto.ts
