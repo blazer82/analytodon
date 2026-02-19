@@ -1,7 +1,6 @@
 import { AccountEntity, HashtagStatsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
 import { Loaded } from '@mikro-orm/core';
-import { EntityManager, EntityRepository } from '@mikro-orm/mongodb';
-import { getRepositoryToken } from '@mikro-orm/nestjs';
+import { EntityManager } from '@mikro-orm/mongodb';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ObjectId } from 'bson';
@@ -14,7 +13,6 @@ jest.mock('../shared/utils/timeframe.helper');
 describe('HashtagsService', () => {
   let service: HashtagsService;
   let mockEm: jest.Mocked<EntityManager>;
-  let mockHashtagStatsRepository: jest.Mocked<EntityRepository<HashtagStatsEntity>>;
 
   const mockUser = {
     id: new ObjectId().toHexString(),
@@ -39,14 +37,8 @@ describe('HashtagsService', () => {
       aggregate: jest.fn(),
     } as unknown as jest.Mocked<EntityManager>;
 
-    mockHashtagStatsRepository = {} as unknown as jest.Mocked<EntityRepository<HashtagStatsEntity>>;
-
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        HashtagsService,
-        { provide: EntityManager, useValue: mockEm },
-        { provide: getRepositoryToken(HashtagStatsEntity), useValue: mockHashtagStatsRepository },
-      ],
+      providers: [HashtagsService, { provide: EntityManager, useValue: mockEm }],
     })
       .setLogger(new Logger())
       .compile();
@@ -97,26 +89,33 @@ describe('HashtagsService', () => {
 
   describe('getOverTime', () => {
     it('should return over time data with pivot format', async () => {
-      // First call: getTopHashtags aggregation
-      const topHashtagsResult = [
-        { _id: 'typescript', tootCount: 10, repliesCount: 5, reblogsCount: 8, favouritesCount: 12 },
-        { _id: 'rust', tootCount: 5, repliesCount: 2, reblogsCount: 3, favouritesCount: 4 },
-      ];
-      // Second call: daily data aggregation
+      // First call: simplified top hashtag names
+      const topHashtagsResult = [{ _id: 'typescript' }, { _id: 'rust' }];
+      // Second call: grouped daily data
       const dailyDataResult = [
-        { day: new Date('2024-01-15T00:00:00.000Z'), hashtag: 'typescript', tootCount: 3 },
-        { day: new Date('2024-01-15T00:00:00.000Z'), hashtag: 'rust', tootCount: 1 },
-        { day: new Date('2024-01-16T00:00:00.000Z'), hashtag: 'typescript', tootCount: 2 },
+        { _id: { day: new Date('2024-01-15T00:00:00.000Z'), hashtag: 'typescript' }, tootCount: 3 },
+        { _id: { day: new Date('2024-01-15T00:00:00.000Z'), hashtag: 'rust' }, tootCount: 1 },
+        { _id: { day: new Date('2024-01-16T00:00:00.000Z'), hashtag: 'typescript' }, tootCount: 2 },
       ];
 
       mockEm.aggregate.mockResolvedValueOnce(topHashtagsResult).mockResolvedValueOnce(dailyDataResult);
 
       const result = await service.getOverTime(mockAccount, 'last30days', 10);
 
+      expect(mockedResolveTimeframe).toHaveBeenCalledTimes(1);
       expect(result.hashtags).toEqual(['typescript', 'rust']);
       expect(result.data).toHaveLength(2);
       expect(result.data[0]).toEqual({ day: '2024-01-15', typescript: 3, rust: 1 });
       expect(result.data[1]).toEqual({ day: '2024-01-16', typescript: 2, rust: 0 });
+
+      // Verify first aggregation uses $project for _id only
+      const topPipeline = mockEm.aggregate.mock.calls[0][1];
+      expect(topPipeline[topPipeline.length - 1]).toEqual({ $project: { _id: 1 } });
+
+      // Verify second aggregation includes $group
+      const dailyPipeline = mockEm.aggregate.mock.calls[1][1];
+      const groupStage = dailyPipeline.find((s: Record<string, unknown>) => s.$group);
+      expect(groupStage.$group._id).toEqual({ day: '$day', hashtag: '$hashtag' });
     });
 
     it('should return empty data when no top hashtags', async () => {
@@ -124,6 +123,7 @@ describe('HashtagsService', () => {
 
       const result = await service.getOverTime(mockAccount, 'last30days');
       expect(result).toEqual({ hashtags: [], data: [] });
+      expect(mockedResolveTimeframe).toHaveBeenCalledTimes(1);
     });
   });
 

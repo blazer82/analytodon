@@ -51,9 +51,6 @@ export default class HashtagStats extends BaseCommand {
     const db = connection.db(flags.database);
 
     try {
-      // Create compound index (idempotent)
-      await db.collection('hashtagstats').createIndex({ account: 1, hashtag: 1, day: -1 }, { unique: true });
-
       await trackJobRun({ db, jobName: 'aggregate:hashtagstats', logger: this }, async () => {
         let accounts;
 

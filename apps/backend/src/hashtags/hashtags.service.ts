@@ -1,7 +1,6 @@
 import { AccountEntity, HashtagStatsEntity } from '@analytodon/shared-orm';
-import { EntityRepository, Loaded } from '@mikro-orm/core';
+import { Loaded } from '@mikro-orm/core';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
-import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { resolveTimeframe } from '../shared/utils/timeframe.helper';
@@ -13,11 +12,7 @@ import { HashtagTopDto } from './dto/hashtag-top.dto';
 export class HashtagsService {
   private readonly logger = new Logger(HashtagsService.name);
 
-  constructor(
-    private readonly em: EntityManager,
-    @InjectRepository(HashtagStatsEntity)
-    private readonly hashtagStatsRepository: EntityRepository<HashtagStatsEntity>,
-  ) {}
+  constructor(private readonly em: EntityManager) {}
 
   async getTopHashtags(account: Loaded<AccountEntity>, timeframe: string, limit = 10): Promise<HashtagTopDto[]> {
     const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
@@ -52,17 +47,34 @@ export class HashtagsService {
   }
 
   async getOverTime(account: Loaded<AccountEntity>, timeframe: string, limit = 10): Promise<HashtagOverTimeDto> {
-    // First get top N hashtag names
-    const topHashtags = await this.getTopHashtags(account, timeframe, limit);
-    const hashtagNames = topHashtags.map((h) => h.hashtag);
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
+
+    // Get top N hashtag names only
+    const topResults = await this.em.aggregate(HashtagStatsEntity, [
+      {
+        $match: {
+          account: new ObjectId(account.id),
+          day: { $gte: dateFrom, $lt: dateTo },
+        },
+      },
+      {
+        $group: {
+          _id: '$hashtag',
+          tootCount: { $sum: '$tootCount' },
+        },
+      },
+      { $sort: { tootCount: -1 } },
+      { $limit: limit },
+      { $project: { _id: 1 } },
+    ]);
+
+    const hashtagNames = topResults.map((r: { _id: string }) => r._id);
 
     if (hashtagNames.length === 0) {
       return { hashtags: [], data: [] };
     }
 
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
-
-    // Query daily data for those hashtags
+    // Query daily data grouped by day+hashtag
     const dailyData = await this.em.aggregate(HashtagStatsEntity, [
       {
         $match: {
@@ -71,14 +83,20 @@ export class HashtagsService {
           hashtag: { $in: hashtagNames },
         },
       },
-      { $sort: { day: 1 } },
+      {
+        $group: {
+          _id: { day: '$day', hashtag: '$hashtag' },
+          tootCount: { $sum: '$tootCount' },
+        },
+      },
+      { $sort: { '_id.day': 1 } },
     ]);
 
     // Pivot into { day, [hashtag]: tootCount } format
     const dayMap = new Map<string, Record<string, string | number>>();
 
     for (const entry of dailyData) {
-      const dayStr = entry.day.toISOString().split('T')[0];
+      const dayStr = entry._id.day.toISOString().split('T')[0];
       if (!dayMap.has(dayStr)) {
         const row: Record<string, string | number> = { day: dayStr };
         for (const tag of hashtagNames) {
@@ -87,7 +105,7 @@ export class HashtagsService {
         dayMap.set(dayStr, row);
       }
       const row = dayMap.get(dayStr)!;
-      row[entry.hashtag] = (row[entry.hashtag] as number) + entry.tootCount;
+      row[entry._id.hashtag] = (row[entry._id.hashtag] as number) + entry.tootCount;
     }
 
     return {

@@ -2,6 +2,9 @@ import { Db, Document, WithId } from 'mongodb';
 
 import { getYesterday } from '../../helpers/getYesterday';
 import { logger } from '../../helpers/logger';
+import { processInBatches } from '../../helpers/processInBatches';
+
+const BATCH_SIZE = 50;
 
 export interface GenerateHashtagStatsOptions {
   since?: Date;
@@ -72,40 +75,46 @@ export const generateHashtagStats = async (
     },
   ]);
 
-  const dbPromises: Promise<any>[] = [];
+  const results: {
+    _id: { day: Date; hashtag: string };
+    tootCount: number;
+    repliesCount: number;
+    reblogsCount: number;
+    favouritesCount: number;
+  }[] = [];
 
   while (await cursor.hasNext()) {
-    const stats = (await cursor.next()) as {
-      _id: { day: Date; hashtag: string };
-      tootCount: number;
-      repliesCount: number;
-      reblogsCount: number;
-      favouritesCount: number;
-    };
-
-    dbPromises.push(
-      db.collection('hashtagstats').updateOne(
-        {
-          account: account._id,
-          day: stats._id.day,
-          hashtag: stats._id.hashtag,
-        },
-        {
-          $set: {
-            account: account._id,
-            day: stats._id.day,
-            hashtag: stats._id.hashtag,
-            tootCount: stats.tootCount,
-            repliesCount: stats.repliesCount,
-            reblogsCount: stats.reblogsCount,
-            favouritesCount: stats.favouritesCount,
-          },
-        },
-        { upsert: true },
-      ),
+    results.push(
+      (await cursor.next()) as {
+        _id: { day: Date; hashtag: string };
+        tootCount: number;
+        repliesCount: number;
+        reblogsCount: number;
+        favouritesCount: number;
+      },
     );
   }
 
-  await Promise.all(dbPromises);
+  await processInBatches(BATCH_SIZE, results, (stats) =>
+    db.collection('hashtagstats').updateOne(
+      {
+        account: account._id,
+        day: stats._id.day,
+        hashtag: stats._id.hashtag,
+      },
+      {
+        $set: {
+          account: account._id,
+          day: stats._id.day,
+          hashtag: stats._id.hashtag,
+          tootCount: stats.tootCount,
+          repliesCount: stats.repliesCount,
+          reblogsCount: stats.reblogsCount,
+          favouritesCount: stats.favouritesCount,
+        },
+      },
+      { upsert: true },
+    ),
+  );
   logger.info(`Hashtag stats: Done for ${account.name}`);
 };
