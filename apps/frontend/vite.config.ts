@@ -19,6 +19,7 @@ export default defineConfig({
         v3_lazyRouteDiscovery: true,
       },
       serverModuleFormat: 'esm',
+      ignoredRouteFiles: ['**/*.test.ts', '**/*.test.tsx'],
     }),
     tsconfigPaths(),
   ],
