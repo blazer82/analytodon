@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AccountSummaryDto } from './AccountSummaryDto';
+import {
+    AccountSummaryDtoFromJSON,
+    AccountSummaryDtoFromJSONTyped,
+    AccountSummaryDtoToJSON,
+    AccountSummaryDtoToJSONTyped,
+} from './AccountSummaryDto';
+
 /**
  * 
  * @export
@@ -55,6 +63,48 @@ export interface UserResponseDto {
      * @memberof UserResponseDto
      */
     updatedAt: Date;
+    /**
+     * Indicates if the user email is verified
+     * @type {boolean}
+     * @memberof UserResponseDto
+     */
+    emailVerified?: boolean;
+    /**
+     * Timestamp of last user login
+     * @type {Date}
+     * @memberof UserResponseDto
+     */
+    lastLoginAt?: Date;
+    /**
+     * User timezone
+     * @type {string}
+     * @memberof UserResponseDto
+     */
+    timezone?: string;
+    /**
+     * User locale
+     * @type {string}
+     * @memberof UserResponseDto
+     */
+    locale?: string;
+    /**
+     * Maximum number of accounts the user can create
+     * @type {number}
+     * @memberof UserResponseDto
+     */
+    maxAccounts?: number;
+    /**
+     * Number of accounts the user has
+     * @type {number}
+     * @memberof UserResponseDto
+     */
+    accountsCount?: number;
+    /**
+     * User accounts
+     * @type {Array<AccountSummaryDto>}
+     * @memberof UserResponseDto
+     */
+    accounts?: Array<AccountSummaryDto>;
 }
 
 
@@ -97,6 +147,13 @@ export function UserResponseDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
         'isActive': json['isActive'],
         'createdAt': (new Date(json['createdAt'])),
         'updatedAt': (new Date(json['updatedAt'])),
+        'emailVerified': json['emailVerified'] == null ? undefined : json['emailVerified'],
+        'lastLoginAt': json['lastLoginAt'] == null ? undefined : (new Date(json['lastLoginAt'])),
+        'timezone': json['timezone'] == null ? undefined : json['timezone'],
+        'locale': json['locale'] == null ? undefined : json['locale'],
+        'maxAccounts': json['maxAccounts'] == null ? undefined : json['maxAccounts'],
+        'accountsCount': json['accountsCount'] == null ? undefined : json['accountsCount'],
+        'accounts': json['accounts'] == null ? undefined : ((json['accounts'] as Array<any>).map(AccountSummaryDtoFromJSON)),
     };
 }
 
@@ -117,6 +174,13 @@ export function UserResponseDtoToJSONTyped(value?: UserResponseDto | null, ignor
         'isActive': value['isActive'],
         'createdAt': ((value['createdAt']).toISOString()),
         'updatedAt': ((value['updatedAt']).toISOString()),
+        'emailVerified': value['emailVerified'],
+        'lastLoginAt': value['lastLoginAt'] == null ? undefined : ((value['lastLoginAt']).toISOString()),
+        'timezone': value['timezone'],
+        'locale': value['locale'],
+        'maxAccounts': value['maxAccounts'],
+        'accountsCount': value['accountsCount'],
+        'accounts': value['accounts'] == null ? undefined : ((value['accounts'] as Array<any>).map(AccountSummaryDtoToJSON)),
     };
 }
 

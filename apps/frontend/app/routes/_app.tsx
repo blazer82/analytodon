@@ -4,6 +4,8 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remi
 import { redirect } from '@remix-run/node';
 import { Outlet, useLoaderData, useLocation } from '@remix-run/react';
 import Layout from '~/components/Layout';
+import { createAdminApiWithAuth } from '~/services/api.server';
+import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -37,10 +39,39 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     }
   }
 
-  const currentAccount = activeAccountId ? user.accounts.find((acc) => acc.id === activeAccountId) : null;
+  let currentAccount = activeAccountId ? user.accounts.find((acc) => acc.id === activeAccountId) : null;
+
+  // Admin "View As" mode: when admin has ?viewAs=<accountId>, fetch that account's details
+  let adminViewAs: { accountId: string; accountName: string; ownerEmail: string } | null = null;
+  if (user.role === 'admin') {
+    const url = new URL(request.url);
+    const viewAsAccountId = url.searchParams.get('viewAs');
+    if (viewAsAccountId) {
+      try {
+        const adminApi = await createAdminApiWithAuth(request);
+        const accountDetail = await adminApi.adminControllerGetAccountById({ accountId: viewAsAccountId });
+        adminViewAs = {
+          accountId: accountDetail.id,
+          accountName: accountDetail.accountName || accountDetail.name || accountDetail.serverURL,
+          ownerEmail: accountDetail.owner.email,
+        };
+        // Override currentAccount display with the viewed account
+        currentAccount = {
+          id: accountDetail.id,
+          name: accountDetail.name,
+          accountName: accountDetail.accountName,
+          avatarURL: accountDetail.avatarURL,
+        } as typeof currentAccount;
+      } catch (error) {
+        if (error instanceof Response) throw error;
+        logger.error('Failed to load admin viewAs account:', error);
+        // Fall through — adminViewAs stays null, normal view
+      }
+    }
+  }
 
   // The HOF will handle creating the Response and committing the session
-  return { user, currentAccount };
+  return { user, currentAccount, adminViewAs };
 });
 
 export const action = withSessionHandling(async ({ request }: ActionFunctionArgs) => {

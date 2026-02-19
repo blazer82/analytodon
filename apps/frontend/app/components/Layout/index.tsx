@@ -23,12 +23,19 @@ import {
 import { Form, useNavigation, useRouteLoaderData } from '@remix-run/react';
 
 import AccountOwnerNavigation from '../AccountOwnerNavigation';
+import AdminViewBanner from '../AdminViewBanner';
 import Footer from '../Footer';
 import Logo from '../Logo';
 import { AppBarContent, AppBarTitle, DashboardContainer, DrawerHeader, UserInfo } from './styles';
 import { AppBar, Drawer } from './ux';
 
 type AccountDto = SessionUserDto['accounts'][0];
+
+interface AdminViewAsData {
+  accountId: string;
+  accountName: string;
+  ownerEmail: string;
+}
 
 interface LayoutProps {
   title: string;
@@ -54,10 +61,12 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
   interface AppLoaderData {
     user?: SessionUserDto;
     currentAccount?: AccountDto | null;
+    adminViewAs?: AdminViewAsData | null;
   }
   const routeLoaderData = useRouteLoaderData('routes/_app') as AppLoaderData | undefined;
   const user = routeLoaderData?.user;
   const currentAccount = routeLoaderData?.currentAccount;
+  const adminViewAs = routeLoaderData?.adminViewAs;
 
   const handleMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -186,7 +195,8 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                   },
                 }}
               >
-                {user &&
+                {!adminViewAs &&
+                  user &&
                   user.accounts &&
                   user.accounts
                     .filter((item: AccountDto) => item.id !== currentAccount?.id)
@@ -233,7 +243,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
                         </Form>
                       </MenuItem>
                     ))}
-                {user && user.accounts && user.accounts.length > 1 && <Divider sx={{ my: 1 }} />}
+                {!adminViewAs && user && user.accounts && user.accounts.length > 1 && <Divider sx={{ my: 1 }} />}
                 <MenuItem sx={{ borderRadius: 1, mx: 0.5, my: 0.25, p: 0 }}>
                   <Form action="/logout" method="post" style={{ width: '100%' }}>
                     <Button
@@ -299,6 +309,7 @@ const Layout: React.FC<LayoutProps> = ({ title, children, accountName, username,
 
       <DashboardContainer>
         <Toolbar />
+        {adminViewAs && <AdminViewBanner accountName={adminViewAs.accountName} ownerEmail={adminViewAs.ownerEmail} />}
         {children}
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           <Footer />

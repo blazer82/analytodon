@@ -2,9 +2,11 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { UserResponseDto } from '@analytodon/rest-client';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import {
   Alert,
   Box,
+  Button,
   Chip,
   Container,
   FormGroup,
@@ -286,6 +288,7 @@ export default function AdminUserDetail() {
                   <TableCell>{t('columns.setupComplete')}</TableCell>
                   <TableCell>{t('columns.active')}</TableCell>
                   <TableCell>{t('columns.created')}</TableCell>
+                  <TableCell>{t('columns.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -309,6 +312,19 @@ export default function AdminUserDetail() {
                       />
                     </TableCell>
                     <TableCell>{new Date(account.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {account.setupComplete && (
+                        <Button
+                          component={RemixLink}
+                          to={`/dashboard?viewAs=${account.id}`}
+                          size="small"
+                          variant="outlined"
+                          startIcon={<DashboardIcon />}
+                        >
+                          {t('actions.viewDashboard')}
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -73,7 +73,7 @@ export class UsersService {
    * @returns A promise that resolves to an array of user entities.
    */
   async findAll(): Promise<UserEntity[]> {
-    return this.userRepository.findAll({ populate: ['accounts'] });
+    return this.userRepository.findAll({ populate: ['accounts'], orderBy: { createdAt: 'DESC' } });
   }
 
   /**

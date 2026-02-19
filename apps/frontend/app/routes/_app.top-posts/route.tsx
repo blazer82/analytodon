@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next';
 import type { RankedTootDto } from '@analytodon/rest-client';
 import { Box, Container, Grid, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { useFetcher, useLoaderData } from '@remix-run/react';
+import { useFetcher, useLoaderData, useSearchParams } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
 import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
 import TopToots, { type Toot } from '~/components/TopToots';
 import { createTootsApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
+import { resolveEffectiveAccountId } from '~/utils/active-account.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -24,15 +25,9 @@ export const handle = {
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
   const session = request.__apiClientSession!;
-  const activeAccountId = session.get('activeAccountId') as string | undefined;
+  const accountId = resolveEffectiveAccountId(request, user, session);
 
-  const currentAccount = activeAccountId
-    ? user.accounts.find((acc) => acc.id === activeAccountId)
-    : user.accounts.length > 0
-      ? user.accounts[0]
-      : null;
-
-  if (!currentAccount || !currentAccount.id) {
+  if (!accountId) {
     return {
       top: [],
       topByReplies: [],
@@ -42,7 +37,6 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       accountId: null,
     };
   }
-  const accountId = currentAccount.id;
 
   const url = new URL(request.url);
   const timeframeParam = (url.searchParams.get('timeframe') as Timeframe) || 'last30days';
@@ -94,6 +88,8 @@ export default function TopPostsPage() {
   const fetcher = useFetcher<typeof loader>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
   const { t } = useTranslation('routes.topPosts');
+  const [searchParams] = useSearchParams();
+  const viewAs = searchParams.get('viewAs');
 
   const topData = fetcher.data?.top ?? top;
   const topByRepliesData = fetcher.data?.topByReplies ?? topByReplies;
@@ -105,10 +101,11 @@ export default function TopPostsPage() {
     (newTimeframe: Timeframe) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        fetcher.load(`/top-posts?index&timeframe=${newTimeframe}`);
+        const viewAsParam = viewAs ? `&viewAs=${viewAs}` : '';
+        fetcher.load(`/top-posts?index&timeframe=${newTimeframe}${viewAsParam}`);
       }
     },
-    [fetcher, accountId],
+    [fetcher, accountId, viewAs],
   );
 
   if (!accountId) {

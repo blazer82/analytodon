@@ -16,22 +16,81 @@
 import * as runtime from '../runtime';
 import type {
   AccountHealthResponseDto,
+  AdminAccountItemDto,
+  AdminAccountsResponseDto,
   AdminStatsResponseDto,
   SystemHealthResponseDto,
 } from '../models/index';
 import {
     AccountHealthResponseDtoFromJSON,
     AccountHealthResponseDtoToJSON,
+    AdminAccountItemDtoFromJSON,
+    AdminAccountItemDtoToJSON,
+    AdminAccountsResponseDtoFromJSON,
+    AdminAccountsResponseDtoToJSON,
     AdminStatsResponseDtoFromJSON,
     AdminStatsResponseDtoToJSON,
     SystemHealthResponseDtoFromJSON,
     SystemHealthResponseDtoToJSON,
 } from '../models/index';
 
+export interface AdminControllerGetAccountByIdRequest {
+    accountId: string;
+}
+
+export interface AdminControllerGetAccountsRequest {
+    search?: string;
+    isActive?: boolean;
+    setupComplete?: boolean;
+    page?: number;
+    limit?: number;
+}
+
 /**
  * 
  */
 export class AdminApi extends runtime.BaseAPI {
+
+    /**
+     * Get single account detail with owner info (Admin)
+     */
+    async adminControllerGetAccountByIdRaw(requestParameters: AdminControllerGetAccountByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdminAccountItemDto>> {
+        if (requestParameters['accountId'] == null) {
+            throw new runtime.RequiredError(
+                'accountId',
+                'Required parameter "accountId" was null or undefined when calling adminControllerGetAccountById().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/admin/accounts/browse/{accountId}`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AdminAccountItemDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Get single account detail with owner info (Admin)
+     */
+    async adminControllerGetAccountById(requestParameters: AdminControllerGetAccountByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdminAccountItemDto> {
+        const response = await this.adminControllerGetAccountByIdRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Get account health report (Admin)
@@ -64,6 +123,60 @@ export class AdminApi extends runtime.BaseAPI {
      */
     async adminControllerGetAccountHealth(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountHealthResponseDto> {
         const response = await this.adminControllerGetAccountHealthRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get paginated list of all accounts with owner info (Admin)
+     */
+    async adminControllerGetAccountsRaw(requestParameters: AdminControllerGetAccountsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdminAccountsResponseDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['search'] != null) {
+            queryParameters['search'] = requestParameters['search'];
+        }
+
+        if (requestParameters['isActive'] != null) {
+            queryParameters['isActive'] = requestParameters['isActive'];
+        }
+
+        if (requestParameters['setupComplete'] != null) {
+            queryParameters['setupComplete'] = requestParameters['setupComplete'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/admin/accounts/browse`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AdminAccountsResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Get paginated list of all accounts with owner info (Admin)
+     */
+    async adminControllerGetAccounts(requestParameters: AdminControllerGetAccountsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdminAccountsResponseDto> {
+        const response = await this.adminControllerGetAccountsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -5,7 +5,7 @@ import type { ChartDataPointDto, RepliedTootDto, RepliesKpiDto, TotalSnapshotDto
 import DownloadIcon from '@mui/icons-material/Download';
 import { Box, Container, Fade, Grid, IconButton, Link, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
-import { useFetcher, useLoaderData, useRouteLoaderData } from '@remix-run/react';
+import { useFetcher, useLoaderData, useRouteLoaderData, useSearchParams } from '@remix-run/react';
 import Chart from '~/components/Chart';
 import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/styles';
 import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
@@ -14,6 +14,7 @@ import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
 import { createRepliesApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
+import { resolveEffectiveAccountId } from '~/utils/active-account.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction = () => {
@@ -39,15 +40,9 @@ interface LoaderData {
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
   const session = request.__apiClientSession!;
-  const activeAccountId = session.get('activeAccountId') as string | undefined;
+  const accountId = resolveEffectiveAccountId(request, user, session);
 
-  const currentAccount = activeAccountId
-    ? user.accounts.find((acc) => acc.id === activeAccountId)
-    : user.accounts.length > 0
-      ? user.accounts[0]
-      : null;
-
-  if (!currentAccount || !currentAccount.id) {
+  if (!accountId) {
     return {
       weeklyKPI: null,
       monthlyKPI: null,
@@ -59,7 +54,6 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       accountId: null,
     };
   }
-  const accountId = currentAccount.id;
 
   const url = new URL(request.url);
   const timeframeParam = (url.searchParams.get('timeframe') as Timeframe) || 'last30days';
@@ -128,6 +122,8 @@ export default function RepliesPage() {
   const fetcher = useFetcher<LoaderData>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
   const { t } = useTranslation('routes.replies');
+  const [searchParams] = useSearchParams();
+  const viewAs = searchParams.get('viewAs');
 
   const rootData = useRouteLoaderData<{ ENV: { SUPPORT_EMAIL: string } }>('root');
   const supportEmail = rootData?.ENV?.SUPPORT_EMAIL || 'support@analytodon.com';
@@ -140,17 +136,19 @@ export default function RepliesPage() {
     (newTimeframe: Timeframe) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        fetcher.load(`/replies?index&timeframe=${newTimeframe}`);
+        const viewAsParam = viewAs ? `&viewAs=${viewAs}` : '';
+        fetcher.load(`/replies?index&timeframe=${newTimeframe}${viewAsParam}`);
       }
     },
-    [fetcher, accountId],
+    [fetcher, accountId, viewAs],
   );
 
   const handleCSVDownload = React.useCallback(() => {
     if (accountId) {
-      window.location.href = `/replies/csv?accountId=${accountId}&timeframe=${currentTimeframe}`;
+      const viewAsParam = viewAs ? `&viewAs=${viewAs}` : '';
+      window.location.href = `/replies/csv?accountId=${accountId}&timeframe=${currentTimeframe}${viewAsParam}`;
     }
-  }, [accountId, currentTimeframe]);
+  }, [accountId, currentTimeframe, viewAs]);
 
   const hasChartData = React.useMemo(() => (chartData?.length ?? 0) > 0, [chartData]);
   const hasTopTootsData = React.useMemo(() => (topTootsData?.length ?? 0) > 0, [topTootsData]);

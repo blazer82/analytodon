@@ -1,23 +1,17 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { createBoostsApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
+import { resolveEffectiveAccountId } from '~/utils/active-account.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
-  const session = request.__apiClientSession!; // Session is guaranteed by withSessionHandling
-  const activeAccountId = session.get('activeAccountId') as string | undefined;
+  const session = request.__apiClientSession!;
+  const accountId = resolveEffectiveAccountId(request, user, session);
 
-  const currentAccount = activeAccountId
-    ? user.accounts.find((acc) => acc.id === activeAccountId)
-    : user.accounts.length > 0
-      ? user.accounts[0]
-      : null;
-
-  if (!currentAccount || !currentAccount.id) {
+  if (!accountId) {
     return new Response('Account not found or not selected', { status: 404 });
   }
-  const accountId = currentAccount.id;
 
   const url = new URL(request.url);
   const timeframe = url.searchParams.get('timeframe');
