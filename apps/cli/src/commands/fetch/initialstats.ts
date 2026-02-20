@@ -7,6 +7,7 @@ import { createInitialAccountStats } from '../../helpers/createInitialAccountSta
 import { createInitialTootStats } from '../../helpers/createInitialTootStats';
 import { fetchTootstatsForAccount } from '../../helpers/fetchTootstatsForAccount';
 import { trackJobRun } from '../../helpers/trackJobRun';
+import { generateHashtagStats } from '../../service/hashtagstats/generateHashtagStats';
 
 export default class InitialStats extends BaseCommand {
   static description = 'Gather initial stats for all accounts (only 1 per call)';
@@ -113,6 +114,9 @@ export default class InitialStats extends BaseCommand {
 
               this.log(`Fetching initial stats: Create initial toot stats for account ${account.name}`);
               await createInitialTootStats(db, account);
+
+              this.log(`Fetching initial stats: Create initial hashtag stats for account ${account.name}`);
+              await generateHashtagStats(db, account, { full: true });
             } else {
               this.log(`Fetching initial stats: Skipping toot stats (--no-toot-stats flag)`);
             }
