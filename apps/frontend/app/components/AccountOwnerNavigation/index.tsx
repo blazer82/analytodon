@@ -16,7 +16,7 @@ import FavoritesIcon from '@mui/icons-material/Star';
 import AccountsIcon from '@mui/icons-material/SupervisedUserCircle';
 import TagIcon from '@mui/icons-material/Tag';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import { Box, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
+import { Box, Chip, Divider, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
 import { Link, useLocation, useRouteLoaderData } from '@remix-run/react';
 import type { AdminViewAsData } from '~/utils/admin-view';
 
@@ -43,9 +43,12 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
           { label: t('items.replies'), link: `/replies${viewAsSuffix}`, icon: <RepliesIcon /> },
           { label: t('items.boosts'), link: `/boosts${viewAsSuffix}`, icon: <BoostsIcon /> },
           { label: t('items.favorites'), link: `/favorites${viewAsSuffix}`, icon: <FavoritesIcon /> },
-          ...(user?.role === 'admin'
-            ? [{ label: t('items.hashtags'), link: `/hashtags${viewAsSuffix}`, icon: <TagIcon /> }]
-            : []),
+          {
+            label: t('items.hashtags'),
+            link: `/hashtags${viewAsSuffix}`,
+            icon: <TagIcon />,
+            badge: t('badges.new'),
+          },
           { label: t('items.topPosts'), link: `/top-posts${viewAsSuffix}`, icon: <TopIcon /> },
         ],
       },
@@ -90,7 +93,7 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
           >
             {folder.label}
           </ListSubheader>
-          {folder.items.map(({ label, link, icon }) => {
+          {folder.items.map(({ label, link, icon, badge }) => {
             const linkPathname = link.split('?')[0];
             const isActive = location.pathname === linkPathname;
             return (
@@ -142,6 +145,14 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
                         }}
                       >
                         {label}
+                        {badge && (
+                          <Chip
+                            label={badge}
+                            size="small"
+                            color="primary"
+                            sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
+                          />
+                        )}
                       </Box>
                     }
                   />
