@@ -4,9 +4,6 @@
     "settings": "Settings",
     "admin": "Administration"
   },
-  "badges": {
-    "new": "New"
-  },
   "items": {
     "dashboard": "Dashboard",
     "followers": "Followers",
