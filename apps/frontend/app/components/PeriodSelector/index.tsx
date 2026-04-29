@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -39,6 +38,8 @@ const timeframes: { value: Timeframe; key: string }[] = [
   { value: 'lastmonth', key: 'common:periods.lastMonth' },
   { value: 'lastyear', key: 'common:periods.lastYear' },
 ];
+
+const MAX_RANGE_DAYS = 366;
 
 const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
   timeframe,
@@ -102,7 +103,6 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
             </ToggleButton>
           ))}
           <ToggleButton value="custom" aria-label={t('common:timeframes.custom')} sx={{ px: 2, fontWeight: 500 }}>
-            <CalendarMonthIcon sx={{ fontSize: 18, mr: 0.5 }} />
             {t('common:timeframes.custom')}
           </ToggleButton>
         </ToggleButtonGroup>
@@ -113,6 +113,7 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
               label={t('from')}
               value={fromDate}
               onChange={handleFromChange}
+              minDate={toDate ? toDate.subtract(MAX_RANGE_DAYS, 'day') : undefined}
               maxDate={toDate ?? today}
               disabled={disabled}
               slotProps={{ textField: { size: 'small' } }}
@@ -124,7 +125,10 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
               value={toDate}
               onChange={handleToChange}
               minDate={fromDate ?? undefined}
-              maxDate={today}
+              maxDate={(() => {
+                const maxByRange = fromDate ? fromDate.add(MAX_RANGE_DAYS, 'day') : today;
+                return maxByRange.isBefore(today) ? maxByRange : today;
+              })()}
               disabled={disabled}
               slotProps={{ textField: { size: 'small' } }}
               format="YYYY-MM-DD"
