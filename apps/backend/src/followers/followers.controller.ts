@@ -100,7 +100,7 @@ export class FollowersController {
     this.logger.log(
       `Getting followers chart data for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    return this.followersService.getChartData(account, query.timeframe);
+    return this.followersService.getChartData(account, query.timeframe, query.dateFrom, query.dateTo);
   }
 
   @Get('csv')
@@ -118,6 +118,6 @@ export class FollowersController {
     @Res() res: Response,
   ): Promise<void> {
     this.logger.log(`Exporting followers CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
-    await this.followersService.exportCsv(account, query.timeframe, res);
+    await this.followersService.exportCsv(account, query.timeframe, res, query.dateFrom, query.dateTo);
   }
 }

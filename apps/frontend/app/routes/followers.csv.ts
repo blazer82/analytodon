@@ -14,13 +14,17 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   }
 
   const url = new URL(request.url);
-  const timeframe = url.searchParams.get('timeframe') || 'last30days'; // Default timeframe
+  const timeframe = url.searchParams.get('timeframe') || 'last30days';
+  const dateFrom = url.searchParams.get('dateFrom') || undefined;
+  const dateTo = url.searchParams.get('dateTo') || undefined;
 
   try {
     const followersApi = await createFollowersApiWithAuth(request);
     const apiResponse = await followersApi.followersControllerExportCsvRaw({
       accountId,
       timeframe,
+      dateFrom,
+      dateTo,
     });
 
     // Forward the response from the API

@@ -34,11 +34,15 @@ import {
 export interface RepliesControllerExportCsvRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
 }
 
 export interface RepliesControllerGetChartDataRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
 }
 
 export interface RepliesControllerGetMonthlyKpiRequest {
@@ -48,6 +52,8 @@ export interface RepliesControllerGetMonthlyKpiRequest {
 export interface RepliesControllerGetTopTootsByRepliesRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
 }
 
 export interface RepliesControllerGetTotalSnapshotRequest {
@@ -89,6 +95,14 @@ export class RepliesApi extends runtime.BaseAPI {
 
         if (requestParameters['timeframe'] != null) {
             queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -140,6 +154,14 @@ export class RepliesApi extends runtime.BaseAPI {
 
         if (requestParameters['timeframe'] != null) {
             queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -233,6 +255,14 @@ export class RepliesApi extends runtime.BaseAPI {
 
         if (requestParameters['timeframe'] != null) {
             queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

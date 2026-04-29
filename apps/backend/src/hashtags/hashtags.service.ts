@@ -14,8 +14,17 @@ export class HashtagsService {
 
   constructor(private readonly em: EntityManager) {}
 
-  async getTopHashtags(account: Loaded<AccountEntity>, timeframe: string, limit = 10): Promise<HashtagTopDto[]> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
+  async getTopHashtags(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    limit = 10,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<HashtagTopDto[]> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
 
     const results = await this.em.aggregate(HashtagStatsEntity, [
       {
@@ -46,8 +55,17 @@ export class HashtagsService {
     }));
   }
 
-  async getOverTime(account: Loaded<AccountEntity>, timeframe: string, limit = 10): Promise<HashtagOverTimeDto> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
+  async getOverTime(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    limit = 10,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<HashtagOverTimeDto> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
 
     // Get top N hashtag names only
     const topResults = await this.em.aggregate(HashtagStatsEntity, [
@@ -114,8 +132,17 @@ export class HashtagsService {
     };
   }
 
-  async getEngagement(account: Loaded<AccountEntity>, timeframe: string, limit = 10): Promise<HashtagEngagementDto[]> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
+  async getEngagement(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    limit = 10,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<HashtagEngagementDto[]> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
 
     const results = await this.em.aggregate(HashtagStatsEntity, [
       {
@@ -167,8 +194,13 @@ export class HashtagsService {
     timeframe: string,
     limit = 10,
     minTootCount = 2,
+    customDateFrom?: string,
+    customDateTo?: string,
   ): Promise<HashtagEngagementDto[]> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
 
     const results = await this.em.aggregate(HashtagStatsEntity, [
       {

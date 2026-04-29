@@ -197,7 +197,7 @@ describe('FollowersService', () => {
 
       await service.exportCsv(mockAccount, 'last7days', mockRes);
 
-      expect(service.getChartData).toHaveBeenCalledWith(mockAccount, 'last7days');
+      expect(service.getChartData).toHaveBeenCalledWith(mockAccount, 'last7days', undefined, undefined);
       expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         'Content-Disposition',

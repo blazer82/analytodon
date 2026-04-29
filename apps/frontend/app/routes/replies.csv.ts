@@ -15,6 +15,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 
   const url = new URL(request.url);
   const timeframe = url.searchParams.get('timeframe');
+  const dateFrom = url.searchParams.get('dateFrom') || undefined;
+  const dateTo = url.searchParams.get('dateTo') || undefined;
 
   if (!timeframe) {
     return new Response('Timeframe parameter is required', { status: 400 });
@@ -22,10 +24,11 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 
   try {
     const repliesApi = await createRepliesApiWithAuth(request);
-    // The repliesControllerExportCsvRaw is expected to return the raw response containing the CSV data.
     const apiResponse = await repliesApi.repliesControllerExportCsvRaw({
       accountId,
       timeframe,
+      dateFrom,
+      dateTo,
     });
 
     // Assuming the API returns the CSV data directly in the response body

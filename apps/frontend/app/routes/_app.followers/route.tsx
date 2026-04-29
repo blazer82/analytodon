@@ -8,7 +8,7 @@ import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { useFetcher, useLoaderData, useRouteLoaderData } from '@remix-run/react';
 import Chart from '~/components/Chart';
 import { ChartPaper, TotalBoxPaper } from '~/components/Layout/styles';
-import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
+import PeriodSelector, { type DateRange, type Timeframe } from '~/components/PeriodSelector';
 import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
 import { createFollowersApiWithAuth } from '~/services/api.server';
@@ -33,6 +33,8 @@ interface LoaderData {
   total: TotalSnapshotDto | null;
   chart: ChartDataPointDto[];
   initialTimeframe: Timeframe;
+  initialDateFrom: string | null;
+  initialDateTo: string | null;
   accountId: string | null;
 }
 
@@ -49,12 +51,16 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       total: null,
       chart: [],
       initialTimeframe: 'last30days' as Timeframe,
+      initialDateFrom: null,
+      initialDateTo: null,
       accountId: null,
     };
   }
 
   const url = new URL(request.url);
   const timeframeParam = (url.searchParams.get('timeframe') as Timeframe) || 'last30days';
+  const dateFrom = url.searchParams.get('dateFrom') || undefined;
+  const dateTo = url.searchParams.get('dateTo') || undefined;
 
   try {
     const followersApi = await createFollowersApiWithAuth(request);
@@ -64,7 +70,9 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       followersApi.followersControllerGetMonthlyKpi({ accountId }).catch(() => null),
       followersApi.followersControllerGetYearlyKpi({ accountId }).catch(() => null),
       followersApi.followersControllerGetTotalSnapshot({ accountId }).catch(() => null),
-      followersApi.followersControllerGetChartData({ accountId, timeframe: timeframeParam }).catch(() => []),
+      followersApi
+        .followersControllerGetChartData({ accountId, timeframe: timeframeParam, dateFrom, dateTo })
+        .catch(() => []),
     ]);
 
     return {
@@ -74,10 +82,11 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       total,
       chart: chartData,
       initialTimeframe: timeframeParam,
+      initialDateFrom: dateFrom || null,
+      initialDateTo: dateTo || null,
       accountId,
     };
   } catch (error) {
-    // If error is a Response (e.g. redirect from API client), HOF will handle it.
     if (error instanceof Response) {
       throw error;
     }
@@ -89,6 +98,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       total: null,
       chart: [],
       initialTimeframe: timeframeParam,
+      initialDateFrom: dateFrom || null,
+      initialDateTo: dateTo || null,
       accountId,
     };
   }
@@ -102,10 +113,15 @@ export default function FollowersPage() {
     total,
     chart: initialChart,
     initialTimeframe,
+    initialDateFrom,
+    initialDateTo,
     accountId,
   } = useLoaderData<LoaderData>();
   const fetcher = useFetcher<LoaderData>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
+  const [currentDateRange, setCurrentDateRange] = React.useState<DateRange | null>(
+    initialDateFrom && initialDateTo ? { from: initialDateFrom, to: initialDateTo } : null,
+  );
   const { t } = useTranslation('routes.followers');
   const { buildLink } = useAdminViewAs();
 
@@ -116,10 +132,15 @@ export default function FollowersPage() {
   const isLoadingChart = fetcher.state === 'loading';
 
   const handleTimeframeChange = React.useCallback(
-    (newTimeframe: Timeframe) => {
+    (newTimeframe: Timeframe, dateRange?: DateRange) => {
       setCurrentTimeframe(newTimeframe);
+      setCurrentDateRange(dateRange || null);
       if (accountId) {
-        fetcher.load(buildLink(`/followers?index&timeframe=${newTimeframe}`));
+        let url = `/followers?index&timeframe=${newTimeframe}`;
+        if (newTimeframe === 'custom' && dateRange) {
+          url += `&dateFrom=${dateRange.from}&dateTo=${dateRange.to}`;
+        }
+        fetcher.load(buildLink(url));
       }
     },
     [fetcher, accountId, buildLink],
@@ -127,9 +148,13 @@ export default function FollowersPage() {
 
   const handleCSVDownload = React.useCallback(() => {
     if (accountId) {
-      window.location.href = buildLink(`/followers/csv?accountId=${accountId}&timeframe=${currentTimeframe}`);
+      let url = `/followers/csv?accountId=${accountId}&timeframe=${currentTimeframe}`;
+      if (currentTimeframe === 'custom' && currentDateRange) {
+        url += `&dateFrom=${currentDateRange.from}&dateTo=${currentDateRange.to}`;
+      }
+      window.location.href = buildLink(url);
     }
-  }, [accountId, currentTimeframe, buildLink]);
+  }, [accountId, currentTimeframe, currentDateRange, buildLink]);
 
   const hasChartData = React.useMemo(() => (chartData?.length ?? 0) > 0, [chartData]);
 
@@ -202,7 +227,13 @@ export default function FollowersPage() {
         {/* Chart Section */}
         <Grid size={{ xs: 12 }} sx={{ mt: 5 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <PeriodSelector timeframe={currentTimeframe} onChange={handleTimeframeChange} disabled={isLoadingChart} />
+            <PeriodSelector
+              timeframe={currentTimeframe}
+              onChange={handleTimeframeChange}
+              disabled={isLoadingChart}
+              dateFrom={initialDateFrom}
+              dateTo={initialDateTo}
+            />
             <IconButton
               title={t('common:actions.downloadCsv')}
               aria-label={t('common:actions.downloadCsv')}

@@ -117,8 +117,16 @@ export class RepliesService {
    * @param timeframe - The timeframe for the chart data (e.g., 'last7days', 'last30days').
    * @returns A promise that resolves to an array of chart data points.
    */
-  async getChartData(account: Loaded<AccountEntity>, timeframe: string): Promise<ChartDataPointDto[]> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
+  async getChartData(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<ChartDataPointDto[]> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
 
     const oneDayEarlier = new Date(dateFrom);
     oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
@@ -142,8 +150,16 @@ export class RepliesService {
    * @param timeframe - The timeframe for ranking (e.g., 'last7days', 'last30days').
    * @returns A promise that resolves to an array of TootEntity augmented with rank.
    */
-  async getTopTootsByReplies(account: Loaded<AccountEntity>, timeframe: string): Promise<RankedTootEntity[]> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
+  async getTopTootsByReplies(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<RankedTootEntity[]> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
     const toots = await this.tootsService.getTopToots({
       accountId: account.id,
       ranking: TootRankingEnum.REPLIES,
@@ -161,11 +177,19 @@ export class RepliesService {
    * @param res - The Express response object to stream the CSV to.
    * @returns A promise that resolves when the CSV has been streamed.
    */
-  async exportCsv(account: Loaded<AccountEntity>, timeframe: string, res: Response): Promise<void> {
-    const chartData = await this.getChartData(account, timeframe);
+  async exportCsv(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    res: Response,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<void> {
+    const chartData = await this.getChartData(account, timeframe, customDateFrom, customDateTo);
 
+    const filenameSuffix =
+      timeframe === 'custom' && customDateFrom && customDateTo ? `custom_${customDateFrom}_${customDateTo}` : timeframe;
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=replies-${account.id}-${timeframe}.csv`);
+    res.setHeader('Content-Disposition', `attachment; filename=replies-${account.id}-${filenameSuffix}.csv`);
 
     const stringifier = stringify({ header: true, delimiter: ';' });
     stringifier.pipe(res);

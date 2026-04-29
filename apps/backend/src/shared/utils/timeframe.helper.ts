@@ -1,11 +1,10 @@
 import { DailyAccountStatsEntity, DailyTootStatsEntity } from '@analytodon/shared-orm';
 import { EntityRepository } from '@mikro-orm/core';
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { parseISO as dateFnsParseISO } from 'date-fns';
 import { intlFormat } from 'date-fns/intlFormat';
 import { findTimeZone, getUTCOffset } from 'timezone-support';
 
-// Define Timeframe type based on legacy usage
 export type Timeframe =
   | 'thisweek'
   | 'thismonth'
@@ -14,7 +13,8 @@ export type Timeframe =
   | 'lastmonth'
   | 'lastyear'
   | 'last7days'
-  | 'last30days'; // Default
+  | 'last30days'
+  | 'custom';
 
 // Define KPI DTO based on legacy usage
 export interface KpiDto {
@@ -69,14 +69,13 @@ export const getDaysAgo = (days: number, timezone: string): Date => {
     // This makes `date` represent 00:00:00 UTC on that specific day *as if* it were local time.
     // Then, applying the UTC offset effectively shifts it to be 00:00:00 in the target timezone.
 
-    const finalDate = new Date(date.toISOString().slice(0, 10) + 'T00:00:00.000Z'); // Ensure it's UTC midnight
-    finalDate.setUTCHours(finalDate.getUTCHours() - offsetHours); // Adjust for timezone offset to get true UTC time for local midnight
-    finalDate.setUTCMinutes(finalDate.getUTCMinutes() - offsetMinutes);
+    const finalDate = new Date(date.toISOString().slice(0, 10) + 'T00:00:00.000Z');
+    finalDate.setUTCHours(finalDate.getUTCHours() + offsetHours);
+    finalDate.setUTCMinutes(finalDate.getUTCMinutes() + offsetMinutes);
 
     return finalDate;
   } catch (error) {
     new Logger('TimeframeHelper').error(`Error processing timezone ${validTimezone} in getDaysAgo: `, error);
-    // Fallback or rethrow, for now, return the unadjusted date
     return date;
   }
 };
@@ -125,9 +124,34 @@ export const getDaysToYearBeginning = (timezone: string, yearModifier = 0): numb
   return diffDays;
 };
 
+const parseDate = (dateStr: string, timezone: string): Date => {
+  const validTimezone = timezone.replace(' ', '_');
+  const date = new Date(dateStr + 'T00:00:00.000Z');
+
+  try {
+    const tz = findTimeZone(validTimezone);
+    const { offset } = getUTCOffset(date, tz);
+
+    const offsetHours = Math.floor(offset / 60);
+    const offsetMinutes = offset % 60;
+
+    const finalDate = new Date(date.toISOString().slice(0, 10) + 'T00:00:00.000Z');
+    finalDate.setUTCHours(finalDate.getUTCHours() + offsetHours);
+    finalDate.setUTCMinutes(finalDate.getUTCMinutes() + offsetMinutes);
+
+    return finalDate;
+  } catch (error) {
+    new Logger('TimeframeHelper').error(`Error processing timezone ${validTimezone} in parseDate: `, error);
+    return date;
+  }
+};
+
+const MAX_CUSTOM_RANGE_DAYS = 366;
+
 export const resolveTimeframe = (
   timezone: string,
   timeframe: string,
+  options?: { dateFrom?: string; dateTo?: string },
 ): { dateFrom: Date; dateTo: Date; timeframe: Timeframe } => {
   const today = getDaysAgo(0, timezone); // Represents start of today in the given timezone
   const tomorrow = getDaysAgo(-1, timezone); // Represents start of tomorrow
@@ -180,6 +204,31 @@ export const resolveTimeframe = (
         dateTo: today, // To start of today (exclusive end for queries often) or tomorrow for inclusive
         timeframe: 'last7days',
       };
+    case 'custom': {
+      if (!options?.dateFrom || !options?.dateTo) {
+        throw new BadRequestException('dateFrom and dateTo are required for custom timeframe');
+      }
+      const customFrom = parseDate(options.dateFrom, timezone);
+      const customTo = parseDate(options.dateTo, timezone);
+
+      if (customFrom > customTo) {
+        throw new BadRequestException('dateFrom must be before or equal to dateTo');
+      }
+
+      const rangeDays = Math.round((customTo.getTime() - customFrom.getTime()) / (1000 * 60 * 60 * 24));
+      if (rangeDays > MAX_CUSTOM_RANGE_DAYS) {
+        throw new BadRequestException(`Custom date range must not exceed ${MAX_CUSTOM_RANGE_DAYS} days`);
+      }
+
+      const oneDayAfterTo = new Date(customTo);
+      oneDayAfterTo.setUTCDate(oneDayAfterTo.getUTCDate() + 1);
+
+      return {
+        dateFrom: customFrom,
+        dateTo: oneDayAfterTo,
+        timeframe: 'custom',
+      };
+    }
     default: {
       // last30days
       return {

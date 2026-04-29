@@ -8,7 +8,7 @@ import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { useFetcher, useLoaderData, useRouteLoaderData } from '@remix-run/react';
 import Chart from '~/components/Chart';
 import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/styles';
-import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
+import PeriodSelector, { type DateRange, type Timeframe } from '~/components/PeriodSelector';
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
@@ -35,6 +35,8 @@ interface LoaderData {
   chart: ChartDataPointDto[];
   topToots: Toot[];
   initialTimeframe: Timeframe;
+  initialDateFrom: string | null;
+  initialDateTo: string | null;
   accountId: string | null;
 }
 
@@ -52,12 +54,16 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       chart: [],
       topToots: [],
       initialTimeframe: 'last30days' as Timeframe,
+      initialDateFrom: null,
+      initialDateTo: null,
       accountId: null,
     };
   }
 
   const url = new URL(request.url);
   const timeframeParam = (url.searchParams.get('timeframe') as Timeframe) || 'last30days';
+  const dateFrom = url.searchParams.get('dateFrom') || undefined;
+  const dateTo = url.searchParams.get('dateTo') || undefined;
 
   try {
     const boostsApi = await createBoostsApiWithAuth(request);
@@ -67,8 +73,12 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       boostsApi.boostsControllerGetMonthlyKpi({ accountId }).catch(() => null),
       boostsApi.boostsControllerGetYearlyKpi({ accountId }).catch(() => null),
       boostsApi.boostsControllerGetTotalSnapshot({ accountId }).catch(() => null),
-      boostsApi.boostsControllerGetChartData({ accountId, timeframe: timeframeParam }).catch(() => []),
-      boostsApi.boostsControllerGetTopTootsByBoosts({ accountId, timeframe: timeframeParam }).catch(() => []),
+      boostsApi
+        .boostsControllerGetChartData({ accountId, timeframe: timeframeParam, dateFrom, dateTo })
+        .catch(() => []),
+      boostsApi
+        .boostsControllerGetTopTootsByBoosts({ accountId, timeframe: timeframeParam, dateFrom, dateTo })
+        .catch(() => []),
     ]);
 
     const topToots: Toot[] = (topTootsData || []).map((toot: BoostedTootDto) => ({
@@ -89,6 +99,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       chart: chartData,
       topToots,
       initialTimeframe: timeframeParam,
+      initialDateFrom: dateFrom || null,
+      initialDateTo: dateTo || null,
       accountId,
     };
   } catch (error) {
@@ -104,6 +116,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       chart: [],
       topToots: [],
       initialTimeframe: timeframeParam,
+      initialDateFrom: dateFrom || null,
+      initialDateTo: dateTo || null,
       accountId,
     };
   }
@@ -118,10 +132,15 @@ export default function BoostsPage() {
     chart: initialChart,
     topToots: initialTopToots,
     initialTimeframe,
+    initialDateFrom,
+    initialDateTo,
     accountId,
   } = useLoaderData<LoaderData>();
   const fetcher = useFetcher<LoaderData>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
+  const [currentDateRange, setCurrentDateRange] = React.useState<DateRange | null>(
+    initialDateFrom && initialDateTo ? { from: initialDateFrom, to: initialDateTo } : null,
+  );
   const { t } = useTranslation('routes.boosts');
   const { buildLink } = useAdminViewAs();
 
@@ -133,10 +152,15 @@ export default function BoostsPage() {
   const isLoadingData = fetcher.state === 'loading';
 
   const handleTimeframeChange = React.useCallback(
-    (newTimeframe: Timeframe) => {
+    (newTimeframe: Timeframe, dateRange?: DateRange) => {
       setCurrentTimeframe(newTimeframe);
+      setCurrentDateRange(dateRange || null);
       if (accountId) {
-        fetcher.load(buildLink(`/boosts?index&timeframe=${newTimeframe}`));
+        let url = `/boosts?index&timeframe=${newTimeframe}`;
+        if (newTimeframe === 'custom' && dateRange) {
+          url += `&dateFrom=${dateRange.from}&dateTo=${dateRange.to}`;
+        }
+        fetcher.load(buildLink(url));
       }
     },
     [fetcher, accountId, buildLink],
@@ -144,9 +168,13 @@ export default function BoostsPage() {
 
   const handleCSVDownload = React.useCallback(() => {
     if (accountId) {
-      window.location.href = buildLink(`/boosts/csv?accountId=${accountId}&timeframe=${currentTimeframe}`);
+      let url = `/boosts/csv?accountId=${accountId}&timeframe=${currentTimeframe}`;
+      if (currentTimeframe === 'custom' && currentDateRange) {
+        url += `&dateFrom=${currentDateRange.from}&dateTo=${currentDateRange.to}`;
+      }
+      window.location.href = buildLink(url);
     }
-  }, [accountId, currentTimeframe, buildLink]);
+  }, [accountId, currentTimeframe, currentDateRange, buildLink]);
 
   const hasChartData = React.useMemo(() => (chartData?.length ?? 0) > 0, [chartData]);
   const hasTopTootsData = React.useMemo(() => (topTootsData?.length ?? 0) > 0, [topTootsData]);
@@ -220,7 +248,13 @@ export default function BoostsPage() {
         {/* Chart Section */}
         <Grid size={{ xs: 12 }} sx={{ mt: 5 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <PeriodSelector timeframe={currentTimeframe} onChange={handleTimeframeChange} disabled={isLoadingData} />
+            <PeriodSelector
+              timeframe={currentTimeframe}
+              onChange={handleTimeframeChange}
+              disabled={isLoadingData}
+              dateFrom={initialDateFrom}
+              dateTo={initialDateTo}
+            />
             <IconButton
               title={t('common:actions.downloadCsv')}
               aria-label={t('common:actions.downloadCsv')}

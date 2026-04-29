@@ -1,3 +1,5 @@
 {
-  "ariaLabel": "Timeframe selector"
+  "ariaLabel": "Timeframe selector",
+  "from": "From",
+  "to": "To"
 }

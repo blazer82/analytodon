@@ -38,7 +38,13 @@ export class HashtagsController {
     @GetUser() user: UserEntity,
   ): Promise<HashtagTopDto[]> {
     this.logger.log(`Getting top hashtags for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
-    return this.hashtagsService.getTopHashtags(account, query.timeframe, query.limit ?? 10);
+    return this.hashtagsService.getTopHashtags(
+      account,
+      query.timeframe,
+      query.limit ?? 10,
+      query.dateFrom,
+      query.dateTo,
+    );
   }
 
   @Get('over-time')
@@ -57,7 +63,7 @@ export class HashtagsController {
     this.logger.log(
       `Getting hashtag over time for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    return this.hashtagsService.getOverTime(account, query.timeframe, query.limit ?? 10);
+    return this.hashtagsService.getOverTime(account, query.timeframe, query.limit ?? 10, query.dateFrom, query.dateTo);
   }
 
   @Get('engagement')
@@ -76,7 +82,13 @@ export class HashtagsController {
     this.logger.log(
       `Getting hashtag engagement for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    return this.hashtagsService.getEngagement(account, query.timeframe, query.limit ?? 10);
+    return this.hashtagsService.getEngagement(
+      account,
+      query.timeframe,
+      query.limit ?? 10,
+      query.dateFrom,
+      query.dateTo,
+    );
   }
 
   @Get('most-effective')
@@ -96,6 +108,13 @@ export class HashtagsController {
     this.logger.log(
       `Getting most effective hashtags for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    return this.hashtagsService.getMostEffective(account, query.timeframe, query.limit ?? 10, query.minTootCount ?? 2);
+    return this.hashtagsService.getMostEffective(
+      account,
+      query.timeframe,
+      query.limit ?? 10,
+      query.minTootCount ?? 2,
+      query.dateFrom,
+      query.dateTo,
+    );
   }
 }

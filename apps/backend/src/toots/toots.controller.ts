@@ -43,7 +43,14 @@ export class TootsController {
     );
     // const account = await this.accountsService.findByIdOrFail(accountId, user, true); // No longer needed
 
-    const { dateFrom, dateTo, timeframe: resolvedTimeframe } = resolveTimeframe(account.timezone, query.timeframe);
+    const {
+      dateFrom,
+      dateTo,
+      timeframe: resolvedTimeframe,
+    } = resolveTimeframe(account.timezone, query.timeframe, {
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+    });
     const limit = 10; // As per legacy
     const accountId = account.id; // Use id from the loaded account
 

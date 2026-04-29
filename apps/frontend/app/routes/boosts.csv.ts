@@ -15,6 +15,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 
   const url = new URL(request.url);
   const timeframe = url.searchParams.get('timeframe');
+  const dateFrom = url.searchParams.get('dateFrom') || undefined;
+  const dateTo = url.searchParams.get('dateTo') || undefined;
 
   if (!timeframe) {
     return new Response('Timeframe parameter is required', { status: 400 });
@@ -22,13 +24,11 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 
   try {
     const boostsApi = await createBoostsApiWithAuth(request);
-    // The boostsControllerExportCsvRaw is expected to return the raw response containing the CSV data.
-    // The OpenAPI generator might type the simplified boostsControllerExportCsv as Promise<void>
-    // if the schema indicates a 204 or if it's not well-defined for file downloads.
-    // We use the Raw method to get access to the Response object.
     const apiResponse = await boostsApi.boostsControllerExportCsvRaw({
       accountId,
       timeframe,
+      dateFrom,
+      dateTo,
     });
 
     // Assuming the API returns the CSV data directly in the response body

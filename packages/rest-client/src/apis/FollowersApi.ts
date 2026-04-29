@@ -31,11 +31,15 @@ import {
 export interface FollowersControllerExportCsvRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
 }
 
 export interface FollowersControllerGetChartDataRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
 }
 
 export interface FollowersControllerGetMonthlyKpiRequest {
@@ -81,6 +85,14 @@ export class FollowersApi extends runtime.BaseAPI {
 
         if (requestParameters['timeframe'] != null) {
             queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -132,6 +144,14 @@ export class FollowersApi extends runtime.BaseAPI {
 
         if (requestParameters['timeframe'] != null) {
             queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
