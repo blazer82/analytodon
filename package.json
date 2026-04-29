@@ -3,12 +3,18 @@
   "version": "2.0.0",
   "description": "Analytics for Mastodon",
   "scripts": {
+    "dev": "pnpm --filter \"@analytodon/*\" run dev",
     "lint": "pnpm --filter \"@analytodon/*\" run lint",
     "test": "pnpm --filter \"@analytodon/*\" run test",
     "prettier:check": "pnpm --filter \"@analytodon/*\" run prettier:check",
     "prettier:write": "pnpm --filter \"@analytodon/*\" run prettier:write",
     "codegen:rest": "openapi-generator-cli generate -i http://localhost:3000/api-json -g typescript-fetch -o packages/rest-client --additional-properties=npmName=@analytodon/rest-client,supportsES6=true,npmVersion=1.0.0",
-    "codegen": "pnpm codegen:rest"
+    "codegen": "pnpm codegen:rest",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "db:seed": "pnpm --filter @analytodon/cli run build && pnpm --filter @analytodon/cli run analytodon-cli dev seed",
+    "db:seed:reset": "pnpm --filter @analytodon/cli run build && pnpm --filter @analytodon/cli run analytodon-cli dev seed --reset",
+    "build": "pnpm --filter \"@analytodon/*\" run build"
   },
   "license": "GPL-3.0-only",
   "packageManager": "pnpm@10.5.2",

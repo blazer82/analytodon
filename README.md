@@ -40,12 +40,35 @@ cd analytodon
 pnpm install
 ```
 
-3. Configure environment variables:
+3. Start local services:
 
-   - Create `.env` files in both apps/backend and apps/frontend directories
-   - See the example env files for required variables
+```bash
+pnpm run docker:up
+```
 
-4. Start the development servers:
+This starts:
+
+- **MongoDB** on `localhost:27017`
+- **Mailpit** SMTP on `localhost:1025`, Web UI at http://localhost:8025
+
+4. Configure environment variables:
+   - Copy `.env.example` to `.env` in `apps/backend`, `apps/frontend`, and `apps/cli`
+   - The example files ship with working defaults for local development
+
+5. Seed the development database (optional):
+
+```bash
+pnpm run db:seed
+```
+
+This creates test users with 90 days of realistic analytics data:
+
+- `dev@analytodon.local` / `password` (account-owner with connected Mastodon account)
+- `admin@analytodon.local` / `password` (admin)
+
+To reset and re-seed: `pnpm run db:seed:reset`
+
+6. Start the development servers:
 
 ```bash
 # Start both frontend and backend in development mode
@@ -61,6 +84,21 @@ pnpm --filter @analytodon/frontend run dev
 The monorepo includes several useful scripts:
 
 ```bash
+# Start local services (MongoDB, Mailpit)
+pnpm run docker:up
+
+# Stop local services
+pnpm run docker:down
+
+# Seed the dev database with test data
+pnpm run db:seed
+
+# Reset and re-seed the dev database
+pnpm run db:seed:reset
+
+# Build all applications
+pnpm run build
+
 # Run linting across all packages
 pnpm run lint
 

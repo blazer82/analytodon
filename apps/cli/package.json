@@ -63,6 +63,9 @@
     "topics": {
       "hello": {
         "description": "Say hello to the world and others"
+      },
+      "dev": {
+        "description": "Development tools for local setup and testing"
       }
     }
   },
