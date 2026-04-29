@@ -97,12 +97,14 @@ describe('TimeframeHelper', () => {
   describe('getDaysAgo', () => {
     it('should return the correct date for 0 days ago', () => {
       const result = getDaysAgo(0, 'Europe/Berlin');
-      expect(result.toISOString().split('T')[0]).toBe('2023-05-15');
+      // Start of May 15 in Berlin (CEST, UTC+2) = May 14 at 22:00 UTC
+      expect(result.toISOString()).toBe('2023-05-14T22:00:00.000Z');
     });
 
     it('should return the correct date for 7 days ago', () => {
       const result = getDaysAgo(7, 'Europe/Berlin');
-      expect(result.toISOString().split('T')[0]).toBe('2023-05-08');
+      // Start of May 8 in Berlin (CEST, UTC+2) = May 7 at 22:00 UTC
+      expect(result.toISOString()).toBe('2023-05-07T22:00:00.000Z');
     });
 
     it('should handle timezone differences correctly', () => {
@@ -191,34 +193,34 @@ describe('TimeframeHelper', () => {
     it('should resolve thisweek timeframe correctly', () => {
       const result = resolveTimeframe('Europe/Berlin', 'thisweek');
       expect(result.timeframe).toBe('thisweek');
-      // Since our mock date is Monday (start of week), dateFrom should be today
-      expect(result.dateFrom.toISOString().split('T')[0]).toBe('2023-05-15');
-      // dateTo should be tomorrow (for inclusive end)
-      expect(result.dateTo.toISOString().split('T')[0]).toBe('2023-05-16');
+      // May 15 is Monday; dateFrom = start of Monday in Berlin (CEST) = May 14 22:00 UTC
+      expect(result.dateFrom.toISOString()).toBe('2023-05-14T22:00:00.000Z');
+      // dateTo = start of tomorrow (May 16) in Berlin = May 15 22:00 UTC
+      expect(result.dateTo.toISOString()).toBe('2023-05-15T22:00:00.000Z');
     });
 
     it('should resolve thismonth timeframe correctly', () => {
       const result = resolveTimeframe('Europe/Berlin', 'thismonth');
       expect(result.timeframe).toBe('thismonth');
-      // dateFrom should be May 1
-      expect(result.dateFrom.toISOString().split('T')[0]).toBe('2023-05-01');
-      // dateTo should be tomorrow
-      expect(result.dateTo.toISOString().split('T')[0]).toBe('2023-05-16');
+      // dateFrom = start of May 1 in Berlin (CEST) = April 30 22:00 UTC
+      expect(result.dateFrom.toISOString()).toBe('2023-04-30T22:00:00.000Z');
+      // dateTo = start of May 16 in Berlin = May 15 22:00 UTC
+      expect(result.dateTo.toISOString()).toBe('2023-05-15T22:00:00.000Z');
     });
 
     it('should resolve last30days timeframe correctly', () => {
       const result = resolveTimeframe('Europe/Berlin', 'last30days');
       expect(result.timeframe).toBe('last30days');
-      // dateFrom should be 30 days ago
-      expect(result.dateFrom.toISOString().split('T')[0]).toBe('2023-04-15');
-      // dateTo should be tomorrow
-      expect(result.dateTo.toISOString().split('T')[0]).toBe('2023-05-16');
+      // dateFrom = start of April 15 in Berlin (CEST) = April 14 22:00 UTC
+      expect(result.dateFrom.toISOString()).toBe('2023-04-14T22:00:00.000Z');
+      // dateTo = start of May 16 in Berlin = May 15 22:00 UTC
+      expect(result.dateTo.toISOString()).toBe('2023-05-15T22:00:00.000Z');
     });
 
     it('should use last30days as default for unknown timeframes', () => {
       const result = resolveTimeframe('Europe/Berlin', 'unknown');
       expect(result.timeframe).toBe('last30days');
-      expect(result.dateFrom.toISOString().split('T')[0]).toBe('2023-04-15');
+      expect(result.dateFrom.toISOString()).toBe('2023-04-14T22:00:00.000Z');
     });
   });
 
@@ -231,24 +233,21 @@ describe('TimeframeHelper', () => {
     });
 
     it('should calculate KPI correctly for followers count', async () => {
-      // Mock data for followers stats - make sure we have entries for all the dates we need
+      // Mock data uses timezone-aware UTC dates (midnight Berlin CEST = 22:00 UTC previous day)
       mockRepo.setMockData([
-        // This is the "current period end" - latest data point
         {
           account: accountId,
-          day: new Date('2023-05-15'), // Today in our mock
+          day: new Date('2023-05-14T22:00:00.000Z'), // May 15 midnight Berlin
           followersCount: 150,
         },
-        // This is the "current period start" - beginning of month
         {
           account: accountId,
-          day: new Date('2023-05-01'),
+          day: new Date('2023-04-30T22:00:00.000Z'), // May 1 midnight Berlin
           followersCount: 100,
         },
-        // This is the "previous period start" - beginning of previous month
         {
           account: accountId,
-          day: new Date('2023-04-01'),
+          day: new Date('2023-03-31T22:00:00.000Z'), // April 1 midnight Berlin
           followersCount: 50,
         },
       ]);

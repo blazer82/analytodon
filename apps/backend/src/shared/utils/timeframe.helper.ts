@@ -69,14 +69,13 @@ export const getDaysAgo = (days: number, timezone: string): Date => {
     // This makes `date` represent 00:00:00 UTC on that specific day *as if* it were local time.
     // Then, applying the UTC offset effectively shifts it to be 00:00:00 in the target timezone.
 
-    const finalDate = new Date(date.toISOString().slice(0, 10) + 'T00:00:00.000Z'); // Ensure it's UTC midnight
-    finalDate.setUTCHours(finalDate.getUTCHours() - offsetHours); // Adjust for timezone offset to get true UTC time for local midnight
-    finalDate.setUTCMinutes(finalDate.getUTCMinutes() - offsetMinutes);
+    const finalDate = new Date(date.toISOString().slice(0, 10) + 'T00:00:00.000Z');
+    finalDate.setUTCHours(finalDate.getUTCHours() + offsetHours);
+    finalDate.setUTCMinutes(finalDate.getUTCMinutes() + offsetMinutes);
 
     return finalDate;
   } catch (error) {
     new Logger('TimeframeHelper').error(`Error processing timezone ${validTimezone} in getDaysAgo: `, error);
-    // Fallback or rethrow, for now, return the unadjusted date
     return date;
   }
 };
@@ -137,8 +136,8 @@ const parseDate = (dateStr: string, timezone: string): Date => {
     const offsetMinutes = offset % 60;
 
     const finalDate = new Date(date.toISOString().slice(0, 10) + 'T00:00:00.000Z');
-    finalDate.setUTCHours(finalDate.getUTCHours() - offsetHours);
-    finalDate.setUTCMinutes(finalDate.getUTCMinutes() - offsetMinutes);
+    finalDate.setUTCHours(finalDate.getUTCHours() + offsetHours);
+    finalDate.setUTCMinutes(finalDate.getUTCMinutes() + offsetMinutes);
 
     return finalDate;
   } catch (error) {
