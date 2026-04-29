@@ -22,6 +22,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.8",
     "@mui/material": "^7.3.8",
+    "@mui/x-date-pickers": "^9.0.4",
     "@remix-run/express": "^2.17.4",
     "@remix-run/node": "^2.17.4",
     "@remix-run/react": "^2.17.4",

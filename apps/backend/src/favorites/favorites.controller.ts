@@ -108,7 +108,12 @@ export class FavoritesController {
     this.logger.log(
       `Getting favorites chart data for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const chartInternalData = await this.favoritesService.getChartData(account, query.timeframe);
+    const chartInternalData = await this.favoritesService.getChartData(
+      account,
+      query.timeframe,
+      query.dateFrom,
+      query.dateTo,
+    );
     return chartInternalData.map((point) => ({ ...point }) as ChartDataPointDto);
   }
 
@@ -127,7 +132,12 @@ export class FavoritesController {
     this.logger.log(
       `Getting top toots by favorites for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const rankedEntities = await this.favoritesService.getTopTootsByFavorites(account, query.timeframe);
+    const rankedEntities = await this.favoritesService.getTopTootsByFavorites(
+      account,
+      query.timeframe,
+      query.dateFrom,
+      query.dateTo,
+    );
     return rankedEntities.map(
       (toot) =>
         ({
@@ -158,6 +168,6 @@ export class FavoritesController {
     @Res() res: Response,
   ): Promise<void> {
     this.logger.log(`Exporting favorites CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
-    await this.favoritesService.exportCsv(account, query.timeframe, res);
+    await this.favoritesService.exportCsv(account, query.timeframe, res, query.dateFrom, query.dateTo);
   }
 }

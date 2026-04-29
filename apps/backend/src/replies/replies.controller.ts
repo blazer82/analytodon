@@ -101,7 +101,7 @@ export class RepliesController {
     this.logger.log(
       `Getting replies chart data for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    return this.repliesService.getChartData(account, query.timeframe);
+    return this.repliesService.getChartData(account, query.timeframe, query.dateFrom, query.dateTo);
   }
 
   @Get('top-toots')
@@ -119,7 +119,12 @@ export class RepliesController {
     this.logger.log(
       `Getting top toots by replies for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const rankedEntities = await this.repliesService.getTopTootsByReplies(account, query.timeframe);
+    const rankedEntities = await this.repliesService.getTopTootsByReplies(
+      account,
+      query.timeframe,
+      query.dateFrom,
+      query.dateTo,
+    );
     return rankedEntities.map(
       (toot) =>
         ({
@@ -150,6 +155,6 @@ export class RepliesController {
     @Res() res: Response,
   ): Promise<void> {
     this.logger.log(`Exporting replies CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
-    await this.repliesService.exportCsv(account, query.timeframe, res);
+    await this.repliesService.exportCsv(account, query.timeframe, res, query.dateFrom, query.dateTo);
   }
 }

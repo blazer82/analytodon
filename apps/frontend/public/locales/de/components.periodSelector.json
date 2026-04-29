@@ -1,3 +1,5 @@
 {
-  "ariaLabel": "Zeitrahmen-Auswahl"
+  "ariaLabel": "Zeitrahmen-Auswahl",
+  "from": "Von",
+  "to": "Bis"
 }

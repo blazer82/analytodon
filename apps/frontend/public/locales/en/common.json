@@ -37,7 +37,8 @@
     "last7days": "Last 7 Days",
     "last30days": "Last 30 Days",
     "last90days": "Last 90 Days",
-    "allTime": "All Time"
+    "allTime": "All Time",
+    "custom": "Custom"
   },
   "periods": {
     "lastWeek": "Last Week",

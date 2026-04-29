@@ -108,7 +108,12 @@ export class BoostsController {
     this.logger.log(
       `Getting boosts chart data for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const chartInternalData = await this.boostsService.getChartData(account, query.timeframe);
+    const chartInternalData = await this.boostsService.getChartData(
+      account,
+      query.timeframe,
+      query.dateFrom,
+      query.dateTo,
+    );
     return chartInternalData.map((point) => ({ ...point }) as ChartDataPointDto);
   }
 
@@ -127,7 +132,12 @@ export class BoostsController {
     this.logger.log(
       `Getting top toots by boosts for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`,
     );
-    const rankedEntities = await this.boostsService.getTopTootsByBoosts(account, query.timeframe);
+    const rankedEntities = await this.boostsService.getTopTootsByBoosts(
+      account,
+      query.timeframe,
+      query.dateFrom,
+      query.dateTo,
+    );
     return rankedEntities.map(
       (toot) =>
         ({
@@ -158,6 +168,6 @@ export class BoostsController {
     @Res() res: Response,
   ): Promise<void> {
     this.logger.log(`Exporting boosts CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
-    await this.boostsService.exportCsv(account, query.timeframe, res);
+    await this.boostsService.exportCsv(account, query.timeframe, res, query.dateFrom, query.dateTo);
   }
 }

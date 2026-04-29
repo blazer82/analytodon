@@ -114,8 +114,16 @@ export class FollowersService {
    * @param user - The user requesting the chart data.
    * @returns A promise that resolves to an array of chart data points.
    */
-  async getChartData(account: Loaded<AccountEntity>, timeframe: string): Promise<ChartDataPointDto[]> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe);
+  async getChartData(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<ChartDataPointDto[]> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
 
     // Fetch data directly for the specified timeframe
     const data = await this.dailyAccountStatsRepository.find(
@@ -138,11 +146,19 @@ export class FollowersService {
    * @param res - The Express response object to stream the CSV to.
    * @returns A promise that resolves when the CSV has been streamed.
    */
-  async exportCsv(account: Loaded<AccountEntity>, timeframe: string, res: Response): Promise<void> {
-    const chartData = await this.getChartData(account, timeframe);
+  async exportCsv(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    res: Response,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<void> {
+    const chartData = await this.getChartData(account, timeframe, customDateFrom, customDateTo);
 
+    const filenameSuffix =
+      timeframe === 'custom' && customDateFrom && customDateTo ? `custom_${customDateFrom}_${customDateTo}` : timeframe;
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=followers-${account.id}-${timeframe}.csv`);
+    res.setHeader('Content-Disposition', `attachment; filename=followers-${account.id}-${filenameSuffix}.csv`);
 
     const stringifier = stringify({ header: true, delimiter: ';' });
     stringifier.pipe(res);

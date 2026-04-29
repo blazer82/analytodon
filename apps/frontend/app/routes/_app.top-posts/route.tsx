@@ -6,7 +6,7 @@ import { Box, Container, Grid, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { useFetcher, useLoaderData } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
-import PeriodSelector, { type Timeframe } from '~/components/PeriodSelector';
+import PeriodSelector, { type DateRange, type Timeframe } from '~/components/PeriodSelector';
 import TopToots, { type Toot } from '~/components/TopToots';
 import { createTootsApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
@@ -35,18 +35,24 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       topByBoosts: [],
       topByFavorites: [],
       initialTimeframe: 'last30days' as Timeframe,
+      initialDateFrom: null as string | null,
+      initialDateTo: null as string | null,
       accountId: null,
     };
   }
 
   const url = new URL(request.url);
   const timeframeParam = (url.searchParams.get('timeframe') as Timeframe) || 'last30days';
+  const dateFrom = url.searchParams.get('dateFrom') || undefined;
+  const dateTo = url.searchParams.get('dateTo') || undefined;
 
   try {
     const tootsApi = await createTootsApiWithAuth(request);
     const topTootsResponse = await tootsApi.tootsControllerGetTopTootsSummary({
       accountId,
       timeframe: timeframeParam,
+      dateFrom,
+      dateTo,
     });
 
     // Convert API response to Toot format for our components
@@ -68,6 +74,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       topByBoosts: mapToToots(topTootsResponse.topByBoosts.data),
       topByFavorites: mapToToots(topTootsResponse.topByFavorites.data),
       initialTimeframe: timeframeParam,
+      initialDateFrom: dateFrom || null,
+      initialDateTo: dateTo || null,
       accountId,
     };
   } catch (error) {
@@ -78,14 +86,24 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       topByBoosts: [],
       topByFavorites: [],
       initialTimeframe: timeframeParam,
+      initialDateFrom: dateFrom || null,
+      initialDateTo: dateTo || null,
       accountId,
     };
   }
 });
 
 export default function TopPostsPage() {
-  const { top, topByReplies, topByBoosts, topByFavorites, initialTimeframe, accountId } =
-    useLoaderData<typeof loader>();
+  const {
+    top,
+    topByReplies,
+    topByBoosts,
+    topByFavorites,
+    initialTimeframe,
+    initialDateFrom,
+    initialDateTo,
+    accountId,
+  } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof loader>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
   const { t } = useTranslation('routes.topPosts');
@@ -98,10 +116,14 @@ export default function TopPostsPage() {
   const isLoadingData = fetcher.state === 'loading';
 
   const handleTimeframeChange = React.useCallback(
-    (newTimeframe: Timeframe) => {
+    (newTimeframe: Timeframe, dateRange?: DateRange) => {
       setCurrentTimeframe(newTimeframe);
       if (accountId) {
-        fetcher.load(buildLink(`/top-posts?index&timeframe=${newTimeframe}`));
+        let url = `/top-posts?index&timeframe=${newTimeframe}`;
+        if (newTimeframe === 'custom' && dateRange) {
+          url += `&dateFrom=${dateRange.from}&dateTo=${dateRange.to}`;
+        }
+        fetcher.load(buildLink(url));
       }
     },
     [fetcher, accountId, buildLink],
@@ -122,7 +144,13 @@ export default function TopPostsPage() {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12 }} sx={{ mt: 5 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <PeriodSelector timeframe={currentTimeframe} onChange={handleTimeframeChange} disabled={isLoadingData} />
+            <PeriodSelector
+              timeframe={currentTimeframe}
+              onChange={handleTimeframeChange}
+              disabled={isLoadingData}
+              dateFrom={initialDateFrom}
+              dateTo={initialDateTo}
+            />
           </Box>
         </Grid>
 

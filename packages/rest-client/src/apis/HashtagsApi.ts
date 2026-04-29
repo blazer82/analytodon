@@ -31,12 +31,16 @@ import {
 export interface HashtagsControllerGetEngagementRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
     limit?: number;
 }
 
 export interface HashtagsControllerGetMostEffectiveRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
     limit?: number;
     minTootCount?: number;
 }
@@ -44,12 +48,16 @@ export interface HashtagsControllerGetMostEffectiveRequest {
 export interface HashtagsControllerGetOverTimeRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
     limit?: number;
 }
 
 export interface HashtagsControllerGetTopHashtagsRequest {
     accountId: string;
     timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
     limit?: number;
 }
 
@@ -80,6 +88,14 @@ export class HashtagsApi extends runtime.BaseAPI {
 
         if (requestParameters['timeframe'] != null) {
             queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
         }
 
         if (requestParameters['limit'] != null) {
@@ -136,6 +152,14 @@ export class HashtagsApi extends runtime.BaseAPI {
 
         if (requestParameters['timeframe'] != null) {
             queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
         }
 
         if (requestParameters['limit'] != null) {
@@ -198,6 +222,14 @@ export class HashtagsApi extends runtime.BaseAPI {
             queryParameters['timeframe'] = requestParameters['timeframe'];
         }
 
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
+        }
+
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
         }
@@ -252,6 +284,14 @@ export class HashtagsApi extends runtime.BaseAPI {
 
         if (requestParameters['timeframe'] != null) {
             queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
         }
 
         if (requestParameters['limit'] != null) {
