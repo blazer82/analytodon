@@ -136,6 +136,8 @@ describe('top-posts loader', () => {
       topByBoosts: [],
       topByFavorites: [],
       initialTimeframe: 'last30days',
+      initialDateFrom: null,
+      initialDateTo: null,
       accountId: null,
     });
   });
@@ -155,6 +157,8 @@ describe('top-posts loader', () => {
       topByBoosts: [],
       topByFavorites: [],
       initialTimeframe: 'last30days',
+      initialDateFrom: null,
+      initialDateTo: null,
       accountId: 'acc-1',
     });
     expect(mocks.mockLogger.error).toHaveBeenCalled();

@@ -71,6 +71,8 @@ describe('followers loader', () => {
       total,
       chart: chartData,
       initialTimeframe: 'last30days',
+      initialDateFrom: null,
+      initialDateTo: null,
       accountId: 'acc-1',
     });
   });
@@ -127,6 +129,8 @@ describe('followers loader', () => {
       total: null,
       chart: [],
       initialTimeframe: 'last30days',
+      initialDateFrom: null,
+      initialDateTo: null,
       accountId: null,
     });
   });
@@ -181,6 +185,8 @@ describe('followers loader', () => {
       total: null,
       chart: [],
       initialTimeframe: 'last30days',
+      initialDateFrom: null,
+      initialDateTo: null,
       accountId: 'acc-1',
     });
     expect(mocks.mockLogger.error).toHaveBeenCalled();
