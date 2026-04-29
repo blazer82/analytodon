@@ -28,9 +28,6 @@ function getLocalesPath(): string {
   }
 }
 
-// Version for cache busting when translations update
-const TRANSLATIONS_VERSION = '1.5.0';
-
 /**
  * Parse Accept-Language header and return languages in priority order
  * Format: "fr-FR,fr;q=0.9,de;q=0.8,en-US;q=0.7,en;q=0.6"
@@ -130,5 +127,3 @@ export default new CustomI18Next({
 
   plugins: [Backend],
 });
-
-export { TRANSLATIONS_VERSION };

@@ -10,7 +10,7 @@ import { I18nextProvider, initReactI18next } from 'react-i18next';
 
 import { CacheProvider } from '@emotion/react';
 import { RemixBrowser } from '@remix-run/react';
-import i18nextConfig from '~/services/i18n/i18n';
+import i18nextConfig, { TRANSLATIONS_VERSION } from '~/services/i18n/i18n';
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
@@ -18,9 +18,6 @@ import { getInitialNamespaces } from 'remix-i18next/client';
 
 import { ClientStyleContext } from './utils/client-style-context';
 import { createEmotionCache } from './utils/createEmotionCache';
-
-// Version for cache busting when translations update
-const TRANSLATIONS_VERSION = '1.5.0';
 
 interface ClientCacheProviderProps {
   children: React.ReactNode;
