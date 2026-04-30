@@ -50,6 +50,12 @@
       border-radius: 0 8px 8px 0;
       margin: 20px 0;
     }
+    .feedback {
+      background-color: #f0f4f8;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+    }
     .footer {
       text-align: center;
       padding-top: 20px;
@@ -115,6 +121,12 @@
       .warning p, .warning p strong {
          color: #f5f5f5 !important;
       }
+      .feedback {
+        background-color: #2a2a2a !important;
+      }
+      .feedback p {
+        color: #e0e0e0 !important;
+      }
     }
   </style>
 </head>
@@ -138,6 +150,11 @@
 
       <div style="text-align: center;">
         <a href="{{ appURL }}" class="button">{{ t.button }}</a>
+      </div>
+
+      <div class="feedback">
+        <p style="font-weight: 600; margin-top: 0;">{{ t.feedbackHeading }}</p>
+        <p>{{ t.feedbackMessage }}</p>
       </div>
 
       <p>{{ t.noAction }}</p>

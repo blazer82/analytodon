@@ -4,6 +4,9 @@
 {{ t.txtInstruction }}
 {{ appURL }}
 
+{{ t.txtFeedbackHeading }}
+{{ t.txtFeedbackMessage }}
+
 {{ t.noAction }}
 
 {{ t.signature }}

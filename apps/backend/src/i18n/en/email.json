@@ -40,10 +40,14 @@
     "warningMessage": "We haven't seen you in a while and we'll be deleting your data soon.",
     "instruction": "If you don't want your data to be deleted, simply log in to your dashboard:",
     "button": "Log In to Dashboard",
-    "noAction": "If you don't intend to use Analytodon anymore, you don't need to do anything.",
+    "feedbackHeading": "Before you go — I'd love your feedback",
+    "feedbackMessage": "I'm Raphael, the creator of Analytodon. If you have a moment, I'd really appreciate hearing what you expected from Analytodon or why it wasn't the right fit. Just reply to this email with your thoughts — every bit of feedback helps me improve the tool.",
+    "noAction": "If you don't intend to use Analytodon anymore, you don't need to do anything. But either way, I'd be grateful for a quick reply!",
     "signature": "Best regards,",
     "txtWarning": "We haven't seen you in a while and we'll be deleting your data soon.",
-    "txtInstruction": "If you don't want your data to be deleted just log in to your dashboard:"
+    "txtInstruction": "If you don't want your data to be deleted just log in to your dashboard:",
+    "txtFeedbackHeading": "Before you go — I'd love your feedback",
+    "txtFeedbackMessage": "I'm Raphael, the creator of Analytodon. If you have a moment, I'd really appreciate hearing what you expected from Analytodon or why it wasn't the right fit. Just reply to this email with your thoughts — every bit of feedback helps me improve the tool."
   },
   "weeklyStats": {
     "subject": "Your Week on Mastodon",
