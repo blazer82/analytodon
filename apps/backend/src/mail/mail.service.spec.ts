@@ -540,9 +540,9 @@ describe('MailService', () => {
     const mockStats = [
       {
         accountName: 'Account1',
-        followers: { value: '10', change: ' <span style="font-size: 24px; color: green;"> (+25%)</span>' },
-        replies: { value: '5', change: ' <span style="font-size: 24px; color: red;"> (-17%)</span>' },
-        boosts: { value: '20', change: ' <span style="font-size: 24px; color: green;"> (+33%)</span>' },
+        followers: { value: '10', change: ' <span class="trend-up" style="font-size: 24px;"> (+25%)</span>' },
+        replies: { value: '5', change: ' <span class="trend-down" style="font-size: 24px;"> (-17%)</span>' },
+        boosts: { value: '20', change: ' <span class="trend-up" style="font-size: 24px;"> (+33%)</span>' },
         favorites: { value: '15', change: '' },
       },
     ];
@@ -621,7 +621,7 @@ describe('MailService', () => {
       const formatted = (service as any).formatKpiForEmail(kpiData);
       expect(formatted).toEqual({
         value: '10',
-        change: ' <span style="font-size: 24px; color: green;"> (+100%)</span>',
+        change: ' <span class="trend-up" style="font-size: 24px;"> (+100%)</span>',
       });
     });
 
@@ -629,7 +629,10 @@ describe('MailService', () => {
       const kpiData = { currentPeriod: 3, trend: -0.4 }; // -40%
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formatted = (service as any).formatKpiForEmail(kpiData);
-      expect(formatted).toEqual({ value: '3', change: ' <span style="font-size: 24px; color: red;"> (-40%)</span>' });
+      expect(formatted).toEqual({
+        value: '3',
+        change: ' <span class="trend-down" style="font-size: 24px;"> (-40%)</span>',
+      });
     });
 
     it('should format KPI data with no change', () => {
@@ -645,7 +648,7 @@ describe('MailService', () => {
       const formatted = (service as any).formatKpiForEmail(kpiData);
       expect(formatted).toEqual({
         value: '0',
-        change: ' <span style="font-size: 24px; color: green;"> (+50%)</span>',
+        change: ' <span class="trend-up" style="font-size: 24px;"> (+50%)</span>',
       });
     });
 
@@ -669,7 +672,7 @@ describe('MailService', () => {
       const formatted = (service as any).formatKpiForEmail(kpiData);
       expect(formatted).toEqual({
         value: '1,234',
-        change: ' <span style="font-size: 24px; color: green;"> (+23%)</span>',
+        change: ' <span class="trend-up" style="font-size: 24px;"> (+23%)</span>',
       });
     });
   });
@@ -806,9 +809,10 @@ describe('MailService', () => {
       expect(sendMailArgs[1][1].accountName).toBe(account2.name); // Fallback
       expect(sendMailArgs[1][0].followers).toEqual({
         value: '10',
-        change: ' <span style="font-size: 24px; color: green;"> (+100%)</span>',
+        change: ' <span class="trend-up" style="font-size: 24px;"> (+100%)</span>',
       });
       expect(sendMailArgs[2]).toBeUndefined(); // rerouteToEmail
+      expect(sendMailArgs[3]).toEqual(expect.any(String)); // dateRange
     });
 
     it('should reroute email if email is provided in DTO', async () => {
@@ -819,6 +823,7 @@ describe('MailService', () => {
         userWithAccounts,
         expect.any(Array),
         'reroute@example.com',
+        expect.any(String),
       );
     });
 

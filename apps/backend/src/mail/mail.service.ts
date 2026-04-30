@@ -217,9 +217,9 @@ export class MailService {
     let changeString = '';
     if (trend) {
       const trendPercentage = (trend * 100).toFixed(0);
-      const color = trend > 0 ? 'green' : 'red';
+      const cssClass = trend > 0 ? 'trend-up' : 'trend-down';
       const sign = trend > 0 ? '+' : '';
-      changeString = ` <span style="font-size: 24px; color: ${color};"> (${sign}${trendPercentage}%)</span>`;
+      changeString = ` <span class="${cssClass}" style="font-size: 24px;"> (${sign}${trendPercentage}%)</span>`;
     }
 
     return { value: formattedValue, change: changeString };
@@ -514,7 +514,7 @@ export class MailService {
    * @returns A promise that resolves when the email is sent.
    * @throws Error if sending the email fails.
    */
-  async sendWeeklyStatsMail(user: UserEntity, stats: WeeklyStatItem[], rerouteToEmail?: string) {
+  async sendWeeklyStatsMail(user: UserEntity, stats: WeeklyStatItem[], rerouteToEmail?: string, dateRange?: string) {
     const locale = this.getUserLocale(user);
     const subject = await this.translate('email.weeklyStats.subject', locale);
     const unsubscribeURL = `${this.frontendURL}/unsubscribe/weekly?u=${encodeURIComponent(user.id)}&e=${encodeURIComponent(user.email)}`;
@@ -535,6 +535,7 @@ export class MailService {
         context: {
           ...this.getCommonContext(),
           stats,
+          dateRange,
           unsubscribeURL,
           subject,
           t: {
@@ -657,6 +658,13 @@ export class MailService {
     const locale = this.getUserLocale(user);
     const statsForEmail: WeeklyStatItem[] = [];
 
+    const { dateFrom: weekStart, dateTo: weekEndExclusive } = resolveTimeframe(userAccounts[0].timezone, 'lastweek');
+    const weekEnd = new Date(weekEndExclusive);
+    weekEnd.setUTCDate(weekEnd.getUTCDate() - 1);
+    const dateFormatFrom: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    const dateFormatTo: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    const dateRange = `${new Intl.DateTimeFormat(locale, dateFormatFrom).format(weekStart)} – ${new Intl.DateTimeFormat(locale, dateFormatTo).format(weekEnd)}`;
+
     for (const account of userAccounts) {
       try {
         const followersKpiData = await this.followersService.getWeeklyKpi(account);
@@ -770,7 +778,7 @@ export class MailService {
     }
 
     if (statsForEmail.length > 0) {
-      await this.sendWeeklyStatsMail(user, statsForEmail, weeklyStatsDto.email);
+      await this.sendWeeklyStatsMail(user, statsForEmail, weeklyStatsDto.email, dateRange);
     } else {
       this.logger.warn(
         `No stats successfully generated for user ${user.email} (ID: ${user.id}), weekly email not sent. This might be due to errors fetching KPIs for all specified accounts.`,
