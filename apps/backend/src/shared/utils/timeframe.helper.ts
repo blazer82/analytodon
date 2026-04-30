@@ -247,6 +247,10 @@ type StatAttribute = DailyTootStatAttributes | DailyAccountStatAttributes; // Ke
 
 type PeriodFunction = (timezone: string, modifier?: number) => number;
 
+export interface PeriodKPIOptions {
+  forceLastPeriod?: boolean;
+}
+
 // Overload for DailyTootStatsEntity
 export function getPeriodKPI(
   statsRepository: EntityRepository<DailyTootStatsEntity>,
@@ -254,6 +258,7 @@ export function getPeriodKPI(
   timezone: string,
   periodFunction: PeriodFunction,
   attribute: DailyTootStatAttributes,
+  options?: PeriodKPIOptions,
 ): Promise<KpiDto>;
 
 // Overload for DailyAccountStatsEntity
@@ -263,6 +268,7 @@ export function getPeriodKPI(
   timezone: string,
   periodFunction: PeriodFunction,
   attribute: DailyAccountStatAttributes,
+  options?: PeriodKPIOptions,
 ): Promise<KpiDto>;
 
 // Implementation
@@ -272,33 +278,32 @@ export async function getPeriodKPI(
   timezone: string,
   periodFunction: PeriodFunction,
   attribute: StatAttribute,
+  options?: PeriodKPIOptions,
 ): Promise<KpiDto> {
-  const periodModifier = periodFunction(timezone) === 0 ? -1 : 0;
+  const isAtPeriodStart = periodFunction(timezone) === 0;
+  const periodModifier = options?.forceLastPeriod || isAtPeriodStart ? -1 : 0;
   const daysToPeriodBeginning = periodFunction(timezone, periodModifier);
 
-  // Dates for querying
   const thisPeriodStart = getDaysAgo(daysToPeriodBeginning, timezone);
-  // For 'currentPeriod' calculation, we need the value at the very end of the period (or start of next day)
-  // and value at the start of the period.
-  // The legacy code used `getDaysAgo(1, timezone)` for `thisPeriodEnd` which is start of yesterday.
-  // This implies the period ends at the end of yesterday.
-  const thisPeriodQueryEnd = getDaysAgo(0, timezone); // Start of today, so data up to end of yesterday.
+
+  const daysToNextPeriodStart = periodFunction(timezone, periodModifier + 1);
+  const thisPeriodQueryEnd =
+    options?.forceLastPeriod && !isAtPeriodStart
+      ? getDaysAgo(daysToNextPeriodStart, timezone)
+      : getDaysAgo(0, timezone);
 
   const lastPeriodStart = getDaysAgo(periodFunction(timezone, periodModifier - 1), timezone);
 
-  // Find the stats entry closest to the start of "thisPeriodStart" (or one day before)
   const thisPeriodStartStat = await statsRepository.findOne(
     { account: accountId, day: { $lte: thisPeriodStart } },
     { orderBy: { day: 'DESC' } },
   );
 
-  // Find the stats entry closest to the end of "thisPeriodStart" (i.e. start of today)
   const thisPeriodEndStat = await statsRepository.findOne(
     { account: accountId, day: { $lte: thisPeriodQueryEnd } },
     { orderBy: { day: 'DESC' } },
   );
 
-  // Find the stats entry closest to the start of "lastPeriodStart" (or one day before)
   const lastPeriodStartStat = await statsRepository.findOne(
     { account: accountId, day: { $lte: lastPeriodStart } },
     { orderBy: { day: 'DESC' } },
@@ -309,18 +314,13 @@ export async function getPeriodKPI(
   if (thisPeriodStartStat && thisPeriodEndStat) {
     results.currentPeriod = (thisPeriodEndStat[attribute] as number) - (thisPeriodStartStat[attribute] as number);
 
-    const daysInPeriodIdeal = daysToPeriodBeginning - periodFunction(timezone, periodModifier + 1);
-    // Progress: how many days of the current period have passed, out of total expected days.
-    // If daysToPeriodBeginning is 0 (today is start of period), progress is 0.
-    // If periodFunction(timezone, periodModifier + 1) is e.g. -7 (for a week), then daysInPeriodIdeal = 7
-    // daysPassed = daysToPeriodBeginning - 0 (if period ends today)
-    const daysPassed = daysToPeriodBeginning - 0; // Assuming period ends "now" or "end of yesterday"
+    const daysInPeriodIdeal = daysToPeriodBeginning - daysToNextPeriodStart;
+    const daysPassed = options?.forceLastPeriod && !isAtPeriodStart ? daysInPeriodIdeal : daysToPeriodBeginning;
     results.currentPeriodProgress = daysPassed / daysInPeriodIdeal;
     results.isLastPeriod = periodModifier !== 0;
   }
 
   if (lastPeriodStartStat && thisPeriodStartStat) {
-    // Previous period is from lastPeriodStartStat to thisPeriodStartStat
     results.previousPeriod = (thisPeriodStartStat[attribute] as number) - (lastPeriodStartStat[attribute] as number);
   }
 

@@ -13,6 +13,7 @@ import {
   getDaysToYearBeginning,
   getKPITrend,
   getPeriodKPI,
+  PeriodKPIOptions,
   resolveTimeframe,
 } from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
@@ -54,18 +55,19 @@ export class BoostsService {
    * @param account - The loaded account entity.
    * @returns A promise that resolves to internal KPI data.
    */
-  async getWeeklyKpi(account: Loaded<AccountEntity>): Promise<InternalKpiData> {
+  async getWeeklyKpi(account: Loaded<AccountEntity>, options?: PeriodKPIOptions): Promise<InternalKpiData> {
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,
       account.id,
       account.timezone,
       getDaysToWeekBeginning,
       'boostsCount',
+      options,
     );
     const trend = getKPITrend(kpiData);
     return {
       ...kpiData,
-      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+      trend: trend !== null ? trend : undefined,
     };
   }
 

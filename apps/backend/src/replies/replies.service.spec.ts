@@ -105,13 +105,13 @@ describe('RepliesService', () => {
 
           const result = await service[methodName](mockAccount);
 
-          expect(mockedGetPeriodKPI).toHaveBeenCalledWith(
-            mockDailyTootStatsRepository,
-            mockAccount.id,
-            mockAccount.timezone,
-            expect.any(Function), // getDaysToWeek/Month/YearBeginning
-            'repliesCount',
-          );
+          expect(mockedGetPeriodKPI).toHaveBeenCalled();
+          const callArgs = mockedGetPeriodKPI.mock.calls[0];
+          expect(callArgs[0]).toBe(mockDailyTootStatsRepository);
+          expect(callArgs[1]).toBe(mockAccount.id);
+          expect(callArgs[2]).toBe(mockAccount.timezone);
+          expect(callArgs[3]).toEqual(expect.any(Function));
+          expect(callArgs[4]).toBe('repliesCount');
           expect(mockedGetKPITrend).toHaveBeenCalledWith({ currentPeriod: 10, previousPeriod: 5 });
           expect(result).toEqual({ currentPeriod: 10, previousPeriod: 5, trend: 1 });
         });

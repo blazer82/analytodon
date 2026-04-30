@@ -658,19 +658,26 @@ export class MailService {
     const locale = this.getUserLocale(user);
     const statsForEmail: WeeklyStatItem[] = [];
 
+    const accountTimezone = userAccounts[0].timezone.replace(' ', '_');
     const { dateFrom: weekStart, dateTo: weekEndExclusive } = resolveTimeframe(userAccounts[0].timezone, 'lastweek');
     const weekEnd = new Date(weekEndExclusive);
     weekEnd.setUTCDate(weekEnd.getUTCDate() - 1);
-    const dateFormatFrom: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-    const dateFormatTo: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    const dateFormatFrom: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', timeZone: accountTimezone };
+    const dateFormatTo: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: accountTimezone,
+    };
     const dateRange = `${new Intl.DateTimeFormat(locale, dateFormatFrom).format(weekStart)} – ${new Intl.DateTimeFormat(locale, dateFormatTo).format(weekEnd)}`;
 
     for (const account of userAccounts) {
       try {
-        const followersKpiData = await this.followersService.getWeeklyKpi(account);
-        const repliesKpiData = await this.repliesService.getWeeklyKpi(account);
-        const boostsKpiData = await this.boostsService.getWeeklyKpi(account);
-        const favoritesKpiData = await this.favoritesService.getWeeklyKpi(account);
+        const lastPeriodOptions = { forceLastPeriod: true };
+        const followersKpiData = await this.followersService.getWeeklyKpi(account, lastPeriodOptions);
+        const repliesKpiData = await this.repliesService.getWeeklyKpi(account, lastPeriodOptions);
+        const boostsKpiData = await this.boostsService.getWeeklyKpi(account, lastPeriodOptions);
+        const favoritesKpiData = await this.favoritesService.getWeeklyKpi(account, lastPeriodOptions);
 
         const totalEngagementKpi = this.computeTotalEngagement(repliesKpiData, boostsKpiData, favoritesKpiData);
 
@@ -688,7 +695,7 @@ export class MailService {
 
         let postingActivityKpi: KpiDto | undefined;
         try {
-          postingActivityKpi = await this.followersService.getWeeklyPostingActivity(account);
+          postingActivityKpi = await this.followersService.getWeeklyPostingActivity(account, lastPeriodOptions);
           if ((postingActivityKpi.currentPeriod ?? 0) > 0) {
             item.postingActivity = this.formatKpiForEmail(postingActivityKpi, locale);
           }

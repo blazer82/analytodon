@@ -15,6 +15,7 @@ import {
   getDaysToYearBeginning,
   getKPITrend,
   getPeriodKPI,
+  PeriodKPIOptions,
   resolveTimeframe,
 } from '../shared/utils/timeframe.helper';
 import { FollowersKpiDto } from './dto/followers-kpi.dto';
@@ -35,28 +36,30 @@ export class FollowersService {
    * @param account - The loaded account entity.
    * @returns A promise that resolves to the followers KPI DTO.
    */
-  async getWeeklyKpi(account: Loaded<AccountEntity>): Promise<FollowersKpiDto> {
+  async getWeeklyKpi(account: Loaded<AccountEntity>, options?: PeriodKPIOptions): Promise<FollowersKpiDto> {
     const kpiData = await getPeriodKPI(
       this.dailyAccountStatsRepository,
       account.id,
       account.timezone,
       getDaysToWeekBeginning,
       'followersCount',
+      options,
     );
     const trend = getKPITrend(kpiData);
     return {
       ...kpiData,
-      trend: trend !== null ? trend : undefined, // Convert null to undefined to omit from response
+      trend: trend !== null ? trend : undefined,
     };
   }
 
-  async getWeeklyPostingActivity(account: Loaded<AccountEntity>): Promise<FollowersKpiDto> {
+  async getWeeklyPostingActivity(account: Loaded<AccountEntity>, options?: PeriodKPIOptions): Promise<FollowersKpiDto> {
     const kpiData = await getPeriodKPI(
       this.dailyAccountStatsRepository,
       account.id,
       account.timezone,
       getDaysToWeekBeginning,
       'statusesCount',
+      options,
     );
     const trend = getKPITrend(kpiData);
     return {

@@ -799,8 +799,8 @@ describe('MailService', () => {
       await service.processAndSendWeeklyStatsMail(dto);
 
       expect(usersService.findById).toHaveBeenCalledWith(dto.userID);
-      expect(followersService.getWeeklyKpi).toHaveBeenCalledWith(account1);
-      expect(followersService.getWeeklyKpi).toHaveBeenCalledWith(account2);
+      expect(followersService.getWeeklyKpi).toHaveBeenCalledWith(account1, { forceLastPeriod: true });
+      expect(followersService.getWeeklyKpi).toHaveBeenCalledWith(account2, { forceLastPeriod: true });
       expect(service.sendWeeklyStatsMail).toHaveBeenCalledTimes(1);
       const sendMailArgs = (service.sendWeeklyStatsMail as jest.Mock).mock.calls[0];
       expect(sendMailArgs[0]).toBe(userWithAccounts); // user
