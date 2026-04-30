@@ -149,9 +149,13 @@ export class MailService {
     favoritesKpi: KpiDto,
   ): KpiDto & { trend?: number } {
     const currentPeriod =
-      (repliesKpi.currentPeriod ?? 0) + (boostsKpi.currentPeriod ?? 0) + (favoritesKpi.currentPeriod ?? 0);
+      Math.max(repliesKpi.currentPeriod ?? 0, 0) +
+      Math.max(boostsKpi.currentPeriod ?? 0, 0) +
+      Math.max(favoritesKpi.currentPeriod ?? 0, 0);
     const previousPeriod =
-      (repliesKpi.previousPeriod ?? 0) + (boostsKpi.previousPeriod ?? 0) + (favoritesKpi.previousPeriod ?? 0);
+      Math.max(repliesKpi.previousPeriod ?? 0, 0) +
+      Math.max(boostsKpi.previousPeriod ?? 0, 0) +
+      Math.max(favoritesKpi.previousPeriod ?? 0, 0);
     const currentPeriodProgress =
       repliesKpi.currentPeriodProgress ?? boostsKpi.currentPeriodProgress ?? favoritesKpi.currentPeriodProgress;
 

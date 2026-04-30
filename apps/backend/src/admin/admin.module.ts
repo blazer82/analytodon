@@ -8,6 +8,8 @@ import {
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 
+import { MailModule } from '../mail/mail.module';
+import { UsersModule } from '../users/users.module';
 import { AdminAccountsService } from './admin-accounts.service';
 import { AdminHealthService } from './admin-health.service';
 import { AdminSystemHealthService } from './admin-system-health.service';
@@ -25,6 +27,8 @@ import { AdminService } from './admin.service';
         UserEntity,
       ],
     }),
+    MailModule,
+    UsersModule,
   ],
   controllers: [AdminController],
   providers: [AdminService, AdminHealthService, AdminSystemHealthService, AdminAccountsService],

@@ -18,6 +18,7 @@ import type {
   AccountHealthResponseDto,
   AdminAccountItemDto,
   AdminAccountsResponseDto,
+  AdminSendWeeklyStatsDto,
   AdminStatsResponseDto,
   SystemHealthResponseDto,
 } from '../models/index';
@@ -28,6 +29,8 @@ import {
     AdminAccountItemDtoToJSON,
     AdminAccountsResponseDtoFromJSON,
     AdminAccountsResponseDtoToJSON,
+    AdminSendWeeklyStatsDtoFromJSON,
+    AdminSendWeeklyStatsDtoToJSON,
     AdminStatsResponseDtoFromJSON,
     AdminStatsResponseDtoToJSON,
     SystemHealthResponseDtoFromJSON,
@@ -44,6 +47,10 @@ export interface AdminControllerGetAccountsRequest {
     setupComplete?: boolean;
     page?: number;
     limit?: number;
+}
+
+export interface AdminControllerSendWeeklyStatsPreviewRequest {
+    adminSendWeeklyStatsDto: AdminSendWeeklyStatsDto;
 }
 
 /**
@@ -246,6 +253,49 @@ export class AdminApi extends runtime.BaseAPI {
     async adminControllerGetSystemHealth(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SystemHealthResponseDto> {
         const response = await this.adminControllerGetSystemHealthRaw(initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Send weekly stats email preview to admin (Admin)
+     */
+    async adminControllerSendWeeklyStatsPreviewRaw(requestParameters: AdminControllerSendWeeklyStatsPreviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['adminSendWeeklyStatsDto'] == null) {
+            throw new runtime.RequiredError(
+                'adminSendWeeklyStatsDto',
+                'Required parameter "adminSendWeeklyStatsDto" was null or undefined when calling adminControllerSendWeeklyStatsPreview().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/admin/mail/weekly-stats-preview`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdminSendWeeklyStatsDtoToJSON(requestParameters['adminSendWeeklyStatsDto']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Send weekly stats email preview to admin (Admin)
+     */
+    async adminControllerSendWeeklyStatsPreview(requestParameters: AdminControllerSendWeeklyStatsPreviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.adminControllerSendWeeklyStatsPreviewRaw(requestParameters, initOverrides);
     }
 
 }

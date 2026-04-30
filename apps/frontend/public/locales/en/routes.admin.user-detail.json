@@ -44,14 +44,17 @@
     "save": "Save",
     "saving": "Saving...",
     "back": "Back",
-    "viewDashboard": "View Dashboard"
+    "viewDashboard": "View Dashboard",
+    "sendWeeklyStats": "Send Weekly Stats to Me"
   },
   "success": {
-    "userSaved": "User saved successfully."
+    "userSaved": "User saved successfully.",
+    "weeklyStatsSent": "Weekly stats email has been sent to your email address."
   },
   "errors": {
     "failedToUpdate": "Failed to update user.",
-    "loadError": "Failed to load user."
+    "loadError": "Failed to load user.",
+    "failedToSendWeeklyStats": "Failed to send weekly stats email."
   },
   "messages": {
     "noAccounts": "This user has no Mastodon accounts."

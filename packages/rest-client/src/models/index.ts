@@ -8,6 +8,7 @@ export * from './AccountSummaryDto';
 export * from './AdminAccountItemDto';
 export * from './AdminAccountOwnerDto';
 export * from './AdminAccountsResponseDto';
+export * from './AdminSendWeeklyStatsDto';
 export * from './AdminStatsResponseDto';
 export * from './AllTopTootsResponseDto';
 export * from './AuthResponseDto';

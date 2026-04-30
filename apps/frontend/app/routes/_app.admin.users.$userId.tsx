@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { UserResponseDto } from '@analytodon/rest-client';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import EmailIcon from '@mui/icons-material/Email';
 import {
   Alert,
   Box,
@@ -26,7 +27,7 @@ import { json, redirect } from '@remix-run/node';
 import { Form, Link as RemixLink, useActionData, useLoaderData, useNavigation } from '@remix-run/react';
 import { DataTablePaper, EnhancedPaper } from '~/components/Layout/styles';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
-import { createUsersApiWithAuth } from '~/services/api.server';
+import { createAdminApiWithAuth, createUsersApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
@@ -76,6 +77,22 @@ export const action = withSessionHandling(async ({ request, params }: ActionFunc
   }
 
   const formData = await request.formData();
+  const intent = formData.get('_intent') as string;
+
+  if (intent === 'sendWeeklyStats') {
+    try {
+      const adminApi = await createAdminApiWithAuth(request);
+      await adminApi.adminControllerSendWeeklyStatsPreview({
+        adminSendWeeklyStatsDto: { userId },
+      });
+      return json({ success: true, intent: 'sendWeeklyStats' });
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      logger.error('Failed to send weekly stats preview:', error, { userId });
+      return json({ error: 'errors.failedToSendWeeklyStats', intent: 'sendWeeklyStats' }, { status: 500 });
+    }
+  }
+
   const email = formData.get('email') as string;
   const role = formData.get('role') as string;
   const isActive = formData.get('isActive') === 'true';
@@ -107,13 +124,13 @@ export const action = withSessionHandling(async ({ request, params }: ActionFunc
       id: userId,
       updateUserDto: updateDto as Parameters<typeof usersApi.usersControllerUpdateUser>[0]['updateUserDto'],
     });
-    return json({ success: true });
+    return json({ success: true, intent: 'updateUser' });
   } catch (error) {
     if (error instanceof Response) {
       throw error;
     }
     logger.error('Failed to update user:', error, { userId });
-    return json({ error: 'errors.failedToUpdate' }, { status: 500 });
+    return json({ error: 'errors.failedToUpdate', intent: 'updateUser' }, { status: 500 });
   }
 });
 
@@ -142,6 +159,7 @@ export default function AdminUserDetail() {
 
       <EnhancedPaper sx={{ mb: 4 }}>
         <Form method="post">
+          <input type="hidden" name="_intent" value="updateUser" />
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
               label={t('form.email')}
@@ -312,6 +330,23 @@ export default function AdminUserDetail() {
         )}
       </DataTablePaper>
 
+      {accounts.some((a) => a.setupComplete) && (
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <Form method="post">
+            <input type="hidden" name="_intent" value="sendWeeklyStats" />
+            <Button
+              type="submit"
+              variant="outlined"
+              color="secondary"
+              disabled={isSubmitting}
+              startIcon={<EmailIcon />}
+            >
+              {t('actions.sendWeeklyStats')}
+            </Button>
+          </Form>
+        </Box>
+      )}
+
       <Snackbar
         open={errorSnackbarOpen}
         autoHideDuration={6000}
@@ -326,7 +361,9 @@ export default function AdminUserDetail() {
         onClose={() => setSuccessSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity="success">{t('success.userSaved')}</Alert>
+        <Alert severity="success">
+          {actionData?.intent === 'sendWeeklyStats' ? t('success.weeklyStatsSent') : t('success.userSaved')}
+        </Alert>
       </Snackbar>
     </Container>
   );

@@ -203,39 +203,69 @@ export default class Seed extends BaseCommand {
     });
     totalRecords += 1;
 
-    // Create account
+    // Create accounts
     const accountId = new ObjectId();
+    const adminAccountId = new ObjectId();
 
-    await db.collection('accounts').insertOne({
-      _id: accountId,
-      serverURL: SEED_SERVER_URL,
-      name: 'Dev User',
-      username: 'devuser',
-      accountName: '@devuser@mastodon.seed.local',
-      accountURL: `${SEED_SERVER_URL}/@devuser`,
-      avatarURL: `${SEED_SERVER_URL}/avatars/original/missing.png`,
-      isActive: true,
-      setupComplete: true,
-      owner: devUserId,
-      utcOffset: '+01:00',
-      timezone: 'Europe/Berlin',
-      requestedScope: ['read'],
-      tootHistoryComplete: true,
-      createdAt: now,
-      updatedAt: now,
-    });
-    totalRecords += 1;
+    await db.collection('accounts').insertMany([
+      {
+        _id: accountId,
+        serverURL: SEED_SERVER_URL,
+        name: 'Dev User',
+        username: 'devuser',
+        accountName: '@devuser@mastodon.seed.local',
+        accountURL: `${SEED_SERVER_URL}/@devuser`,
+        avatarURL: `${SEED_SERVER_URL}/avatars/original/missing.png`,
+        isActive: true,
+        setupComplete: true,
+        owner: devUserId,
+        utcOffset: '+01:00',
+        timezone: 'Europe/Berlin',
+        requestedScope: ['read'],
+        tootHistoryComplete: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        _id: adminAccountId,
+        serverURL: SEED_SERVER_URL,
+        name: 'Admin User',
+        username: 'adminuser',
+        accountName: '@adminuser@mastodon.seed.local',
+        accountURL: `${SEED_SERVER_URL}/@adminuser`,
+        avatarURL: `${SEED_SERVER_URL}/avatars/original/missing.png`,
+        isActive: true,
+        setupComplete: true,
+        owner: adminUserId,
+        utcOffset: '+01:00',
+        timezone: 'Europe/Berlin',
+        requestedScope: ['read'],
+        tootHistoryComplete: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    totalRecords += 2;
 
-    // Create account credentials (encrypted fake token)
+    // Create account credentials (encrypted fake tokens)
     const encryptedToken = encryptText('seed-fake-access-token');
-    await db.collection('accountcredentials').insertOne({
-      _id: new ObjectId(),
-      account: accountId,
-      accessToken: encryptedToken,
-      createdAt: now,
-      updatedAt: now,
-    });
-    totalRecords += 1;
+    await db.collection('accountcredentials').insertMany([
+      {
+        _id: new ObjectId(),
+        account: accountId,
+        accessToken: encryptedToken,
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        _id: new ObjectId(),
+        account: adminAccountId,
+        accessToken: encryptedToken,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    totalRecords += 2;
 
     // Generate daily account stats (90 days)
     const accountStats = this.generateDailyAccountStats(accountId);
