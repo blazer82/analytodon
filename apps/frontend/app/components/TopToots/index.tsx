@@ -104,7 +104,7 @@ const TopToots: React.FunctionComponent<{
           <TableBody>
             {data.map((toot) => (
               <TableRow key={toot.uri} sx={{ transition: 'background-color 0.2s ease' }}>
-                <TableCell>{formatDate(toot.createdAt, userTimezone)}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(toot.createdAt, userTimezone)}</TableCell>
                 <TableCell>
                   <Link
                     href={toot.url}

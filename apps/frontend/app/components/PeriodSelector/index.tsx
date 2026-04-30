@@ -4,7 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { deDE as datePickersDeDE } from '@mui/x-date-pickers/locales';
 import dayjs, { type Dayjs } from 'dayjs';
+
+import 'dayjs/locale/de';
+import 'dayjs/locale/en-gb';
 
 export type Timeframe =
   | 'last30days'
@@ -48,7 +52,11 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
   dateFrom,
   dateTo,
 }) => {
-  const { t } = useTranslation('components.periodSelector');
+  const { t, i18n } = useTranslation('components.periodSelector');
+
+  const adapterLocale = i18n.language === 'de' ? 'de' : 'en-gb';
+  const pickerLocaleText =
+    i18n.language === 'de' ? datePickersDeDE.components.MuiLocalizationProvider.defaultProps.localeText : undefined;
 
   const [fromDate, setFromDate] = React.useState<Dayjs | null>(dateFrom ? dayjs(dateFrom) : null);
   const [toDate, setToDate] = React.useState<Dayjs | null>(dateTo ? dayjs(dateTo) : null);
@@ -86,7 +94,7 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
   const today = dayjs();
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={adapterLocale} localeText={pickerLocaleText}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         <ToggleButtonGroup
           value={timeframe}
