@@ -10,14 +10,16 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateUserDto } from './dto/create-user.dto';
+import { RecipientCountQueryDto, RecipientCountResponseDto } from './dto/recipient-count.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { ManageSubscriptionDto } from './dto/subscription-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -57,6 +59,20 @@ export class UsersController {
     this.logger.log(`Admin fetching all users`);
     const users = await this.usersService.findAll();
     return users.map((user) => new UserResponseDto(user));
+  }
+
+  @Get('email-recipient-count')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.Admin)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get recipient count for an email broadcast group (Admin)' })
+  @ApiQuery({ name: 'recipientGroup', enum: ['all', 'active'], description: 'Recipient group' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Recipient count retrieved.', type: RecipientCountResponseDto })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden resource.' })
+  async getEmailRecipientCount(@Query() query: RecipientCountQueryDto): Promise<RecipientCountResponseDto> {
+    const count = await this.usersService.getRecipientCount(query.recipientGroup);
+    return { count };
   }
 
   @Get(':id')

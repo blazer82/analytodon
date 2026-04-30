@@ -90,6 +90,9 @@
     "signature": "Beste Grüße,",
     "txtMessage": "Ein neuer Benutzer hat sich gerade bei Analytodon registriert"
   },
+  "broadcast": {
+    "signature": "Beste Grüße,"
+  },
   "common": {
     "email": "E-Mail:",
     "website": "Website:",

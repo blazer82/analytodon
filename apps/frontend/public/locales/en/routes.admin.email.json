@@ -5,15 +5,17 @@
   "form": {
     "recipientGroup": "Recipient Group",
     "groupAll": "All Users",
-    "groupAdmins": "Admins",
-    "groupAccountOwners": "Account Owners",
-    "groupCustom": "Custom",
-    "customRecipients": "Custom Recipients",
-    "customRecipientsHelp": "Comma-separated email addresses",
-    "subject": "Subject",
-    "body": "Body",
+    "groupActive": "Active Users (last 30 days)",
+    "sectionEnglish": "English Version",
+    "sectionGerman": "German Version",
+    "subjectEn": "Subject (English)",
+    "bodyEn": "Body (English)",
+    "subjectDe": "Subject (German)",
+    "bodyDe": "Body (German)",
     "bodyHelp": "Use [[email]] and [[userid]] as placeholders",
-    "isTest": "Send as test to admin email only"
+    "isTest": "Send both language versions as test to admin email",
+    "recipientCount": "{{count}} recipients",
+    "recipientCountLoading": "Loading recipient count..."
   },
   "actions": {
     "send": "Send Email",
@@ -21,7 +23,7 @@
   },
   "confirm": {
     "title": "Confirm Email Broadcast",
-    "message": "Are you sure you want to send this email to the selected recipients? This action cannot be undone.",
+    "message": "Are you sure you want to send this email to {{count}} recipients? This action cannot be undone.",
     "cancel": "Cancel",
     "confirm": "Send"
   },

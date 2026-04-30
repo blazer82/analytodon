@@ -6,12 +6,15 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
+  CircularProgress,
   Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   FormControlLabel,
   FormGroup,
   MenuItem,
@@ -21,7 +24,7 @@ import {
 } from '@mui/material';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
-import { Form, useActionData, useNavigation, useSubmit } from '@remix-run/react';
+import { Form, useActionData, useFetcher, useNavigation, useSubmit } from '@remix-run/react';
 import { EnhancedPaper } from '~/components/Layout/styles';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createUsersApiWithAuth } from '~/services/api.server';
@@ -55,19 +58,21 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
 
   const formData = await request.formData();
   const recipientGroup = formData.get('recipientGroup') as string;
-  const recipients = formData.get('recipients') as string;
-  const subject = formData.get('subject') as string;
-  const text = formData.get('text') as string;
+  const subjectEn = formData.get('subjectEn') as string;
+  const subjectDe = formData.get('subjectDe') as string;
+  const textEn = formData.get('textEn') as string;
+  const textDe = formData.get('textDe') as string;
   const isTest = formData.get('isTest') === 'true';
 
   try {
     const usersApi = await createUsersApiWithAuth(request);
     await usersApi.usersControllerSendEmailToUsers({
       sendEmailDto: {
-        recipientGroup: recipientGroup as 'all' | 'admins' | 'account-owners' | 'custom',
-        recipients: recipients || undefined,
-        subject,
-        text,
+        recipientGroup: recipientGroup as 'all' | 'active',
+        subjectEn,
+        subjectDe,
+        textEn,
+        textDe,
         isTest,
       },
     });
@@ -88,6 +93,7 @@ export default function AdminEmailBroadcast() {
   const submit = useSubmit();
   const isSubmitting = navigation.state === 'submitting';
   const formRef = React.useRef<HTMLFormElement>(null);
+  const countFetcher = useFetcher<{ count: number }>();
 
   const [recipientGroup, setRecipientGroup] = React.useState<string>('all');
   const [isTest, setIsTest] = React.useState(false);
@@ -97,9 +103,16 @@ export default function AdminEmailBroadcast() {
   const [successSnackbarOpen, setSuccessSnackbarOpen] = React.useState(!!actionData?.success);
 
   React.useEffect(() => {
+    countFetcher.load(`/api/admin/email-recipient-count?recipientGroup=${recipientGroup}`);
+  }, [recipientGroup]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
     setErrorSnackbarOpen(!!actionData?.error);
     setSuccessSnackbarOpen(!!actionData?.success);
   }, [actionData]);
+
+  const recipientCount = countFetcher.data?.count;
+  const isCountLoading = countFetcher.state === 'loading';
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -131,28 +144,27 @@ export default function AdminEmailBroadcast() {
               fullWidth
             >
               <MenuItem value="all">{t('form.groupAll')}</MenuItem>
-              <MenuItem value="admins">{t('form.groupAdmins')}</MenuItem>
-              <MenuItem value="account-owners">{t('form.groupAccountOwners')}</MenuItem>
-              <MenuItem value="custom">{t('form.groupCustom')}</MenuItem>
+              <MenuItem value="active">{t('form.groupActive')}</MenuItem>
             </Select>
+            <Box sx={{ mt: 1 }}>
+              {isCountLoading ? (
+                <CircularProgress size={16} sx={{ mr: 1 }} />
+              ) : recipientCount != null ? (
+                <Chip label={t('form.recipientCount', { count: recipientCount })} size="small" variant="outlined" />
+              ) : null}
+            </Box>
           </FormGroup>
 
-          {recipientGroup === 'custom' && (
-            <FormGroup sx={{ mb: 3 }}>
-              <StyledTextField
-                label={t('form.customRecipients')}
-                name="recipients"
-                helperText={t('form.customRecipientsHelp')}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-              />
-            </FormGroup>
-          )}
+          <Divider sx={{ mb: 3 }} />
+
+          <Typography variant="subtitle1" sx={{ mb: 2 }}>
+            {t('form.sectionEnglish')}
+          </Typography>
 
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
-              label={t('form.subject')}
-              name="subject"
+              label={t('form.subjectEn')}
+              name="subjectEn"
               InputLabelProps={{ shrink: true }}
               fullWidth
               required
@@ -161,16 +173,47 @@ export default function AdminEmailBroadcast() {
 
           <FormGroup sx={{ mb: 3 }}>
             <StyledTextField
-              label={t('form.body')}
-              name="text"
+              label={t('form.bodyEn')}
+              name="textEn"
               multiline
-              rows={8}
+              rows={6}
               helperText={t('form.bodyHelp')}
               InputLabelProps={{ shrink: true }}
               fullWidth
               required
             />
           </FormGroup>
+
+          <Divider sx={{ mb: 3 }} />
+
+          <Typography variant="subtitle1" sx={{ mb: 2 }}>
+            {t('form.sectionGerman')}
+          </Typography>
+
+          <FormGroup sx={{ mb: 3 }}>
+            <StyledTextField
+              label={t('form.subjectDe')}
+              name="subjectDe"
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              required
+            />
+          </FormGroup>
+
+          <FormGroup sx={{ mb: 3 }}>
+            <StyledTextField
+              label={t('form.bodyDe')}
+              name="textDe"
+              multiline
+              rows={6}
+              helperText={t('form.bodyHelp')}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              required
+            />
+          </FormGroup>
+
+          <Divider sx={{ mb: 3 }} />
 
           <FormGroup sx={{ mb: 3 }}>
             <FormControlLabel
@@ -191,7 +234,7 @@ export default function AdminEmailBroadcast() {
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>{t('confirm.title')}</DialogTitle>
         <DialogContent>
-          <DialogContentText>{t('confirm.message')}</DialogContentText>
+          <DialogContentText>{t('confirm.message', { count: recipientCount ?? 0 })}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>{t('confirm.cancel')}</Button>

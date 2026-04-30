@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject }}</title>
+  <style>
+    body {
+      font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      line-height: 1.6;
+      color: #455a64;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .logo {
+      margin-bottom: 15px;
+    }
+    .content {
+      padding: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 14px;
+      color: #607d8b;
+    }
+    .social-link {
+      color: #607d8b;
+      text-decoration: none;
+    }
+    h1 {
+      color: #455a64;
+      font-weight: 700;
+    }
+    p {
+      margin: 16px 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121212 !important;
+        color: #e0e0e0 !important;
+      }
+      .container {
+        background-color: #1e1e1e !important;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3) !important;
+      }
+      .header {
+        border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+      }
+      .footer {
+        border-top-color: rgba(255, 255, 255, 0.12) !important;
+        color: #8eacbb !important;
+      }
+      .footer p {
+        color: #8eacbb !important;
+      }
+      h1 {
+        color: #8eb2c3 !important;
+      }
+      p:not(.footer p) {
+         color: #e0e0e0 !important;
+      }
+      p strong, strong {
+         color: #e8e8e8 !important;
+      }
+      .social-link {
+        color: #8eacbb !important;
+      }
+      a:not(.social-link) {
+        color: #8eb2c3 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <img src="cid:logo@analytodon.com" alt="Analytodon Logo" width="120" height="77" style="width:120px; height:77px">
+      </div>
+      <h1>{{ subject }}</h1>
+    </div>
+
+    <div class="content">
+      {{{ bodyHtml }}}
+
+      <p>{{ t.signature }}<br>{{ emailSenderName }}</p>
+    </div>
+
+    <div class="footer">
+      <p>
+        {{ t.email }} <a href="mailto:{{ supportEmail }}" class="social-link">{{ supportEmail }}</a><br>
+        {{ t.website }} <a href="{{ marketingURL }}" class="social-link">{{ marketingURL }}</a><br>
+        {{ t.mastodon }} <a href="https://undefined.social/@analytodon" class="social-link">{{ t.mastodonHandle }}</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

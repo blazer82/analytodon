@@ -62,7 +62,7 @@ describe('UsersService', () => {
 
     // Mock MailService methods
     const mockMailServiceMethods = {
-      sendGenericPlainTextEmail: jest.fn().mockResolvedValue(undefined),
+      sendBroadcastEmail: jest.fn().mockResolvedValue(undefined),
       // Add other MailService methods used by UsersService if any, and mock their return values
       // For example, if UsersService calls other mail methods directly:
       // sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),

@@ -161,6 +161,7 @@ describe('MailService', () => {
                 'email.weeklyStats.dashboardButton': 'Go to Dashboard',
                 'email.weeklyStats.unsubscribe': "If you don't want to receive any more messages like this you can",
                 'email.weeklyStats.unsubscribeLink': 'unsubscribe here',
+                'email.broadcast.signature': 'Best regards,',
                 'email.common.email': 'Email:',
                 'email.common.website': 'Website:',
                 'email.common.mastodon': 'Mastodon:',
@@ -585,30 +586,33 @@ describe('MailService', () => {
     });
   });
 
-  describe('sendGenericPlainTextEmail', () => {
+  describe('sendBroadcastEmail', () => {
     const to = 'recipient@example.com';
     const subject = 'Generic Subject';
-    const textBody = 'This is a generic email body.';
+    const body = 'This is a broadcast email body.';
+    const locale = 'en';
 
-    it('should send a generic plain text email successfully', async () => {
+    it('should send a broadcast email successfully', async () => {
       mailerService.sendMail.mockResolvedValueOnce(undefined);
-      await service.sendGenericPlainTextEmail(to, subject, textBody);
+      await service.sendBroadcastEmail(to, subject, body, locale);
 
-      expect(mailerService.sendMail).toHaveBeenCalledWith({
-        to,
-        subject,
-        text: textBody,
-      });
-      expect(loggerLogSpy).toHaveBeenCalledWith(`Generic plain text email sent to ${to} with subject "${subject}"`);
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to,
+          subject,
+          template: './broadcast',
+        }),
+      );
+      expect(loggerLogSpy).toHaveBeenCalledWith(`Broadcast email sent to ${to} with subject "${subject}"`);
     });
 
     it('should log an error and re-throw if sending fails', async () => {
       const error = new Error('Mail sending failed');
       mailerService.sendMail.mockRejectedValueOnce(error);
 
-      await expect(service.sendGenericPlainTextEmail(to, subject, textBody)).rejects.toThrow(error);
+      await expect(service.sendBroadcastEmail(to, subject, body, locale)).rejects.toThrow(error);
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        `Failed to send generic plain text email to ${to} with subject "${subject}"`,
+        `Failed to send broadcast email to ${to} with subject "${subject}"`,
         error.stack,
       );
     });

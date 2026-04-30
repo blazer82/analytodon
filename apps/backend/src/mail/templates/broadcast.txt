@@ -1,0 +1,10 @@
+{{ subject }}
+
+{{ body }}
+
+{{ t.signature }}
+{{ emailSenderName }}
+
+{{ t.email }} {{ supportEmail }}
+{{ t.website }} {{ marketingURL }}
+{{ t.mastodon }} https://undefined.social/@analytodon
