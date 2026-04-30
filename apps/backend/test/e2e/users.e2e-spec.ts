@@ -308,12 +308,13 @@ describe('UsersController (e2e)', () => {
   describe('POST /users/send-email (Admin Send Email)', () => {
     const emailDto: SendEmailDto = {
       recipientGroup: 'all',
-      subject: 'E2E Test Email',
-      text: 'Hello from E2E test!',
+      subjectEn: 'E2E Test Email',
+      subjectDe: 'E2E Test E-Mail',
+      textEn: 'Hello from E2E test!',
+      textDe: 'Hallo vom E2E-Test!',
     };
 
     it('should accept the request and return NO_CONTENT (Admin)', async () => {
-      // Logger spy to check if the service method was called (actual email sending is mocked/logged)
       const loggerSpy = jest.spyOn(app.get(UsersService)['logger'], 'log');
 
       await request(app.getHttpServer())
@@ -323,15 +324,13 @@ describe('UsersController (e2e)', () => {
         .expect(HttpStatus.NO_CONTENT);
 
       expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `Initiating email send: group=${emailDto.recipientGroup}, subject="${emailDto.subject}", isTest=false, customRecipientsProvided=false`,
-        ),
+        expect.stringContaining(`Initiating email send: group=${emailDto.recipientGroup}, isTest=false`),
       );
       loggerSpy.mockRestore();
     });
 
     it('should fail with invalid input data (Admin)', async () => {
-      const invalidEmailDto = { ...emailDto, subject: undefined };
+      const invalidEmailDto = { ...emailDto, subjectEn: undefined };
       await request(app.getHttpServer())
         .post('/users/send-email')
         .set('Authorization', `Bearer ${adminAccessToken}`)
