@@ -242,7 +242,7 @@ export const resolveTimeframe = (
 
 // Define specific attribute types for each entity
 type DailyTootStatAttributes = 'boostsCount' | 'favouritesCount' | 'repliesCount';
-type DailyAccountStatAttributes = 'followersCount';
+type DailyAccountStatAttributes = 'followersCount' | 'statusesCount';
 type StatAttribute = DailyTootStatAttributes | DailyAccountStatAttributes; // Keep original union for implementation
 
 type PeriodFunction = (timezone: string, modifier?: number) => number;
