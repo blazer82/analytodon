@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Account Inactivity Notice</title>
+  <title>{{ subject }}</title>
   <style>
     body {
       font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
@@ -31,30 +31,6 @@
     }
     .content {
       padding: 20px 0;
-    }
-    .button {
-      display: inline-block;
-      background: linear-gradient(135deg, #455a64 0%, #1c313a 100%);
-      color: #ffffff;
-      text-decoration: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 600;
-      margin: 20px 0;
-      text-align: center;
-    }
-    .warning {
-      background-color: #fff8e1;
-      border-left: 4px solid #ffc107;
-      padding: 15px;
-      border-radius: 0 8px 8px 0;
-      margin: 20px 0;
-    }
-    .feedback {
-      background-color: #f0f4f8;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 20px 0;
     }
     .footer {
       text-align: center;
@@ -103,29 +79,11 @@
       p strong, strong {
          color: #e8e8e8 !important;
       }
-      .button {
-        background: linear-gradient(135deg, #8eb2c3 0%, #607d8b 100%) !important;
-        color: #ffffff !important;
-      }
       .social-link {
         color: #8eacbb !important;
       }
-      a:not(.button):not(.social-link) {
+      a:not(.social-link) {
         color: #8eb2c3 !important;
-      }
-      .warning {
-        background-color: #4A3E1A !important;
-        border-left-color: #ffab00 !important;
-        color: #f5f5f5 !important;
-      }
-      .warning p, .warning p strong {
-         color: #f5f5f5 !important;
-      }
-      .feedback {
-        background-color: #2a2a2a !important;
-      }
-      .feedback p {
-        color: #e0e0e0 !important;
       }
     }
   </style>
@@ -136,28 +94,11 @@
       <div class="logo">
         <img src="cid:logo@analytodon.com" alt="Analytodon Logo" width="120" height="77" style="width:120px; height:77px">
       </div>
-      <h1>{{ t.title }}</h1>
+      <h1>{{ subject }}</h1>
     </div>
 
     <div class="content">
-      <p>{{ t.greeting }}</p>
-
-      <div class="warning">
-        <p><strong>{{ t.warningMessage }}</strong></p>
-      </div>
-
-      <p>{{ t.instruction }}</p>
-
-      <div style="text-align: center;">
-        <a href="{{ appURL }}" class="button">{{ t.button }}</a>
-      </div>
-
-      <div class="feedback">
-        <p style="font-weight: 600; margin-top: 0;">{{ t.feedbackHeading }}</p>
-        <p>{{ t.feedbackMessage }}</p>
-      </div>
-
-      <p>{{ t.noAction }}</p>
+      {{{ bodyHtml }}}
 
       <p>{{ t.signature }}<br>{{ emailSenderName }}</p>
     </div>

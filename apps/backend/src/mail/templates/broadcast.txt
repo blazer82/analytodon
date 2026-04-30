@@ -1,13 +1,6 @@
-{{ t.greeting }}
+{{ subject }}
 
-{{ t.txtWarning }}
-{{ t.txtInstruction }}
-{{ appURL }}
-
-{{ t.txtFeedbackHeading }}
-{{ t.txtFeedbackMessage }}
-
-{{ t.noAction }}
+{{ body }}
 
 {{ t.signature }}
 {{ emailSenderName }}

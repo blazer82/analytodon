@@ -40,10 +40,14 @@
     "warningMessage": "Wir haben Sie eine Weile nicht gesehen und werden Ihre Daten bald löschen.",
     "instruction": "Falls Sie nicht möchten, dass Ihre Daten gelöscht werden, melden Sie sich einfach bei Ihrem Dashboard an:",
     "button": "Bei Dashboard anmelden",
-    "noAction": "Falls Sie Analytodon nicht mehr nutzen möchten, müssen Sie nichts tun.",
+    "feedbackHeading": "Bevor Sie gehen — ich würde mich über Ihr Feedback freuen",
+    "feedbackMessage": "Ich bin Raphael, der Entwickler von Analytodon. Falls Sie einen Moment Zeit haben, würde ich mich sehr freuen zu erfahren, was Sie von Analytodon erwartet haben oder warum es nicht das Richtige für Sie war. Antworten Sie einfach auf diese E-Mail — jedes Feedback hilft mir, das Tool zu verbessern.",
+    "noAction": "Falls Sie Analytodon nicht mehr nutzen möchten, müssen Sie nichts tun. Aber über eine kurze Rückmeldung würde ich mich in jedem Fall freuen!",
     "signature": "Beste Grüße,",
     "txtWarning": "Wir haben Sie eine Weile nicht gesehen und werden Ihre Daten bald löschen.",
-    "txtInstruction": "Falls Sie nicht möchten, dass Ihre Daten gelöscht werden, melden Sie sich einfach bei Ihrem Dashboard an:"
+    "txtInstruction": "Falls Sie nicht möchten, dass Ihre Daten gelöscht werden, melden Sie sich einfach bei Ihrem Dashboard an:",
+    "txtFeedbackHeading": "Bevor Sie gehen — ich würde mich über Ihr Feedback freuen",
+    "txtFeedbackMessage": "Ich bin Raphael, der Entwickler von Analytodon. Falls Sie einen Moment Zeit haben, würde ich mich sehr freuen zu erfahren, was Sie von Analytodon erwartet haben oder warum es nicht das Richtige für Sie war. Antworten Sie einfach auf diese E-Mail — jedes Feedback hilft mir, das Tool zu verbessern."
   },
   "weeklyStats": {
     "subject": "Ihre Woche auf Mastodon",
@@ -85,6 +89,9 @@
     "message": "Ein neuer Benutzer hat sich gerade bei Analytodon registriert:",
     "signature": "Beste Grüße,",
     "txtMessage": "Ein neuer Benutzer hat sich gerade bei Analytodon registriert"
+  },
+  "broadcast": {
+    "signature": "Beste Grüße,"
   },
   "common": {
     "email": "E-Mail:",

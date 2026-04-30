@@ -39,6 +39,7 @@ export * from './ManageSubscriptionDto';
 export * from './OldAccountMailDto';
 export * from './RankedTootDto';
 export * from './RecentFailureDto';
+export * from './RecipientCountResponseDto';
 export * from './RefreshTokenDto';
 export * from './RegisterUserDto';
 export * from './RegistrationTrendDto';

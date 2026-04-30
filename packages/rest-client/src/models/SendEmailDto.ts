@@ -20,31 +20,37 @@ import { mapValues } from '../runtime';
  */
 export interface SendEmailDto {
     /**
-     * Recipient group: 'all', 'admins', 'account-owners', or 'custom'
+     * Recipient group: 'all' or 'active' (last login within 30 days)
      * @type {string}
      * @memberof SendEmailDto
      */
     recipientGroup: string;
     /**
-     * Comma-separated list of email addresses for custom group
+     * Email subject (English)
      * @type {string}
      * @memberof SendEmailDto
      */
-    recipients?: string;
+    subjectEn: string;
     /**
-     * Email subject
+     * Email subject (German)
      * @type {string}
      * @memberof SendEmailDto
      */
-    subject: string;
+    subjectDe: string;
     /**
-     * Email body text
+     * Email body text (English)
      * @type {string}
      * @memberof SendEmailDto
      */
-    text: string;
+    textEn: string;
     /**
-     * Is this a test email?
+     * Email body text (German)
+     * @type {string}
+     * @memberof SendEmailDto
+     */
+    textDe: string;
+    /**
+     * Send both language versions as test to admin email
      * @type {boolean}
      * @memberof SendEmailDto
      */
@@ -56,8 +62,10 @@ export interface SendEmailDto {
  */
 export function instanceOfSendEmailDto(value: object): value is SendEmailDto {
     if (!('recipientGroup' in value) || value['recipientGroup'] === undefined) return false;
-    if (!('subject' in value) || value['subject'] === undefined) return false;
-    if (!('text' in value) || value['text'] === undefined) return false;
+    if (!('subjectEn' in value) || value['subjectEn'] === undefined) return false;
+    if (!('subjectDe' in value) || value['subjectDe'] === undefined) return false;
+    if (!('textEn' in value) || value['textEn'] === undefined) return false;
+    if (!('textDe' in value) || value['textDe'] === undefined) return false;
     return true;
 }
 
@@ -72,9 +80,10 @@ export function SendEmailDtoFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'recipientGroup': json['recipientGroup'],
-        'recipients': json['recipients'] == null ? undefined : json['recipients'],
-        'subject': json['subject'],
-        'text': json['text'],
+        'subjectEn': json['subjectEn'],
+        'subjectDe': json['subjectDe'],
+        'textEn': json['textEn'],
+        'textDe': json['textDe'],
         'isTest': json['isTest'] == null ? undefined : json['isTest'],
     };
 }
@@ -91,9 +100,10 @@ export function SendEmailDtoToJSONTyped(value?: SendEmailDto | null, ignoreDiscr
     return {
         
         'recipientGroup': value['recipientGroup'],
-        'recipients': value['recipients'],
-        'subject': value['subject'],
-        'text': value['text'],
+        'subjectEn': value['subjectEn'],
+        'subjectDe': value['subjectDe'],
+        'textEn': value['textEn'],
+        'textDe': value['textDe'],
         'isTest': value['isTest'],
     };
 }

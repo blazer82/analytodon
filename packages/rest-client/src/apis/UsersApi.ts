@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   CreateUserDto,
   ManageSubscriptionDto,
+  RecipientCountResponseDto,
   SendEmailDto,
   UpdateUserDto,
   UserResponseDto,
@@ -26,6 +27,8 @@ import {
     CreateUserDtoToJSON,
     ManageSubscriptionDtoFromJSON,
     ManageSubscriptionDtoToJSON,
+    RecipientCountResponseDtoFromJSON,
+    RecipientCountResponseDtoToJSON,
     SendEmailDtoFromJSON,
     SendEmailDtoToJSON,
     UpdateUserDtoFromJSON,
@@ -40,6 +43,10 @@ export interface UsersControllerCreateUserRequest {
 
 export interface UsersControllerFindUserByIdRequest {
     id: string;
+}
+
+export interface UsersControllerGetEmailRecipientCountRequest {
+    recipientGroup: UsersControllerGetEmailRecipientCountRecipientGroupEnum;
 }
 
 export interface UsersControllerSendEmailToUsersRequest {
@@ -182,6 +189,51 @@ export class UsersApi extends runtime.BaseAPI {
      */
     async usersControllerFindUserById(requestParameters: UsersControllerFindUserByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserResponseDto> {
         const response = await this.usersControllerFindUserByIdRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get recipient count for an email broadcast group (Admin)
+     */
+    async usersControllerGetEmailRecipientCountRaw(requestParameters: UsersControllerGetEmailRecipientCountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipientCountResponseDto>> {
+        if (requestParameters['recipientGroup'] == null) {
+            throw new runtime.RequiredError(
+                'recipientGroup',
+                'Required parameter "recipientGroup" was null or undefined when calling usersControllerGetEmailRecipientCount().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['recipientGroup'] != null) {
+            queryParameters['recipientGroup'] = requestParameters['recipientGroup'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/users/email-recipient-count`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipientCountResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Get recipient count for an email broadcast group (Admin)
+     */
+    async usersControllerGetEmailRecipientCount(requestParameters: UsersControllerGetEmailRecipientCountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipientCountResponseDto> {
+        const response = await this.usersControllerGetEmailRecipientCountRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -364,3 +416,12 @@ export class UsersApi extends runtime.BaseAPI {
     }
 
 }
+
+/**
+ * @export
+ */
+export const UsersControllerGetEmailRecipientCountRecipientGroupEnum = {
+    All: 'all',
+    Active: 'active'
+} as const;
+export type UsersControllerGetEmailRecipientCountRecipientGroupEnum = typeof UsersControllerGetEmailRecipientCountRecipientGroupEnum[keyof typeof UsersControllerGetEmailRecipientCountRecipientGroupEnum];

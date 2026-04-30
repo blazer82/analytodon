@@ -5,15 +5,17 @@
   "form": {
     "recipientGroup": "Empfängergruppe",
     "groupAll": "Alle Benutzer",
-    "groupAdmins": "Admins",
-    "groupAccountOwners": "Kontoinhaber",
-    "groupCustom": "Benutzerdefiniert",
-    "customRecipients": "Benutzerdefinierte Empfänger",
-    "customRecipientsHelp": "Kommagetrennte E-Mail-Adressen",
-    "subject": "Betreff",
-    "body": "Nachricht",
+    "groupActive": "Aktive Benutzer (letzte 30 Tage)",
+    "sectionEnglish": "Englische Version",
+    "sectionGerman": "Deutsche Version",
+    "subjectEn": "Betreff (Englisch)",
+    "bodyEn": "Nachricht (Englisch)",
+    "subjectDe": "Betreff (Deutsch)",
+    "bodyDe": "Nachricht (Deutsch)",
     "bodyHelp": "Verwenden Sie [[email]] und [[userid]] als Platzhalter",
-    "isTest": "Als Test nur an Admin-E-Mail senden"
+    "isTest": "Beide Sprachversionen als Test an Admin-E-Mail senden",
+    "recipientCount": "{{count}} Empfänger",
+    "recipientCountLoading": "Empfängeranzahl wird geladen..."
   },
   "actions": {
     "send": "E-Mail senden",
@@ -21,7 +23,7 @@
   },
   "confirm": {
     "title": "E-Mail-Versand bestätigen",
-    "message": "Sind Sie sicher, dass Sie diese E-Mail an die ausgewählten Empfänger senden möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "message": "Sind Sie sicher, dass Sie diese E-Mail an {{count}} Empfänger senden möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "cancel": "Abbrechen",
     "confirm": "Senden"
   },

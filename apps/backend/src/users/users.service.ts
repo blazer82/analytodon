@@ -1,4 +1,4 @@
-import { UserCredentialsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
+import { UserCredentialsEntity, UserEntity } from '@analytodon/shared-orm';
 import { EntityRepository, FilterQuery, Loaded } from '@mikro-orm/mongodb';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { ConflictException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -157,98 +157,78 @@ export class UsersService {
     return user;
   }
 
-  /**
-   * Placeholder for sending an email to a group of users.
-   * Note: Actual email sending logic is not implemented here.
-   * @param sendEmailDto - DTO containing email details and recipient information.
-   * @returns A promise that resolves when the operation is complete.
-   */
-  async sendEmailToUsers(sendEmailDto: SendEmailDto): Promise<void> {
-    const { recipientGroup, recipients: recipientsString, subject, text, isTest } = sendEmailDto;
-    this.logger.log(
-      `Initiating email send: group=${recipientGroup}, subject="${subject}", isTest=${isTest}, customRecipientsProvided=${!!recipientsString}`,
-    );
+  private resolveLocale(user: UserEntity): 'en' | 'de' {
+    return user.locale === 'de' ? 'de' : 'en';
+  }
 
-    const adminEmail = this.mailService['supportEmail']; // Accessing private member for admin email, consider making it public or via getter in MailService
-    const recipientsSet = new Set<{ id?: string; email: string }>();
+  private async getEligibleRecipients(recipientGroup: 'all' | 'active'): Promise<UserEntity[]> {
+    const filterQuery: FilterQuery<UserEntity> = {
+      isActive: true,
+      emailVerified: true,
+      unsubscribed: { $nin: ['news'] },
+    };
 
-    if (isTest) {
-      recipientsSet.add({ email: adminEmail });
-      this.logger.log(`Test mode: Sending email to admin ${adminEmail}`);
-    } else {
-      if (recipientGroup === 'custom') {
-        if (recipientsString) {
-          recipientsString
-            .split(',')
-            .map((email) => email.trim())
-            .filter((email) => email)
-            .forEach((email) => recipientsSet.add({ email }));
-          this.logger.log(`Custom recipients: ${Array.from(recipientsSet).map((r) => r.email)}`);
-        } else {
-          this.logger.warn('Custom recipient group selected but no recipients string provided.');
-        }
-      } else {
-        const filterQuery: FilterQuery<UserEntity> = {
-          isActive: true,
-          emailVerified: true,
-          unsubscribed: { $nin: ['news'] }, // As per legacy, filter out those unsubscribed from 'news'
-        };
-
-        if (recipientGroup === 'admins') {
-          filterQuery.role = UserRole.Admin;
-        } else if (recipientGroup === 'account-owners') {
-          filterQuery.role = UserRole.AccountOwner;
-        }
-        // For 'all', no additional role filter is applied beyond isActive, emailVerified, and not unsubscribed.
-
-        const usersToEmail = await this.userRepository.find(filterQuery);
-        usersToEmail.forEach((user) => recipientsSet.add({ id: user.id, email: user.email }));
-        this.logger.log(
-          `Fetched ${usersToEmail.length} users for group '${recipientGroup}'. Unique recipients: ${recipientsSet.size}`,
-        );
-      }
+    if (recipientGroup === 'active') {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      filterQuery.lastLoginAt = { $gte: thirtyDaysAgo };
     }
 
-    if (recipientsSet.size === 0) {
+    const users = await this.userRepository.find(filterQuery, { populate: ['accounts'] });
+    return users.filter((user) => user.accounts.getItems().some((account) => account.setupComplete));
+  }
+
+  async getRecipientCount(recipientGroup: 'all' | 'active'): Promise<number> {
+    const recipients = await this.getEligibleRecipients(recipientGroup);
+    return recipients.length;
+  }
+
+  private replacePlaceholders(text: string, email: string, userId: string): string {
+    return text.replaceAll('[[email]]', email).replaceAll('[[userid]]', userId);
+  }
+
+  async sendEmailToUsers(sendEmailDto: SendEmailDto): Promise<void> {
+    const { recipientGroup, subjectEn, subjectDe, textEn, textDe, isTest } = sendEmailDto;
+    this.logger.log(`Initiating email send: group=${recipientGroup}, isTest=${isTest}`);
+
+    if (isTest) {
+      const adminEmail = this.mailService['supportEmail'];
+      this.logger.log(`Test mode: Sending both language versions to ${adminEmail}`);
+
+      await this.mailService.sendBroadcastEmail(adminEmail, `[TEST - EN] ${subjectEn}`, textEn, 'en');
+      await this.mailService.sendBroadcastEmail(adminEmail, `[TEST - DE] ${subjectDe}`, textDe, 'de');
+
+      this.logger.log('Test emails sent successfully.');
+      return;
+    }
+
+    const recipients = await this.getEligibleRecipients(recipientGroup);
+
+    if (recipients.length === 0) {
       this.logger.warn('No recipients determined for the email broadcast. Aborting.');
       return;
     }
 
-    const emailPromises = Array.from(recipientsSet).map(async (recipient) => {
-      let mailSubject = subject;
-      let mailText = text;
+    this.logger.log(`Sending email to ${recipients.length} recipients for group '${recipientGroup}'.`);
 
-      // Replace placeholders
-      mailSubject = mailSubject.replaceAll('[[email]]', recipient.email);
-      mailText = mailText.replaceAll('[[email]]', recipient.email);
+    const emailPromises = recipients.map(async (user) => {
+      const locale = this.resolveLocale(user);
+      const subject = locale === 'de' ? subjectDe : subjectEn;
+      const text = locale === 'de' ? textDe : textEn;
 
-      if (recipient.id) {
-        mailSubject = mailSubject.replaceAll('[[userid]]', recipient.id);
-        mailText = mailText.replaceAll('[[userid]]', recipient.id);
-      } else {
-        // For custom emails where ID might not be available
-        mailSubject = mailSubject.replaceAll('[[userid]]', '');
-        mailText = mailText.replaceAll('[[userid]]', '');
-      }
+      const mailSubject = this.replacePlaceholders(subject, user.email, user.id);
+      const mailText = this.replacePlaceholders(text, user.email, user.id);
 
       try {
-        await this.mailService.sendGenericPlainTextEmail(recipient.email, mailSubject, mailText);
-        this.logger.log(
-          `Email sent to ${recipient.email} (User ID: ${recipient.id || 'N/A'}) with subject "${mailSubject}"`,
-        );
+        await this.mailService.sendBroadcastEmail(user.email, mailSubject, mailText, locale);
+        this.logger.log(`Email sent to ${user.email} (locale=${locale})`);
       } catch (error) {
-        this.logger.error(
-          `Failed to send email to ${recipient.email} (User ID: ${recipient.id || 'N/A'}): ${error.message}`,
-          error.stack,
-        );
-        // Decide if one failure should stop all, or collect errors. For now, log and continue.
+        this.logger.error(`Failed to send email to ${user.email}: ${error.message}`, error.stack);
       }
     });
 
     await Promise.all(emailPromises);
-    this.logger.log(
-      `Finished processing email send request for subject "${subject}". Total emails attempted: ${emailPromises.length}.`,
-    );
+    this.logger.log(`Finished processing email broadcast. Total emails attempted: ${emailPromises.length}.`);
   }
 
   /**

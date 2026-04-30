@@ -55,6 +55,7 @@ src/models/ManageSubscriptionDto.ts
 src/models/OldAccountMailDto.ts
 src/models/RankedTootDto.ts
 src/models/RecentFailureDto.ts
+src/models/RecipientCountResponseDto.ts
 src/models/RefreshTokenDto.ts
 src/models/RegisterUserDto.ts
 src/models/RegistrationTrendDto.ts

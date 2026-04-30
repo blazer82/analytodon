@@ -4,34 +4,44 @@ import { IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validat
 export class SendEmailDto {
   @ApiProperty({
     example: 'all',
-    description: "Recipient group: 'all', 'admins', 'account-owners', or 'custom'",
+    description: "Recipient group: 'all' or 'active' (last login within 30 days)",
   })
   @IsString()
   @IsNotEmpty()
-  @IsIn(['all', 'admins', 'account-owners', 'custom'])
-  recipientGroup!: 'all' | 'admins' | 'account-owners' | 'custom';
+  @IsIn(['all', 'active'])
+  recipientGroup!: 'all' | 'active';
+
+  @ApiProperty({ example: 'Important Announcement', description: 'Email subject (English)' })
+  @IsString()
+  @IsNotEmpty()
+  subjectEn!: string;
+
+  @ApiProperty({ example: 'Wichtige Ankündigung', description: 'Email subject (German)' })
+  @IsString()
+  @IsNotEmpty()
+  subjectDe!: string;
+
+  @ApiProperty({
+    example: 'Hello [[email]], this is an important message.',
+    description: 'Email body text (English)',
+  })
+  @IsString()
+  @IsNotEmpty()
+  textEn!: string;
+
+  @ApiProperty({
+    example: 'Hallo [[email]], dies ist eine wichtige Nachricht.',
+    description: 'Email body text (German)',
+  })
+  @IsString()
+  @IsNotEmpty()
+  textDe!: string;
 
   @ApiPropertyOptional({
-    example: 'user1@example.com, user2@example.com',
-    description: 'Comma-separated list of email addresses for custom group',
+    example: false,
+    description: 'Send both language versions as test to admin email',
     required: false,
   })
-  @IsString()
-  @IsOptional()
-  // Basic validation, can be improved with a custom validator for list of emails
-  recipients?: string;
-
-  @ApiProperty({ example: 'Important Announcement', description: 'Email subject' })
-  @IsString()
-  @IsNotEmpty()
-  subject!: string;
-
-  @ApiProperty({ example: 'Hello [[email]], this is an important message.', description: 'Email body text' })
-  @IsString()
-  @IsNotEmpty()
-  text!: string;
-
-  @ApiPropertyOptional({ example: false, description: 'Is this a test email?', required: false })
   @IsBoolean()
   @IsOptional()
   isTest?: boolean = false;

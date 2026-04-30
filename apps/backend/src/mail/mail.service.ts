@@ -360,8 +360,14 @@ export class MailService {
         warningMessage: await this.translate('email.oldAccountWarning.warningMessage', locale),
         instruction: await this.translate('email.oldAccountWarning.instruction', locale),
         button: await this.translate('email.oldAccountWarning.button', locale),
+        feedbackHeading: await this.translate('email.oldAccountWarning.feedbackHeading', locale),
+        feedbackMessage: await this.translate('email.oldAccountWarning.feedbackMessage', locale),
         noAction: await this.translate('email.oldAccountWarning.noAction', locale),
         signature: await this.translate('email.oldAccountWarning.signature', locale),
+        txtWarning: await this.translate('email.oldAccountWarning.txtWarning', locale),
+        txtInstruction: await this.translate('email.oldAccountWarning.txtInstruction', locale),
+        txtFeedbackHeading: await this.translate('email.oldAccountWarning.txtFeedbackHeading', locale),
+        txtFeedbackMessage: await this.translate('email.oldAccountWarning.txtFeedbackMessage', locale),
         email: await this.translate('email.common.email', locale),
         website: await this.translate('email.common.website', locale),
         mastodon: await this.translate('email.common.mastodon', locale),
@@ -585,17 +591,44 @@ export class MailService {
    * @returns A promise that resolves when the email is sent.
    * @throws Error if sending the email fails.
    */
-  async sendGenericPlainTextEmail(to: string, subject: string, textBody: string) {
+  async sendBroadcastEmail(to: string, subject: string, body: string, locale: string) {
+    const context = {
+      ...this.getCommonContext(),
+      subject,
+      body,
+      bodyHtml: body.replace(/\n/g, '<br>'),
+      t: {
+        signature: await this.translate('email.broadcast.signature', locale),
+        email: await this.translate('email.common.email', locale),
+        website: await this.translate('email.common.website', locale),
+        mastodon: await this.translate('email.common.mastodon', locale),
+        mastodonHandle: await this.translate('email.common.mastodonHandle', locale),
+      },
+    };
+
+    const textTemplatePath = path.join(__dirname, 'templates', 'broadcast.txt');
+    const textTemplateSource = fs.readFileSync(textTemplatePath, 'utf-8');
+    const compiledTextTemplate = handlebars.compile(textTemplateSource, { noEscape: true });
+    const textBody = compiledTextTemplate(context);
+
     try {
       await this.mailerService.sendMail({
         to,
         subject,
+        template: './broadcast',
         text: textBody,
-        // `from` address is picked from MailerModule defaults
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+            cid: 'logo@analytodon.com',
+          },
+        ],
+        context,
       });
-      this.logger.log(`Generic plain text email sent to ${to} with subject "${subject}"`);
+      this.logger.log(`Broadcast email sent to ${to} with subject "${subject}"`);
     } catch (error) {
-      this.logger.error(`Failed to send generic plain text email to ${to} with subject "${subject}"`, error.stack);
+      this.logger.error(`Failed to send broadcast email to ${to} with subject "${subject}"`, error.stack);
       throw error;
     }
   }
