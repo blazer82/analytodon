@@ -154,15 +154,164 @@ pnpm --filter @analytodon/cli run analytodon-cli [command]
 pnpm --filter @analytodon/cli run analytodon-cli help
 ```
 
-## 🚢 Deployment
+## 🏠 Self-Hosting
 
-For production deployment, build all applications:
+Analytodon runs as three Docker containers -- a **backend** API (NestJS), a **frontend** web app (Remix), and a **CLI** cron worker -- plus a **MongoDB** database. The recommended way to self-host is with Docker Compose.
+
+### 📋 Prerequisites
+
+- Docker and Docker Compose
+- A reverse proxy (Caddy, nginx, or Traefik) for TLS termination
+- An SMTP server or transactional email service (for verification and notification emails)
+- A domain name with DNS pointing to your server
+
+### 🔑 Generate Secrets
+
+Generate three secrets before starting. The `ENCRYPTION_KEY` encrypts Mastodon OAuth tokens stored in the database -- it **must** be identical in the backend and CLI containers.
 
 ```bash
-pnpm run build
+# ENCRYPTION_KEY — 64-character hex string (32 bytes for AES-256)
+openssl rand -hex 32
+
+# JWT_SECRET — used by the backend to sign authentication tokens
+openssl rand -base64 48
+
+# SESSION_SECRET — used by the frontend to encrypt session cookies
+openssl rand -base64 48
 ```
 
-Then deploy the built applications according to your hosting environment.
+> **Warning:** Never change `ENCRYPTION_KEY` after initial setup -- existing Mastodon tokens would become undecryptable.
+
+### 🐳 Docker Compose
+
+Create a `docker-compose.prod.yml` in the repository root:
+
+```yaml
+services:
+  mongodb:
+    image: mongo:8
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: analytodon
+      MONGO_INITDB_ROOT_PASSWORD: <db-password>
+    volumes:
+      - mongodb_data:/data/db
+
+  backend:
+    build:
+      context: .
+      dockerfile: deploy/docker/backend.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      - mongodb
+    environment:
+      DB_CLIENT_URL: mongodb://analytodon:<db-password>@mongodb:27017/analytodon?authSource=admin
+      ENCRYPTION_KEY: <your-encryption-key>
+      JWT_SECRET: <your-jwt-secret>
+      JWT_EXPIRES_IN: 1h
+      JWT_REFRESH_TOKEN_EXPIRES_IN: 7d
+      FRONTEND_URL: https://<your-domain>
+      MASTODON_APP_NAME: Analytodon
+      MARKETING_URL: https://<your-domain>
+      EMAIL_HOST: <smtp-host>
+      EMAIL_PORT: "587"
+      EMAIL_USER: <smtp-user>
+      EMAIL_PASS: <smtp-password>
+      EMAIL_SECURE: "false"
+      EMAIL_FROM_NAME: Analytodon
+      EMAIL_FROM_ADDRESS: <noreply@your-domain>
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/docker/frontend.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3002:3000"
+    depends_on:
+      - backend
+    environment:
+      API_URL: http://backend:3000
+      SESSION_SECRET: <your-session-secret>
+      MARKETING_URL: https://<your-domain>
+      SUPPORT_EMAIL: <your-email>
+
+  cli:
+    build:
+      context: .
+      dockerfile: deploy/docker/cli.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      MONGODB_URI: mongodb://analytodon:<db-password>@mongodb:27017/analytodon?authSource=admin
+      MONGODB_DATABASE: analytodon
+      ENCRYPTION_KEY: <your-encryption-key>
+      APP_URL: https://<your-domain>
+      LOG_LEVEL: info
+
+volumes:
+  mongodb_data:
+```
+
+A few notes:
+
+- **`API_URL`** (frontend) uses Docker-internal networking -- the frontend calls the backend server-side, never from the browser
+- Backend and frontend bind to `127.0.0.1` so they are only reachable through the reverse proxy
+- The **CLI container** runs a cron daemon in the foreground -- it handles all scheduled data fetching, aggregation, emails, and cleanup automatically
+- Set `EMAIL_SECURE` to `"true"` for port 465 (implicit TLS) or `"false"` for port 587 (STARTTLS)
+
+Build and start:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### 🔀 Reverse Proxy
+
+Only the **frontend** needs to be publicly accessible. The backend API is called server-side by the frontend (Remix SSR) and by the CLI container, both over Docker's internal network.
+
+Example with [Caddy](https://caddyserver.com/) (automatic HTTPS):
+
+```
+your-domain.com {
+    reverse_proxy localhost:3002
+}
+```
+
+nginx, Traefik, or any other reverse proxy works equally well -- just proxy all traffic to the frontend on port 3002.
+
+### 🚀 First Run
+
+1. Start the stack: `docker compose -f docker-compose.prod.yml up -d --build`
+2. Verify all containers are running: `docker compose -f docker-compose.prod.yml ps`
+3. Open `https://your-domain.com` and create an account
+4. Connect a Mastodon account -- the CLI will begin fetching initial stats within one minute
+
+Initial data population can take several hours depending on the account's history. Hourly cron jobs then keep data up to date.
+
+### ⚙️ Configuration
+
+Optional settings you may want to adjust:
+
+| Variable                       | Where              | Description                                                           |
+| ------------------------------ | ------------------ | --------------------------------------------------------------------- |
+| `DISABLE_NEW_REGISTRATIONS`    | backend + frontend | Set to `true` to close signups after creating your account            |
+| `MASTODON_APP_NAME`            | backend            | Name shown to users during Mastodon OAuth (default: `Analytodon`)     |
+| `LOG_LEVEL`                    | cli                | Logging verbosity: `debug`, `info`, `warn`, `error` (default: `info`) |
+| `JWT_EXPIRES_IN`               | backend            | Access token lifetime (default: `1h`)                                 |
+| `JWT_REFRESH_TOKEN_EXPIRES_IN` | backend            | Refresh token lifetime (default: `7d`)                                |
+
+### 🔄 Updating
+
+Pull the latest changes and rebuild:
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
 ## 📄 License
 
