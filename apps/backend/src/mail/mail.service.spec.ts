@@ -11,7 +11,9 @@ import { I18nService } from 'nestjs-i18n';
 import { BoostsService } from '../boosts/boosts.service';
 import { FavoritesService } from '../favorites/favorites.service';
 import { FollowersService } from '../followers/followers.service';
+import { HashtagsService } from '../hashtags/hashtags.service';
 import { RepliesService } from '../replies/replies.service';
+import { TootsService } from '../toots/toots.service';
 import { UsersService } from '../users/users.service';
 import { FirstStatsMailDto } from './dto/first-stats-mail.dto';
 import { OldAccountMailDto } from './dto/old-account-mail.dto';
@@ -25,6 +27,8 @@ describe('MailService', () => {
   let repliesService: jest.Mocked<RepliesService>;
   let boostsService: jest.Mocked<BoostsService>;
   let favoritesService: jest.Mocked<FavoritesService>;
+  let tootsService: jest.Mocked<TootsService>;
+  let hashtagsService: jest.Mocked<HashtagsService>;
   let mailerService: jest.Mocked<MailerService>;
   let loggerLogSpy: jest.SpyInstance;
   let loggerErrorSpy: jest.SpyInstance;
@@ -134,6 +138,26 @@ describe('MailService', () => {
                 'email.weeklyStats.boostsLabel': 'received',
                 'email.weeklyStats.favorites': 'Favorites',
                 'email.weeklyStats.favoritesLabel': 'received',
+                'email.weeklyStats.totalEngagement': 'Total Engagement',
+                'email.weeklyStats.totalEngagementLabel': 'interactions',
+                'email.weeklyStats.engagementRate': 'Engagement Rate',
+                'email.weeklyStats.engagementRateLabel': 'of followers',
+                'email.weeklyStats.postingActivity': 'Posts Published',
+                'email.weeklyStats.postingActivityLabel': 'this week',
+                'email.weeklyStats.bestDay': 'Best Day',
+                'email.weeklyStats.bestDayLabel': 'for engagement',
+                'email.weeklyStats.topPosts': 'Top Performing Posts',
+                'email.weeklyStats.viewPost': 'View Post',
+                'email.weeklyStats.topHashtags': 'Top Hashtags',
+                'email.weeklyStats.topHashtagsPosts': 'posts',
+                'email.weeklyStats.topHashtagsEngagement': 'engagements',
+                'email.weeklyStats.summaryEngagementUp': 'Engagement was up {percentage}% this week!',
+                'email.weeklyStats.summaryEngagementDown': 'Engagement was down {percentage}% this week.',
+                'email.weeklyStats.summaryFollowersGained': 'You gained {count} new followers this week!',
+                'email.weeklyStats.summaryActivity':
+                  'You published {posts} posts and received {interactions} interactions this week.',
+                'email.weeklyStats.summaryPostsOnly': 'You published {posts} posts this week. Keep going!',
+                'email.weeklyStats.summaryNeutral': "Here's your weekly performance summary.",
                 'email.weeklyStats.dashboardButton': 'Go to Dashboard',
                 'email.weeklyStats.unsubscribe': "If you don't want to receive any more messages like this you can",
                 'email.weeklyStats.unsubscribeLink': 'unsubscribe here',
@@ -157,12 +181,15 @@ describe('MailService', () => {
           provide: FollowersService,
           useValue: {
             getWeeklyKpi: jest.fn(),
+            getWeeklyPostingActivity: jest.fn().mockResolvedValue({ currentPeriod: 0 }),
+            getAverageFollowerCount: jest.fn().mockResolvedValue(null),
           },
         },
         {
           provide: RepliesService,
           useValue: {
             getWeeklyKpi: jest.fn(),
+            getWeeklyBestDay: jest.fn().mockResolvedValue(null),
           },
         },
         {
@@ -177,6 +204,18 @@ describe('MailService', () => {
             getWeeklyKpi: jest.fn(),
           },
         },
+        {
+          provide: TootsService,
+          useValue: {
+            getTopToots: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: HashtagsService,
+          useValue: {
+            getEngagement: jest.fn().mockResolvedValue([]),
+          },
+        },
       ],
     }).compile();
 
@@ -187,6 +226,8 @@ describe('MailService', () => {
     repliesService = module.get(RepliesService);
     boostsService = module.get(BoostsService);
     favoritesService = module.get(FavoritesService);
+    tootsService = module.get(TootsService);
+    hashtagsService = module.get(HashtagsService);
 
     // Setup spies for logger methods
     loggerLogSpy = jest.spyOn(Logger.prototype, 'log');
@@ -718,12 +759,14 @@ describe('MailService', () => {
       serverURL: 'http://mastodon.social',
       accountName: '@test@mastodon.social',
       setupComplete: true,
+      timezone: 'UTC',
     } as AccountEntity;
     const account2 = {
       id: 'acc2',
       serverURL: 'http://example.com',
       name: 'Example Account',
       setupComplete: true,
+      timezone: 'UTC',
     } as AccountEntity;
     const dto: WeeklyStatsMailDto = {
       userID: 'user-id-123',
@@ -833,6 +876,138 @@ describe('MailService', () => {
         ),
       );
       expect(service.sendWeeklyStatsMail).not.toHaveBeenCalled();
+    });
+
+    it('should include enhanced stats when data is available', async () => {
+      usersService.findById.mockResolvedValue(userWithAccounts);
+      followersService.getWeeklyPostingActivity.mockResolvedValue({ currentPeriod: 5, previousPeriod: 3 });
+      followersService.getAverageFollowerCount.mockResolvedValue(100);
+      repliesService.getWeeklyBestDay.mockResolvedValue({ day: new Date('2026-04-28'), engagement: 42 });
+      tootsService.getTopToots.mockResolvedValue([
+        {
+          content: '<p>Hello <strong>world</strong>!</p>',
+          url: 'https://mastodon.social/@test/123',
+          reblogsCount: 10,
+          repliesCount: 5,
+          favouritesCount: 20,
+        },
+      ] as never);
+      hashtagsService.getEngagement.mockResolvedValue([
+        {
+          hashtag: 'testing',
+          tootCount: 3,
+          totalEngagement: 15,
+          avgEngagementPerToot: 5,
+          repliesCount: 2,
+          reblogsCount: 5,
+          favouritesCount: 8,
+        },
+      ]);
+
+      await service.processAndSendWeeklyStatsMail(dto);
+
+      expect(service.sendWeeklyStatsMail).toHaveBeenCalledTimes(1);
+      const sendMailArgs = (service.sendWeeklyStatsMail as jest.Mock).mock.calls[0];
+      const stats = sendMailArgs[1];
+      expect(stats[0].totalEngagement).toBeDefined();
+      expect(stats[0].postingActivity).toBeDefined();
+      expect(stats[0].engagementRate).toBeDefined();
+      expect(stats[0].bestDay).toBeDefined();
+      expect(stats[0].bestDay.engagement).toBe('42');
+      expect(stats[0].topPosts).toHaveLength(1);
+      expect(stats[0].topPosts[0].snippet).toBe('Hello world!');
+      expect(stats[0].topHashtags).toHaveLength(1);
+      expect(stats[0].topHashtags[0].hashtag).toBe('testing');
+      expect(stats[0].summarySentence).toBeDefined();
+    });
+
+    it('should omit optional sections when account has no data', async () => {
+      usersService.findById.mockResolvedValue(userWithAccounts);
+      const zeroKpi = { currentPeriod: 0, previousPeriod: 0 };
+      followersService.getWeeklyKpi.mockResolvedValue(zeroKpi);
+      repliesService.getWeeklyKpi.mockResolvedValue(zeroKpi);
+      boostsService.getWeeklyKpi.mockResolvedValue(zeroKpi);
+      favoritesService.getWeeklyKpi.mockResolvedValue(zeroKpi);
+      followersService.getWeeklyPostingActivity.mockResolvedValue({ currentPeriod: 0 });
+      followersService.getAverageFollowerCount.mockResolvedValue(null);
+      repliesService.getWeeklyBestDay.mockResolvedValue(null);
+      tootsService.getTopToots.mockResolvedValue([]);
+      hashtagsService.getEngagement.mockResolvedValue([]);
+
+      await service.processAndSendWeeklyStatsMail(dto);
+
+      const sendMailArgs = (service.sendWeeklyStatsMail as jest.Mock).mock.calls[0];
+      const stats = sendMailArgs[1];
+      expect(stats[0].totalEngagement).toBeUndefined();
+      expect(stats[0].postingActivity).toBeUndefined();
+      expect(stats[0].engagementRate).toBeUndefined();
+      expect(stats[0].bestDay).toBeUndefined();
+      expect(stats[0].topPosts).toBeUndefined();
+      expect(stats[0].topHashtags).toBeUndefined();
+    });
+
+    it('should gracefully degrade when enhanced feature services fail', async () => {
+      usersService.findById.mockResolvedValue(userWithAccounts);
+      followersService.getWeeklyPostingActivity.mockRejectedValue(new Error('fail'));
+      followersService.getAverageFollowerCount.mockRejectedValue(new Error('fail'));
+      repliesService.getWeeklyBestDay.mockRejectedValue(new Error('fail'));
+      tootsService.getTopToots.mockRejectedValue(new Error('fail'));
+      hashtagsService.getEngagement.mockRejectedValue(new Error('fail'));
+
+      await service.processAndSendWeeklyStatsMail(dto);
+
+      expect(service.sendWeeklyStatsMail).toHaveBeenCalledTimes(1);
+      const sendMailArgs = (service.sendWeeklyStatsMail as jest.Mock).mock.calls[0];
+      const stats = sendMailArgs[1];
+      expect(stats[0].followers).toBeDefined();
+      expect(stats[0].replies).toBeDefined();
+    });
+  });
+
+  describe('stripHtmlAndTruncate', () => {
+    it('should strip HTML tags', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).stripHtmlAndTruncate('<p>Hello <strong>world</strong></p>', 100);
+      expect(result).toBe('Hello world');
+    });
+
+    it('should decode HTML entities', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).stripHtmlAndTruncate('Tom &amp; Jerry &lt;3', 100);
+      expect(result).toBe('Tom & Jerry <3');
+    });
+
+    it('should truncate long text', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).stripHtmlAndTruncate('A'.repeat(200), 50);
+      expect(result).toHaveLength(53); // 50 chars + "..."
+      expect(result.endsWith('...')).toBe(true);
+    });
+
+    it('should convert br tags to spaces', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).stripHtmlAndTruncate('Line 1<br>Line 2<br />Line 3', 100);
+      expect(result).toBe('Line 1 Line 2 Line 3');
+    });
+  });
+
+  describe('computeTotalEngagement', () => {
+    it('should sum KPI current periods', () => {
+      const replies = { currentPeriod: 10, previousPeriod: 8, currentPeriodProgress: 1 };
+      const boosts = { currentPeriod: 20, previousPeriod: 15, currentPeriodProgress: 1 };
+      const favorites = { currentPeriod: 30, previousPeriod: 25, currentPeriodProgress: 1 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).computeTotalEngagement(replies, boosts, favorites);
+      expect(result.currentPeriod).toBe(60);
+      expect(result.previousPeriod).toBe(48);
+      expect(result.trend).toBeDefined();
+    });
+
+    it('should return undefined trend when previous period is zero', () => {
+      const kpi = { currentPeriod: 10, previousPeriod: 0, currentPeriodProgress: 1 };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).computeTotalEngagement(kpi, kpi, kpi);
+      expect(result.trend).toBeUndefined();
     });
   });
 });

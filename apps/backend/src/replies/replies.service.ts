@@ -39,6 +39,39 @@ export class RepliesService {
    * @param account - The loaded account entity.
    * @returns A promise that resolves to the replies KPI DTO.
    */
+  async getWeeklyBestDay(account: Loaded<AccountEntity>): Promise<{ day: Date; engagement: number } | null> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, 'lastweek');
+
+    const oneDayBefore = new Date(dateFrom);
+    oneDayBefore.setUTCDate(oneDayBefore.getUTCDate() - 1);
+
+    const entries = await this.dailyTootStatsRepository.find(
+      { account: account.id, day: { $gte: oneDayBefore, $lt: dateTo } },
+      { orderBy: { day: 'ASC' } },
+    );
+
+    if (entries.length < 2) return null;
+
+    let bestDay: Date | null = null;
+    let bestEngagement = 0;
+
+    for (let i = 1; i < entries.length; i++) {
+      const dailyEngagement =
+        entries[i].repliesCount -
+        entries[i - 1].repliesCount +
+        (entries[i].boostsCount - entries[i - 1].boostsCount) +
+        (entries[i].favouritesCount - entries[i - 1].favouritesCount);
+
+      if (dailyEngagement > bestEngagement) {
+        bestEngagement = dailyEngagement;
+        bestDay = entries[i].day;
+      }
+    }
+
+    if (!bestDay || bestEngagement === 0) return null;
+    return { day: bestDay, engagement: bestEngagement };
+  }
+
   async getWeeklyKpi(account: Loaded<AccountEntity>): Promise<RepliesKpiDto> {
     const kpiData = await getPeriodKPI(
       this.dailyTootStatsRepository,

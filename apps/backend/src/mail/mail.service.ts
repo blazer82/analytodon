@@ -11,7 +11,11 @@ import { I18nService } from 'nestjs-i18n';
 import { BoostsService } from '../boosts/boosts.service';
 import { FavoritesService } from '../favorites/favorites.service';
 import { FollowersService } from '../followers/followers.service';
+import { HashtagsService } from '../hashtags/hashtags.service';
 import { RepliesService } from '../replies/replies.service';
+import { KpiDto, resolveTimeframe } from '../shared/utils/timeframe.helper';
+import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
+import { TootsService } from '../toots/toots.service';
 import { UsersService } from '../users/users.service';
 import { FirstStatsMailDto } from './dto/first-stats-mail.dto';
 import { OldAccountMailDto } from './dto/old-account-mail.dto';
@@ -22,12 +26,33 @@ interface FormattedKpi {
   change: string; // e.g., "(+5)", "(-2)", "(no change)"
 }
 
+interface TopPostItem {
+  snippet: string;
+  url: string;
+  boosts: number;
+  replies: number;
+  favorites: number;
+}
+
+interface TopHashtagItem {
+  hashtag: string;
+  tootCount: number;
+  totalEngagement: number;
+}
+
 interface WeeklyStatItem {
   accountName: string;
   followers: FormattedKpi;
   replies: FormattedKpi;
   boosts: FormattedKpi;
   favorites: FormattedKpi;
+  totalEngagement?: FormattedKpi;
+  engagementRate?: FormattedKpi;
+  postingActivity?: FormattedKpi;
+  summarySentence?: string;
+  bestDay?: { dayName: string; engagement: string };
+  topPosts?: TopPostItem[];
+  topHashtags?: TopHashtagItem[];
 }
 
 @Injectable()
@@ -47,6 +72,8 @@ export class MailService {
     private readonly repliesService: RepliesService,
     private readonly boostsService: BoostsService,
     private readonly favoritesService: FavoritesService,
+    private readonly tootsService: TootsService,
+    private readonly hashtagsService: HashtagsService,
   ) {
     this.frontendURL = this.configService.getOrThrow<string>('FRONTEND_URL');
     this.supportEmail = this.configService.getOrThrow<string>('EMAIL_FROM_ADDRESS');
@@ -98,6 +125,83 @@ export class MailService {
    */
   private async translate(key: string, locale: string, args?: Record<string, string | number>): Promise<string> {
     return this.i18n.translate(key, { lang: locale, args });
+  }
+
+  private stripHtmlAndTruncate(html: string, maxLength: number): string {
+    let text = html.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '');
+    text = text
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+    text = text.replace(/\s+/g, ' ').trim();
+    if (text.length > maxLength) {
+      return text.substring(0, maxLength).trimEnd() + '...';
+    }
+    return text;
+  }
+
+  private computeTotalEngagement(
+    repliesKpi: KpiDto,
+    boostsKpi: KpiDto,
+    favoritesKpi: KpiDto,
+  ): KpiDto & { trend?: number } {
+    const currentPeriod =
+      (repliesKpi.currentPeriod ?? 0) + (boostsKpi.currentPeriod ?? 0) + (favoritesKpi.currentPeriod ?? 0);
+    const previousPeriod =
+      (repliesKpi.previousPeriod ?? 0) + (boostsKpi.previousPeriod ?? 0) + (favoritesKpi.previousPeriod ?? 0);
+    const currentPeriodProgress =
+      repliesKpi.currentPeriodProgress ?? boostsKpi.currentPeriodProgress ?? favoritesKpi.currentPeriodProgress;
+
+    let trend: number | undefined;
+    if (previousPeriod > 0 && currentPeriod > 0 && currentPeriodProgress && currentPeriodProgress > 0) {
+      const projected = currentPeriod / currentPeriodProgress;
+      trend = (projected - previousPeriod) / Math.abs(previousPeriod);
+    }
+
+    return { currentPeriod, previousPeriod, currentPeriodProgress, trend };
+  }
+
+  private async generateSummarySentence(
+    data: {
+      totalEngagement?: KpiDto & { trend?: number };
+      followersKpi: KpiDto & { trend?: number };
+      postingActivity?: KpiDto;
+    },
+    locale: string,
+  ): Promise<string> {
+    const { totalEngagement, followersKpi, postingActivity } = data;
+
+    if (totalEngagement?.trend !== undefined && Math.abs(totalEngagement.trend) >= 0.1) {
+      const percentage = Math.abs(Math.round(totalEngagement.trend * 100));
+      if (totalEngagement.trend > 0) {
+        return this.translate('email.weeklyStats.summaryEngagementUp', locale, { percentage });
+      }
+      return this.translate('email.weeklyStats.summaryEngagementDown', locale, { percentage });
+    }
+
+    if (followersKpi.currentPeriod !== undefined && followersKpi.currentPeriod > 0) {
+      return this.translate('email.weeklyStats.summaryFollowersGained', locale, {
+        count: followersKpi.currentPeriod,
+      });
+    }
+
+    if (postingActivity?.currentPeriod !== undefined && postingActivity.currentPeriod > 0) {
+      const totalEng = totalEngagement?.currentPeriod ?? 0;
+      if (totalEng > 0) {
+        return this.translate('email.weeklyStats.summaryActivity', locale, {
+          posts: postingActivity.currentPeriod,
+          interactions: totalEng,
+        });
+      }
+      return this.translate('email.weeklyStats.summaryPostsOnly', locale, {
+        posts: postingActivity.currentPeriod,
+      });
+    }
+
+    return this.translate('email.weeklyStats.summaryNeutral', locale);
   }
 
   private formatKpiForEmail(kpiData: { currentPeriod?: number; trend?: number }, locale: string = 'en'): FormattedKpi {
@@ -417,6 +521,13 @@ export class MailService {
         to: recipientEmail,
         subject,
         template: './weekly-stats',
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+            cid: 'logo@analytodon.com',
+          },
+        ],
         context: {
           ...this.getCommonContext(),
           stats,
@@ -432,6 +543,19 @@ export class MailService {
             boostsLabel: await this.translate('email.weeklyStats.boostsLabel', locale),
             favorites: await this.translate('email.weeklyStats.favorites', locale),
             favoritesLabel: await this.translate('email.weeklyStats.favoritesLabel', locale),
+            totalEngagement: await this.translate('email.weeklyStats.totalEngagement', locale),
+            totalEngagementLabel: await this.translate('email.weeklyStats.totalEngagementLabel', locale),
+            engagementRate: await this.translate('email.weeklyStats.engagementRate', locale),
+            engagementRateLabel: await this.translate('email.weeklyStats.engagementRateLabel', locale),
+            postingActivity: await this.translate('email.weeklyStats.postingActivity', locale),
+            postingActivityLabel: await this.translate('email.weeklyStats.postingActivityLabel', locale),
+            bestDay: await this.translate('email.weeklyStats.bestDay', locale),
+            bestDayLabel: await this.translate('email.weeklyStats.bestDayLabel', locale),
+            topPosts: await this.translate('email.weeklyStats.topPosts', locale),
+            viewPost: await this.translate('email.weeklyStats.viewPost', locale),
+            topHashtags: await this.translate('email.weeklyStats.topHashtags', locale),
+            topHashtagsPosts: await this.translate('email.weeklyStats.topHashtagsPosts', locale),
+            topHashtagsEngagement: await this.translate('email.weeklyStats.topHashtagsEngagement', locale),
             dashboardButton: await this.translate('email.weeklyStats.dashboardButton', locale),
             unsubscribe: await this.translate('email.weeklyStats.unsubscribe', locale),
             unsubscribeLink: await this.translate('email.weeklyStats.unsubscribeLink', locale),
@@ -536,13 +660,103 @@ export class MailService {
         const boostsKpiData = await this.boostsService.getWeeklyKpi(account);
         const favoritesKpiData = await this.favoritesService.getWeeklyKpi(account);
 
-        statsForEmail.push({
+        const totalEngagementKpi = this.computeTotalEngagement(repliesKpiData, boostsKpiData, favoritesKpiData);
+
+        const item: WeeklyStatItem = {
           accountName: account.name || account.accountName || new URL(account.serverURL).hostname,
           followers: this.formatKpiForEmail(followersKpiData, locale),
           replies: this.formatKpiForEmail(repliesKpiData, locale),
           boosts: this.formatKpiForEmail(boostsKpiData, locale),
           favorites: this.formatKpiForEmail(favoritesKpiData, locale),
-        });
+        };
+
+        if ((totalEngagementKpi.currentPeriod ?? 0) > 0) {
+          item.totalEngagement = this.formatKpiForEmail(totalEngagementKpi, locale);
+        }
+
+        let postingActivityKpi: KpiDto | undefined;
+        try {
+          postingActivityKpi = await this.followersService.getWeeklyPostingActivity(account);
+          if ((postingActivityKpi.currentPeriod ?? 0) > 0) {
+            item.postingActivity = this.formatKpiForEmail(postingActivityKpi, locale);
+          }
+        } catch (e) {
+          this.logger.warn(`Failed to get posting activity for account ${account.id}: ${e.message}`);
+        }
+
+        try {
+          const { dateFrom, dateTo } = resolveTimeframe(account.timezone, 'lastweek');
+          const avgFollowers = await this.followersService.getAverageFollowerCount(account, dateFrom, dateTo);
+          if (avgFollowers && avgFollowers > 0 && (totalEngagementKpi.currentPeriod ?? 0) > 0) {
+            const rate = ((totalEngagementKpi.currentPeriod ?? 0) / avgFollowers) * 100;
+            item.engagementRate = { value: rate.toFixed(1) + '%', change: '' };
+          }
+        } catch (e) {
+          this.logger.warn(`Failed to get engagement rate for account ${account.id}: ${e.message}`);
+        }
+
+        try {
+          const bestDayResult = await this.repliesService.getWeeklyBestDay(account);
+          if (bestDayResult) {
+            const dayName = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(bestDayResult.day);
+            item.bestDay = {
+              dayName,
+              engagement: new Intl.NumberFormat(locale).format(bestDayResult.engagement),
+            };
+          }
+        } catch (e) {
+          this.logger.warn(`Failed to get best day for account ${account.id}: ${e.message}`);
+        }
+
+        try {
+          const { dateFrom, dateTo } = resolveTimeframe(account.timezone, 'lastweek');
+          const rankedToots = await this.tootsService.getTopToots({
+            accountId: account.id,
+            ranking: TootRankingEnum.TOP,
+            dateFrom,
+            dateTo,
+            limit: 3,
+          });
+          if (rankedToots.length > 0) {
+            item.topPosts = rankedToots.map((toot) => ({
+              snippet: this.stripHtmlAndTruncate(toot.content, 120),
+              url: toot.url,
+              boosts: toot.reblogsCount,
+              replies: toot.repliesCount,
+              favorites: toot.favouritesCount,
+            }));
+          }
+        } catch (e) {
+          this.logger.warn(`Failed to get top posts for account ${account.id}: ${e.message}`);
+        }
+
+        try {
+          const hashtagData = await this.hashtagsService.getEngagement(account, 'lastweek', 5);
+          if (hashtagData.length > 0) {
+            item.topHashtags = hashtagData.map((h) => ({
+              hashtag: h.hashtag,
+              tootCount: h.tootCount,
+              totalEngagement: h.totalEngagement,
+            }));
+          }
+        } catch (e) {
+          this.logger.warn(`Failed to get top hashtags for account ${account.id}: ${e.message}`);
+        }
+
+        try {
+          item.summarySentence = await this.generateSummarySentence(
+            {
+              totalEngagement: totalEngagementKpi,
+              followersKpi: followersKpiData,
+              postingActivity: postingActivityKpi,
+            },
+            locale,
+          );
+        } catch (e) {
+          this.logger.warn(`Failed to generate summary for account ${account.id}: ${e.message}`);
+        }
+
+        statsForEmail.push(item);
       } catch (error) {
         this.logger.error(
           `Failed to retrieve weekly KPIs for account ${account.id} (User: ${user.email}): ${error.message}`,

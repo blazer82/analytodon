@@ -9,7 +9,9 @@ import { AccountsModule } from '../accounts/accounts.module';
 import { BoostsModule } from '../boosts/boosts.module';
 import { FavoritesModule } from '../favorites/favorites.module';
 import { FollowersModule } from '../followers/followers.module';
+import { HashtagsModule } from '../hashtags/hashtags.module';
 import { RepliesModule } from '../replies/replies.module';
+import { TootsModule } from '../toots/toots.module';
 import { UsersModule } from '../users/users.module';
 import { MailController } from './mail.controller';
 import { MailService } from './mail.service';
@@ -54,7 +56,9 @@ import { MailService } from './mail.service';
     BoostsModule,
     FavoritesModule,
     FollowersModule,
+    HashtagsModule,
     RepliesModule,
+    TootsModule,
   ],
   controllers: [MailController],
   providers: [MailService],

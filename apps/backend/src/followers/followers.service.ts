@@ -50,6 +50,31 @@ export class FollowersService {
     };
   }
 
+  async getWeeklyPostingActivity(account: Loaded<AccountEntity>): Promise<FollowersKpiDto> {
+    const kpiData = await getPeriodKPI(
+      this.dailyAccountStatsRepository,
+      account.id,
+      account.timezone,
+      getDaysToWeekBeginning,
+      'statusesCount',
+    );
+    const trend = getKPITrend(kpiData);
+    return {
+      ...kpiData,
+      trend: trend !== null ? trend : undefined,
+    };
+  }
+
+  async getAverageFollowerCount(account: Loaded<AccountEntity>, dateFrom: Date, dateTo: Date): Promise<number | null> {
+    const entries = await this.dailyAccountStatsRepository.find(
+      { account: account.id, day: { $gte: dateFrom, $lte: dateTo } },
+      { orderBy: { day: 'ASC' } },
+    );
+    if (entries.length === 0) return null;
+    const sum = entries.reduce((acc, e) => acc + e.followersCount, 0);
+    return sum / entries.length;
+  }
+
   /**
    * Retrieves monthly Key Performance Indicators (KPIs) for followers for a specific account.
    * @param account - The loaded account entity.
