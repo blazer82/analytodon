@@ -930,6 +930,39 @@ describe('MailService', () => {
       expect(stats[0].summarySentence).toBeDefined();
     });
 
+    it('should format best day name using account timezone, not UTC', async () => {
+      const berlinAccount = {
+        ...account1,
+        timezone: 'Europe/Berlin',
+      } as AccountEntity;
+      const berlinUserWithAccounts = {
+        ...mockUser,
+        accounts: {
+          init: jest.fn().mockResolvedValue(undefined),
+          getItems: jest.fn().mockReturnValue([berlinAccount]),
+        },
+      } as unknown as UserEntity;
+      const berlinDto: WeeklyStatsMailDto = {
+        userID: 'user-id-123',
+        accounts: [berlinAccount.id],
+      };
+      usersService.findById.mockResolvedValue(berlinUserWithAccounts);
+      // 2026-04-28 is a Tuesday. In Europe/Berlin (UTC+2), midnight = 2026-04-27T22:00:00Z.
+      // Without timezone correction, Intl.DateTimeFormat in UTC would show "Monday" instead of "Tuesday".
+      repliesService.getWeeklyBestDay.mockResolvedValue({
+        day: new Date('2026-04-27T22:00:00.000Z'),
+        engagement: 10,
+      });
+
+      await service.processAndSendWeeklyStatsMail(berlinDto);
+
+      expect(service.sendWeeklyStatsMail).toHaveBeenCalledTimes(1);
+      const sendMailArgs = (service.sendWeeklyStatsMail as jest.Mock).mock.calls[0];
+      const stats = sendMailArgs[1];
+      expect(stats[0].bestDay).toBeDefined();
+      expect(stats[0].bestDay.dayName).toBe('Tuesday');
+    });
+
     it('should omit optional sections when account has no data', async () => {
       usersService.findById.mockResolvedValue(userWithAccounts);
       const zeroKpi = { currentPeriod: 0, previousPeriod: 0 };

@@ -750,7 +750,10 @@ export class MailService {
         try {
           const bestDayResult = await this.repliesService.getWeeklyBestDay(account);
           if (bestDayResult) {
-            const dayName = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(bestDayResult.day);
+            const dayName = new Intl.DateTimeFormat(locale, {
+              weekday: 'long',
+              timeZone: account.timezone.replace(' ', '_'),
+            }).format(bestDayResult.day);
             item.bestDay = {
               dayName,
               engagement: new Intl.NumberFormat(locale).format(bestDayResult.engagement),
