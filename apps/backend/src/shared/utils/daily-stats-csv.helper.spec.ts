@@ -74,7 +74,7 @@ describe('getDailyStatsCsvRows', () => {
     const [whereArg, optsArg] = findMock.mock.calls[0];
     expect(whereArg.account).toBe('acc-1');
     expect(whereArg.day.$gte).toBeInstanceOf(Date);
-    expect(whereArg.day.$lte).toBeInstanceOf(Date);
+    expect(whereArg.day.$lt).toBeInstanceOf(Date);
     expect(optsArg).toEqual({ orderBy: { day: 'ASC' } });
 
     // Row is computed via buildDailyStatsCsvRows with seeded prior 100 → +3 delta.

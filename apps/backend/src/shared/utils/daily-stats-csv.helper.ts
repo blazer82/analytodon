@@ -1,5 +1,5 @@
 import { AccountEntity, DailyAccountStatsEntity, DailyTootStatsEntity } from '@analytodon/shared-orm';
-import { EntityRepository, Loaded } from '@mikro-orm/core';
+import { EntityRepository, FilterQuery, FindOptions, Loaded } from '@mikro-orm/core';
 
 import { eachDayInRange, formatDateISO, resolveTimeframe } from './timeframe.helper';
 
@@ -87,10 +87,10 @@ export async function getDailyStatsCsvRows<T extends DailyTootStatsEntity | Dail
   const oneDayEarlier = new Date(dateFrom);
   oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
 
-  const entries = (await (repo as unknown as EntityRepository<DailyTootStatsEntity>).find(
-    { account: account.id, day: { $gte: oneDayEarlier, $lte: dateTo } },
-    { orderBy: { day: 'ASC' } },
-  )) as unknown as T[];
+  const entries = await repo.find(
+    { account: account.id, day: { $gte: oneDayEarlier, $lt: dateTo } } as FilterQuery<T>,
+    { orderBy: { day: 'ASC' } } as FindOptions<T>,
+  );
 
   return buildDailyStatsCsvRows(
     entries.map((e) => ({ day: e.day, value: valueAccessor(e) })),

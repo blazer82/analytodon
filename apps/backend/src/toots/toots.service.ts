@@ -99,9 +99,11 @@ export class TootsService {
   }
 
   /**
-   * Streams a CSV of every toot in the requested timeframe (capped) to the
-   * provided Express response. Content is stripped to plain text. Mirrors the
-   * conventions used by the followers/boosts/replies/favorites exporters.
+   * Streams a CSV of toots in the requested timeframe to the provided Express
+   * response — one row per toot, newest first, capped at TOP_POSTS_CSV_MAX_ROWS.
+   * Content is stripped to plain text and CSV-injection-escaped. Shares the
+   * streaming/error/headers plumbing with the other CSV exporters; the per-toot
+   * row shape (and the row cap) are specific to this endpoint.
    */
   async exportCsv(
     account: Loaded<AccountEntity>,
