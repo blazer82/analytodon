@@ -1,12 +1,25 @@
 import { AccountEntity, TootEntity } from '@analytodon/shared-orm';
-import { Rel } from '@mikro-orm/core';
+import { Loaded, Rel } from '@mikro-orm/core';
 import { EntityManager, EntityRepository, FilterQuery, ObjectId } from '@mikro-orm/mongodb';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { stringify } from 'csv-stringify';
+import { Response } from 'express';
 
+import * as timeframeHelper from '../shared/utils/timeframe.helper';
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
-import { TootsService } from './toots.service';
+import { TootsService, TOP_POSTS_CSV_MAX_ROWS } from './toots.service';
+
+jest.mock('csv-stringify');
+jest.mock('../shared/utils/timeframe.helper', () => {
+  const actual = jest.requireActual('../shared/utils/timeframe.helper');
+  return {
+    ...actual,
+    resolveTimeframe: jest.fn(),
+    formatDateISO: jest.fn(),
+  };
+});
 
 describe('TootsService', () => {
   let service: TootsService;
@@ -50,15 +63,20 @@ describe('TootsService', () => {
     },
   ];
 
+  const mockedResolveTimeframe = timeframeHelper.resolveTimeframe as jest.Mock;
+  const mockedFormatDateISO = timeframeHelper.formatDateISO as jest.Mock;
+
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     // Mock EntityManager
     mockEm = {
       aggregate: jest.fn(),
     } as unknown as jest.Mocked<EntityManager>;
 
-    // Mock TootRepository (even if not directly used by getTopToots, it's part of the service constructor)
+    // Mock TootRepository
     mockTootRepository = {
-      // Add any methods if the service starts using the repository directly
+      find: jest.fn(),
     } as unknown as jest.Mocked<EntityRepository<TootEntity>>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -73,6 +91,15 @@ describe('TootsService', () => {
     module.useLogger(false); // Disable logger for tests
 
     service = module.get<TootsService>(TootsService);
+
+    mockedResolveTimeframe.mockReturnValue({
+      dateFrom: new Date('2023-01-01T00:00:00.000Z'),
+      dateTo: new Date('2023-02-01T00:00:00.000Z'),
+      timeframe: 'last30days',
+    });
+    mockedFormatDateISO.mockImplementation((date: Date | undefined) =>
+      date ? date.toISOString().split('T')[0] : null,
+    );
   });
 
   it('should be defined', () => {
@@ -253,6 +280,133 @@ describe('TootsService', () => {
       const options: GetTopTootsOptions = { accountId: mockAccountId };
 
       await expect(service.getTopToots(options)).rejects.toThrow(testError);
+    });
+  });
+
+  describe('getTootsForCsv', () => {
+    it('should query toots in range, newest first, capped at the default limit', async () => {
+      mockTootRepository.find.mockResolvedValue(mockTootEntities);
+      const result = await service.getTootsForCsv(mockAccountId, mockDateFrom, mockDateTo);
+
+      expect(mockTootRepository.find).toHaveBeenCalledWith(
+        { account: mockAccountId, createdAt: { $gte: mockDateFrom, $lt: mockDateTo } },
+        { orderBy: { createdAt: 'DESC' }, limit: TOP_POSTS_CSV_MAX_ROWS },
+      );
+      expect(result).toEqual(mockTootEntities);
+    });
+
+    it('should respect a smaller limit when passed explicitly', async () => {
+      mockTootRepository.find.mockResolvedValue([]);
+      await service.getTootsForCsv(mockAccountId, mockDateFrom, mockDateTo, 50);
+
+      expect(mockTootRepository.find).toHaveBeenCalledWith(
+        { account: mockAccountId, createdAt: { $gte: mockDateFrom, $lt: mockDateTo } },
+        { orderBy: { createdAt: 'DESC' }, limit: 50 },
+      );
+    });
+  });
+
+  describe('exportCsv', () => {
+    let mockRes: jest.Mocked<Response>;
+    let mockStringifier: { pipe: jest.Mock; on: jest.Mock; write: jest.Mock; end: jest.Mock };
+
+    const mockAccount = {
+      id: mockAccountId,
+      timezone: 'Europe/Berlin',
+    } as Loaded<AccountEntity>;
+
+    beforeEach(() => {
+      mockStringifier = {
+        pipe: jest.fn(),
+        on: jest.fn(),
+        write: jest.fn(),
+        end: jest.fn(),
+      };
+      (stringify as jest.Mock).mockReturnValue(mockStringifier);
+
+      mockRes = {
+        setHeader: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as unknown as jest.Mocked<Response>;
+    });
+
+    it('should write one row per toot with HTML stripped from content', async () => {
+      const toots: TootEntity[] = [
+        {
+          ...mockTootEntities[0],
+          content: '<p>Hello <a href="https://x.example">world</a></p>',
+          createdAt: new Date('2023-01-15T10:00:00.000Z'),
+          url: 'http://example.com/toot1',
+          visibility: 'public',
+          language: 'en',
+          repliesCount: 2,
+          reblogsCount: 5,
+          favouritesCount: 10,
+        },
+      ];
+      mockTootRepository.find.mockResolvedValue(toots);
+
+      await service.exportCsv(mockAccount, 'last30days', mockRes);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
+      expect(mockRes.setHeader).toHaveBeenCalledWith(
+        'Content-Disposition',
+        `attachment; filename=top-posts-${mockAccountId}-last30days.csv`,
+      );
+      expect(stringify).toHaveBeenCalledWith({ header: true, delimiter: ';' });
+      expect(mockStringifier.pipe).toHaveBeenCalledWith(mockRes);
+      expect(mockStringifier.write).toHaveBeenCalledWith({
+        Date: '2023-01-15',
+        URL: 'http://example.com/toot1',
+        Visibility: 'public',
+        Language: 'en',
+        Replies: 2,
+        Boosts: 5,
+        Favorites: 10,
+        Content: 'Hello world',
+      });
+      expect(mockStringifier.end).toHaveBeenCalled();
+    });
+
+    it('should prefix CSV-injection-prone Content and URL cells with a single quote', async () => {
+      const toots: TootEntity[] = [
+        {
+          ...mockTootEntities[0],
+          content: '<p>=cmd|"/c calc"!A1</p>',
+          createdAt: new Date('2023-01-15T10:00:00.000Z'),
+          url: '=HYPERLINK("http://bad.example","click")',
+          visibility: 'public',
+          language: 'en',
+          repliesCount: 0,
+          reblogsCount: 0,
+          favouritesCount: 0,
+        },
+      ];
+      mockTootRepository.find.mockResolvedValue(toots);
+
+      await service.exportCsv(mockAccount, 'last30days', mockRes);
+
+      expect(mockStringifier.write).toHaveBeenCalledWith(
+        expect.objectContaining({
+          URL: `'=HYPERLINK("http://bad.example","click")`,
+          Content: `'=cmd|"/c calc"!A1`,
+        }),
+      );
+    });
+
+    it('should handle errors and respond 500 when headers not yet sent', async () => {
+      mockTootRepository.find.mockResolvedValue([]);
+      const testError = new Error('CSV error');
+      mockStringifier.on.mockImplementation((event, callback) => {
+        if (event === 'error') callback(testError);
+      });
+      mockRes.headersSent = false;
+
+      await service.exportCsv(mockAccount, 'last30days', mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.send).toHaveBeenCalledWith('Error generating CSV');
     });
   });
 });

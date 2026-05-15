@@ -243,17 +243,17 @@ describe('BoostsService', () => {
       } as unknown as jest.Mocked<Response>;
     });
 
-    it('should export chart data to CSV', async () => {
-      const chartData = [
-        { time: '2023-01-01', value: 10 },
-        { time: '2023-01-02', value: 15 },
+    it('should export daily stats as CSV with New Boosts and Total Boosts columns', async () => {
+      const rows = [
+        { day: '2023-01-01', absolute: 50, delta: null },
+        { day: '2023-01-02', absolute: 55, delta: 5 },
+        { day: '2023-01-03', absolute: 55, delta: 0 },
       ];
-      // Mock getChartData directly on the service instance for this test
-      jest.spyOn(service, 'getChartData').mockResolvedValue(chartData);
+      jest.spyOn(service, 'getDailyStatsForCsv').mockResolvedValue(rows);
 
       await service.exportCsv(mockAccount, 'last7days', mockRes);
 
-      expect(service.getChartData).toHaveBeenCalledWith(mockAccount, 'last7days', undefined, undefined);
+      expect(service.getDailyStatsForCsv).toHaveBeenCalledWith(mockAccount, 'last7days', undefined, undefined);
       expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         'Content-Disposition',
@@ -261,41 +261,50 @@ describe('BoostsService', () => {
       );
       expect(stringify).toHaveBeenCalledWith({ header: true, delimiter: ';' });
       expect(mockStringifier.pipe).toHaveBeenCalledWith(mockRes);
-      expect(mockStringifier.write).toHaveBeenCalledWith({ Date: '2023-01-01', Boosts: 10 });
-      expect(mockStringifier.write).toHaveBeenCalledWith({ Date: '2023-01-02', Boosts: 15 });
+      expect(mockStringifier.write).toHaveBeenCalledWith({
+        Date: '2023-01-01',
+        'New Boosts': '',
+        'Total Boosts': 50,
+      });
+      expect(mockStringifier.write).toHaveBeenCalledWith({
+        Date: '2023-01-02',
+        'New Boosts': 5,
+        'Total Boosts': 55,
+      });
+      expect(mockStringifier.write).toHaveBeenCalledWith({
+        Date: '2023-01-03',
+        'New Boosts': 0,
+        'Total Boosts': 55,
+      });
       expect(mockStringifier.end).toHaveBeenCalled();
     });
 
     it('should handle error during CSV stringification', async () => {
-      jest.spyOn(service, 'getChartData').mockResolvedValue([]); // No data, but still tests error handling
+      jest.spyOn(service, 'getDailyStatsForCsv').mockResolvedValue([]);
 
       const testError = new Error('CSV error');
-      // Simulate error event
       mockStringifier.on.mockImplementation((event, callback) => {
         if (event === 'error') {
           callback(testError);
         }
       });
-      mockRes.headersSent = false; // Simulate headers not sent yet
+      mockRes.headersSent = false;
 
-      // We don't expect exportCsv to throw, but to handle the error (e.g., log, send 500)
       await service.exportCsv(mockAccount, 'last7days', mockRes);
 
-      // Check that logger was called (assuming logger is spied on or service method logs)
-      // For now, check that res.status().send() was called
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith('Error generating CSV');
     });
 
     it('should not send error response if headers already sent', async () => {
-      jest.spyOn(service, 'getChartData').mockResolvedValue([]);
+      jest.spyOn(service, 'getDailyStatsForCsv').mockResolvedValue([]);
       const testError = new Error('CSV error');
       mockStringifier.on.mockImplementation((event, callback) => {
         if (event === 'error') {
           callback(testError);
         }
       });
-      mockRes.headersSent = true; // Simulate headers already sent
+      mockRes.headersSent = true;
 
       await service.exportCsv(mockAccount, 'last7days', mockRes);
 

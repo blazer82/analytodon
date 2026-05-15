@@ -2,7 +2,8 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { RankedTootDto } from '@analytodon/rest-client';
-import { Box, Container, Grid, Typography } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import { Box, Container, Grid, IconButton, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { useFetcher, useLoaderData } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
@@ -114,10 +115,14 @@ export default function TopPostsPage() {
   const topByBoostsData = fetcher.data?.topByBoosts ?? topByBoosts;
   const topByFavoritesData = fetcher.data?.topByFavorites ?? topByFavorites;
   const isLoadingData = fetcher.state === 'loading';
+  const [currentDateRange, setCurrentDateRange] = React.useState<DateRange | null>(() =>
+    initialDateFrom && initialDateTo ? { from: initialDateFrom, to: initialDateTo } : null,
+  );
 
   const handleTimeframeChange = React.useCallback(
     (newTimeframe: Timeframe, dateRange?: DateRange) => {
       setCurrentTimeframe(newTimeframe);
+      setCurrentDateRange(dateRange || null);
       if (accountId) {
         let url = `/top-posts?index&timeframe=${newTimeframe}`;
         if (newTimeframe === 'custom' && dateRange) {
@@ -128,6 +133,16 @@ export default function TopPostsPage() {
     },
     [fetcher, accountId, buildLink],
   );
+
+  const handleCSVDownload = React.useCallback(() => {
+    if (accountId) {
+      let url = `/top-posts/csv?accountId=${accountId}&timeframe=${currentTimeframe}`;
+      if (currentTimeframe === 'custom' && currentDateRange) {
+        url += `&dateFrom=${currentDateRange.from}&dateTo=${currentDateRange.to}`;
+      }
+      window.location.href = buildLink(url);
+    }
+  }, [accountId, currentTimeframe, currentDateRange, buildLink]);
 
   if (!accountId) {
     return (
@@ -151,6 +166,14 @@ export default function TopPostsPage() {
               dateFrom={initialDateFrom}
               dateTo={initialDateTo}
             />
+            <IconButton
+              title={t('common:actions.downloadCsv')}
+              aria-label={t('common:actions.downloadCsv')}
+              onClick={handleCSVDownload}
+              disabled={isLoadingData}
+            >
+              <DownloadIcon />
+            </IconButton>
           </Box>
         </Grid>
 

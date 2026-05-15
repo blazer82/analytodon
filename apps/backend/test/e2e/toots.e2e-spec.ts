@@ -241,6 +241,65 @@ describe('TootsController (e2e)', () => {
     });
   });
 
+  describe('GET /accounts/:accountId/toots/csv', () => {
+    it('should download top posts as CSV with expected columns', async () => {
+      const timeframe = 'last7days';
+      const response = await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/csv?timeframe=${timeframe}`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.headers['content-type']).toBe('text/csv');
+      expect(response.headers['content-disposition']).toBe(
+        `attachment; filename=top-posts-${testAccount.id}-${timeframe}.csv`,
+      );
+      // Header row
+      expect(response.text.split('\n')[0]).toContain('Date;URL;Visibility;Language;Replies;Boosts;Favorites;Content');
+      // At least one of the seeded toot URLs should be present
+      expect(response.text).toContain('https://mastodon.test/users/testuser_toots/statuses/1');
+    });
+
+    it('should return 400 if timeframe is missing', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/csv`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 401 if not authenticated', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/csv?timeframe=last7days`)
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should escape CSV-injection-prone content with a single quote', async () => {
+      const emFork = orm.em.fork();
+      const maliciousToot = emFork.create(TootEntity, {
+        account: testAccount,
+        uri: 'tag:mastodon.test,2023-01-99:injection',
+        url: 'https://mastodon.test/users/testuser_toots/statuses/injection',
+        content: '<p>=cmd|"/c calc"!A1</p>',
+        reblogsCount: 0,
+        favouritesCount: 0,
+        repliesCount: 0,
+        createdAt: new Date(new Date().setDate(new Date().getDate() - 1)),
+        language: 'en',
+        visibility: 'public',
+        fetchedAt: new Date(),
+      });
+      await emFork.persistAndFlush(maliciousToot);
+
+      const response = await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/csv?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      // The Content cell should be prefixed with a single quote so spreadsheets
+      // render it as text instead of evaluating it as a formula.
+      expect(response.text).toContain(`'=cmd|""/c calc""!A1`);
+    });
+  });
+
   describe('Account Setup Incomplete', () => {
     let incompleteAccount: AccountEntity;
 
@@ -257,6 +316,13 @@ describe('TootsController (e2e)', () => {
     it('should return 404 for top-summary if account setup is not complete', async () => {
       await request(app.getHttpServer())
         .get(`/accounts/${incompleteAccount.id}/toots/top-summary?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 404 for csv if account setup is not complete', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${incompleteAccount.id}/toots/csv?timeframe=last7days`)
         .set('Authorization', `Bearer ${testUserAccessToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });

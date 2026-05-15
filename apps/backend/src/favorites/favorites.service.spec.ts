@@ -234,16 +234,16 @@ describe('FavoritesService', () => {
       } as unknown as jest.Mocked<Response>;
     });
 
-    it('should export chart data to CSV', async () => {
-      const chartData = [
-        { time: '2023-01-01', value: 10 },
-        { time: '2023-01-02', value: 15 },
+    it('should export daily stats as CSV with New Favorites and Total Favorites columns', async () => {
+      const rows = [
+        { day: '2023-01-01', absolute: 25, delta: null },
+        { day: '2023-01-02', absolute: 30, delta: 5 },
       ];
-      jest.spyOn(service, 'getChartData').mockResolvedValue(chartData);
+      jest.spyOn(service, 'getDailyStatsForCsv').mockResolvedValue(rows);
 
       await service.exportCsv(mockAccount, 'last7days', mockRes);
 
-      expect(service.getChartData).toHaveBeenCalledWith(mockAccount, 'last7days', undefined, undefined);
+      expect(service.getDailyStatsForCsv).toHaveBeenCalledWith(mockAccount, 'last7days', undefined, undefined);
       expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         'Content-Disposition',
@@ -251,13 +251,21 @@ describe('FavoritesService', () => {
       );
       expect(stringify).toHaveBeenCalledWith({ header: true, delimiter: ';' });
       expect(mockStringifier.pipe).toHaveBeenCalledWith(mockRes);
-      expect(mockStringifier.write).toHaveBeenCalledWith({ Date: '2023-01-01', Favorites: 10 });
-      expect(mockStringifier.write).toHaveBeenCalledWith({ Date: '2023-01-02', Favorites: 15 });
+      expect(mockStringifier.write).toHaveBeenCalledWith({
+        Date: '2023-01-01',
+        'New Favorites': '',
+        'Total Favorites': 25,
+      });
+      expect(mockStringifier.write).toHaveBeenCalledWith({
+        Date: '2023-01-02',
+        'New Favorites': 5,
+        'Total Favorites': 30,
+      });
       expect(mockStringifier.end).toHaveBeenCalled();
     });
 
     it('should handle error during CSV stringification and respond if headers not sent', async () => {
-      jest.spyOn(service, 'getChartData').mockResolvedValue([]);
+      jest.spyOn(service, 'getDailyStatsForCsv').mockResolvedValue([]);
       const testError = new Error('CSV error');
       mockStringifier.on.mockImplementation((event, callback) => {
         if (event === 'error') {
@@ -273,7 +281,7 @@ describe('FavoritesService', () => {
     });
 
     it('should handle error during CSV stringification and not respond if headers already sent', async () => {
-      jest.spyOn(service, 'getChartData').mockResolvedValue([]);
+      jest.spyOn(service, 'getDailyStatsForCsv').mockResolvedValue([]);
       const testError = new Error('CSV error');
       mockStringifier.on.mockImplementation((event, callback) => {
         if (event === 'error') {

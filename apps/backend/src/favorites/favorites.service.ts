@@ -6,6 +6,7 @@ import { stringify } from 'csv-stringify';
 import { Response } from 'express';
 
 import { AccountsService } from '../accounts/accounts.service';
+import { DailyStatsCsvRow, getDailyStatsCsvRows } from '../shared/utils/daily-stats-csv.helper';
 import {
   formatDateISO,
   getDaysToMonthBeginning,
@@ -191,6 +192,23 @@ export class FavoritesService {
   }
 
   /**
+   * Returns one row per calendar day in the requested range with both the absolute
+   * cumulative favorite count and the day-over-day delta. Missing source rows are
+   * backfilled with carry-forward absolutes and a delta of 0.
+   */
+  async getDailyStatsForCsv(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<DailyStatsCsvRow[]> {
+    return getDailyStatsCsvRows(this.dailyTootStatsRepository, account, timeframe, (e) => e.favouritesCount, {
+      customDateFrom,
+      customDateTo,
+    });
+  }
+
+  /**
    * Exports favorites data as a CSV file for a specific account and timeframe.
    * @param account - The loaded account entity.
    * @param timeframe - The timeframe for the data to export.
@@ -204,7 +222,7 @@ export class FavoritesService {
     customDateFrom?: string,
     customDateTo?: string,
   ): Promise<void> {
-    const chartData = await this.getChartData(account, timeframe, customDateFrom, customDateTo);
+    const rows = await this.getDailyStatsForCsv(account, timeframe, customDateFrom, customDateTo);
 
     const filenameSuffix =
       timeframe === 'custom' && customDateFrom && customDateTo ? `custom_${customDateFrom}_${customDateTo}` : timeframe;
@@ -221,8 +239,12 @@ export class FavoritesService {
       }
     });
 
-    chartData.forEach((row) => {
-      stringifier.write({ Date: row.time, Favorites: row.value });
+    rows.forEach((row) => {
+      stringifier.write({
+        Date: row.day,
+        'New Favorites': row.delta ?? '',
+        'Total Favorites': row.absolute,
+      });
     });
     stringifier.end();
   }

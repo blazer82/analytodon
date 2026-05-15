@@ -355,6 +355,48 @@ export const getKPITrend = (kpi: KpiDto): number | null => {
   return (projectedCurrentPeriod - kpi.previousPeriod) / Math.abs(kpi.previousPeriod);
 };
 
+// Buffer above MAX_CUSTOM_RANGE_DAYS to absorb DST double-step edge cases. Crossing
+// this means upstream validation (resolveTimeframe) was bypassed — surface, don't truncate.
+const EACH_DAY_HARD_CAP = MAX_CUSTOM_RANGE_DAYS + 30;
+
+/**
+ * Iterates over each calendar day in the [dateFrom, dateTo) range (in the given timezone),
+ * yielding one UTC `Date` per local day. The boundary semantics match the rest of the
+ * codebase: `resolveTimeframe` returns a `dateTo` that is the exclusive upper bound
+ * (i.e. start of the day AFTER the last day to include), so we iterate while
+ * `current < dateTo`.
+ *
+ * Throws if the iteration exceeds EACH_DAY_HARD_CAP — that indicates upstream
+ * validation was skipped, and we'd rather fail loudly than emit a truncated CSV.
+ */
+export const eachDayInRange = (dateFrom: Date, dateTo: Date, timezone: string): Date[] => {
+  const days: Date[] = [];
+  if (dateFrom >= dateTo) return days;
+
+  // Walk one day at a time. We add 24h in UTC; for accounts whose timezone has DST
+  // shifts this can drift by an hour, but `formatDateISO(..., timezone)` is what we
+  // key off, so we de-dupe on the formatted day string to avoid emitting the same
+  // local day twice across a DST transition.
+  const seen = new Set<string>();
+  const current = new Date(dateFrom);
+  let i = 0;
+  while (current < dateTo) {
+    if (i >= EACH_DAY_HARD_CAP) {
+      throw new Error(
+        `eachDayInRange exceeded ${EACH_DAY_HARD_CAP} iterations; upstream timeframe validation likely bypassed`,
+      );
+    }
+    const key = formatDateISO(current, timezone);
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      days.push(new Date(current));
+    }
+    current.setUTCDate(current.getUTCDate() + 1);
+    i++;
+  }
+  return days;
+};
+
 export const formatDateISO = (date: Date | string | undefined, timezone?: string): string | null => {
   if (!date) return null;
   try {

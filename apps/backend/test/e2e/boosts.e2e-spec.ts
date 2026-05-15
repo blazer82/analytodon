@@ -354,10 +354,11 @@ describe('BoostsController (e2e)', () => {
       expect(response.headers['content-disposition']).toBe(
         `attachment; filename=boosts-${testAccount.id}-${timeframe}.csv`,
       );
-      expect(response.text).toContain('Date;Boosts');
-      // Based on seeded data, (15-10)=5, (20-15)=5
-      // The exact dates depend on test execution time.
-      expect(response.text).toContain(';5');
+      expect(response.text).toContain('Date;New Boosts;Total Boosts');
+      // Seeded absolute boost counts that fall inside last7days: 10 (two days ago) and 15
+      // (yesterday). Today's snapshot (20) is excluded because dateTo is exclusive.
+      expect(response.text).toMatch(/;10\b/);
+      expect(response.text).toMatch(/;15\b/);
     });
 
     it('should return 400 if timeframe is missing for CSV export', async () => {

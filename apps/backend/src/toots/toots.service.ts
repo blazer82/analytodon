@@ -1,12 +1,19 @@
-import { TootEntity } from '@analytodon/shared-orm';
-import { EntityRepository, FilterQuery } from '@mikro-orm/core';
+import { AccountEntity, TootEntity } from '@analytodon/shared-orm';
+import { EntityRepository, FilterQuery, Loaded } from '@mikro-orm/core';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, Logger } from '@nestjs/common';
+import { stringify } from 'csv-stringify';
+import { Response } from 'express';
 
+import { escapeCsvCell } from '../shared/utils/csv-cell';
+import { stripHtml } from '../shared/utils/strip-html';
+import { formatDateISO, resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
 
 export type RankedTootEntity = TootEntity & { rank: number };
+
+export const TOP_POSTS_CSV_MAX_ROWS = 5000;
 
 @Injectable()
 export class TootsService {
@@ -72,5 +79,72 @@ export class TootsService {
       this.logger.error(`Error fetching top toots for account ${accountId}: ${error.message}`, error.stack);
       throw error; // Or handle more gracefully
     }
+  }
+
+  /**
+   * Returns toots authored by the account inside the [dateFrom, dateTo) window,
+   * ordered newest first. Hard-capped at TOP_POSTS_CSV_MAX_ROWS to keep exports
+   * bounded — heavy accounts will see the most recent slice of the timeframe.
+   */
+  async getTootsForCsv(
+    accountId: string,
+    dateFrom: Date,
+    dateTo: Date,
+    limit: number = TOP_POSTS_CSV_MAX_ROWS,
+  ): Promise<TootEntity[]> {
+    return this.tootRepository.find(
+      { account: accountId, createdAt: { $gte: dateFrom, $lt: dateTo } },
+      { orderBy: { createdAt: 'DESC' }, limit },
+    );
+  }
+
+  /**
+   * Streams a CSV of toots in the requested timeframe to the provided Express
+   * response — one row per toot, newest first, capped at TOP_POSTS_CSV_MAX_ROWS.
+   * Content is stripped to plain text and CSV-injection-escaped. Shares the
+   * streaming/error/headers plumbing with the other CSV exporters; the per-toot
+   * row shape (and the row cap) are specific to this endpoint.
+   */
+  async exportCsv(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    res: Response,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<void> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
+    const toots = await this.getTootsForCsv(account.id, dateFrom, dateTo);
+
+    const filenameSuffix =
+      timeframe === 'custom' && customDateFrom && customDateTo ? `custom_${customDateFrom}_${customDateTo}` : timeframe;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=top-posts-${account.id}-${filenameSuffix}.csv`);
+
+    const stringifier = stringify({ header: true, delimiter: ';' });
+    stringifier.pipe(res);
+
+    stringifier.on('error', (err) => {
+      this.logger.error('Error during CSV stringification', err);
+      if (!res.headersSent) {
+        res.status(500).send('Error generating CSV');
+      }
+    });
+
+    toots.forEach((toot) => {
+      stringifier.write({
+        Date: formatDateISO(toot.createdAt, account.timezone) ?? '',
+        URL: escapeCsvCell(toot.url),
+        Visibility: toot.visibility,
+        Language: toot.language,
+        Replies: toot.repliesCount,
+        Boosts: toot.reblogsCount,
+        Favorites: toot.favouritesCount,
+        Content: escapeCsvCell(stripHtml(toot.content)),
+      });
+    });
+    stringifier.end();
   }
 }
