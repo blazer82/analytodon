@@ -1,4 +1,7 @@
-import { eachDayInRange, formatDateISO } from './timeframe.helper';
+import { AccountEntity, DailyAccountStatsEntity, DailyTootStatsEntity } from '@analytodon/shared-orm';
+import { EntityRepository, Loaded } from '@mikro-orm/core';
+
+import { eachDayInRange, formatDateISO, resolveTimeframe } from './timeframe.helper';
 
 export interface DailyStatsCsvRow {
   day: string;
@@ -62,4 +65,37 @@ export function buildDailyStatsCsvRows(
     if (seenAny) previous = absolute;
   }
   return rows;
+}
+
+/**
+ * Repository-aware wrapper that resolves the timeframe, queries the seed-day-extended
+ * window, projects each entity to a numeric value via `valueAccessor`, and returns
+ * the continuous CSV row series. Used by the boosts/favorites/replies/followers
+ * services to avoid four near-identical copies of the same fetch-then-build sequence.
+ */
+export async function getDailyStatsCsvRows<T extends DailyTootStatsEntity | DailyAccountStatsEntity>(
+  repo: EntityRepository<T>,
+  account: Loaded<AccountEntity>,
+  timeframe: string,
+  valueAccessor: (entry: T) => number,
+  opts?: { customDateFrom?: string; customDateTo?: string },
+): Promise<DailyStatsCsvRow[]> {
+  const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+    dateFrom: opts?.customDateFrom,
+    dateTo: opts?.customDateTo,
+  });
+  const oneDayEarlier = new Date(dateFrom);
+  oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
+
+  const entries = (await (repo as unknown as EntityRepository<DailyTootStatsEntity>).find(
+    { account: account.id, day: { $gte: oneDayEarlier, $lte: dateTo } },
+    { orderBy: { day: 'ASC' } },
+  )) as unknown as T[];
+
+  return buildDailyStatsCsvRows(
+    entries.map((e) => ({ day: e.day, value: valueAccessor(e) })),
+    dateFrom,
+    dateTo,
+    account.timezone,
+  );
 }

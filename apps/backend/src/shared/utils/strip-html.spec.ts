@@ -33,4 +33,9 @@ describe('stripHtml', () => {
   it('decodes numeric and hex entities', () => {
     expect(stripHtml('snowman &#9731; alpha &#x3B1;')).toBe('snowman ☃ alpha α');
   });
+
+  it('leaves out-of-range numeric entities intact instead of throwing', () => {
+    expect(stripHtml('bogus &#9999999999; here')).toBe('bogus &#9999999999; here');
+    expect(stripHtml('bogus &#x110000; here')).toBe('bogus &#x110000; here');
+  });
 });

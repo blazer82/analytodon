@@ -1,4 +1,7 @@
-import { buildDailyStatsCsvRows } from './daily-stats-csv.helper';
+import { AccountEntity, DailyTootStatsEntity } from '@analytodon/shared-orm';
+import { EntityRepository, Loaded } from '@mikro-orm/core';
+
+import { buildDailyStatsCsvRows, getDailyStatsCsvRows } from './daily-stats-csv.helper';
 
 describe('buildDailyStatsCsvRows', () => {
   const timezone = 'UTC';
@@ -42,5 +45,39 @@ describe('buildDailyStatsCsvRows', () => {
     const sameDay = new Date('2024-05-10T00:00:00.000Z');
     const rows = buildDailyStatsCsvRows([], sameDay, sameDay, timezone);
     expect(rows).toEqual([]);
+  });
+
+  it('throws (via eachDayInRange) when the range exceeds the hard cap', () => {
+    // ~500 days far exceeds MAX_CUSTOM_RANGE_DAYS (366) + buffer (30).
+    const dateFrom = new Date('2023-01-01T00:00:00.000Z');
+    const dateTo = new Date('2024-05-15T00:00:00.000Z');
+    expect(() => buildDailyStatsCsvRows([], dateFrom, dateTo, timezone)).toThrow(/eachDayInRange exceeded/);
+  });
+});
+
+describe('getDailyStatsCsvRows', () => {
+  it('queries the seed-day-extended window and projects values via the accessor', async () => {
+    const account = { id: 'acc-1', timezone: 'UTC' } as unknown as Loaded<AccountEntity>;
+    const findMock = jest.fn().mockResolvedValue([
+      { day: new Date('2024-05-09T00:00:00.000Z'), boostsCount: 100 },
+      { day: new Date('2024-05-10T00:00:00.000Z'), boostsCount: 103 },
+    ] as DailyTootStatsEntity[]);
+    const repo = { find: findMock } as unknown as EntityRepository<DailyTootStatsEntity>;
+
+    const rows = await getDailyStatsCsvRows(repo, account, 'custom', (e) => e.boostsCount, {
+      customDateFrom: '2024-05-10',
+      customDateTo: '2024-05-10',
+    });
+
+    // Repo.find was called with day window that starts one day before dateFrom.
+    expect(findMock).toHaveBeenCalledTimes(1);
+    const [whereArg, optsArg] = findMock.mock.calls[0];
+    expect(whereArg.account).toBe('acc-1');
+    expect(whereArg.day.$gte).toBeInstanceOf(Date);
+    expect(whereArg.day.$lte).toBeInstanceOf(Date);
+    expect(optsArg).toEqual({ orderBy: { day: 'ASC' } });
+
+    // Row is computed via buildDailyStatsCsvRows with seeded prior 100 → +3 delta.
+    expect(rows).toEqual([{ day: '2024-05-10', absolute: 103, delta: 3 }]);
   });
 });

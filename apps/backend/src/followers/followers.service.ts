@@ -8,7 +8,7 @@ import { Response } from 'express';
 import { AccountsService } from '../accounts/accounts.service';
 import { ChartDataPointDto } from '../shared/dto/chart-data-point.dto';
 import { TotalSnapshotDto } from '../shared/dto/total-snapshot.dto';
-import { buildDailyStatsCsvRows, DailyStatsCsvRow } from '../shared/utils/daily-stats-csv.helper';
+import { DailyStatsCsvRow, getDailyStatsCsvRows } from '../shared/utils/daily-stats-csv.helper';
 import {
   formatDateISO,
   getDaysToMonthBeginning,
@@ -178,22 +178,10 @@ export class FollowersService {
     customDateFrom?: string,
     customDateTo?: string,
   ): Promise<DailyStatsCsvRow[]> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
-      dateFrom: customDateFrom,
-      dateTo: customDateTo,
+    return getDailyStatsCsvRows(this.dailyAccountStatsRepository, account, timeframe, (e) => e.followersCount, {
+      customDateFrom,
+      customDateTo,
     });
-    const oneDayEarlier = new Date(dateFrom);
-    oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
-    const entries = await this.dailyAccountStatsRepository.find(
-      { account: account.id, day: { $gte: oneDayEarlier, $lte: dateTo } },
-      { orderBy: { day: 'ASC' } },
-    );
-    return buildDailyStatsCsvRows(
-      entries.map((e) => ({ day: e.day, value: e.followersCount })),
-      dateFrom,
-      dateTo,
-      account.timezone,
-    );
   }
 
   async exportCsv(

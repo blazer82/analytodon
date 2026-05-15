@@ -8,17 +8,23 @@ const HTML_ENTITIES: Record<string, string> = {
   '&nbsp;': ' ',
 };
 
+// String.fromCodePoint throws RangeError for codepoints > 0x10FFFF.
+// Return the original entity text on failure so one malformed entity can't
+// break the whole CSV stream.
+const safeFromCodePoint = (num: number, original: string): string => {
+  if (!Number.isFinite(num)) return original;
+  try {
+    return String.fromCodePoint(num);
+  } catch {
+    return original;
+  }
+};
+
 const decodeEntities = (input: string): string =>
   input
     .replace(/&(amp|lt|gt|quot|apos|nbsp|#39);/g, (match) => HTML_ENTITIES[match] ?? match)
-    .replace(/&#(\d+);/g, (_, code: string) => {
-      const num = Number(code);
-      return Number.isFinite(num) ? String.fromCodePoint(num) : _;
-    })
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => {
-      const num = parseInt(hex, 16);
-      return Number.isFinite(num) ? String.fromCodePoint(num) : _;
-    });
+    .replace(/&#(\d+);/g, (match, code: string) => safeFromCodePoint(Number(code), match))
+    .replace(/&#x([0-9a-fA-F]+);/g, (match, hex: string) => safeFromCodePoint(parseInt(hex, 16), match));
 
 export const stripHtml = (input: string | undefined | null): string => {
   if (!input) return '';

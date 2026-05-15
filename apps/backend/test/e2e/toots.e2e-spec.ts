@@ -271,6 +271,33 @@ describe('TootsController (e2e)', () => {
         .get(`/accounts/${testAccount.id}/toots/csv?timeframe=last7days`)
         .expect(HttpStatus.UNAUTHORIZED);
     });
+
+    it('should escape CSV-injection-prone content with a single quote', async () => {
+      const emFork = orm.em.fork();
+      const maliciousToot = emFork.create(TootEntity, {
+        account: testAccount,
+        uri: 'tag:mastodon.test,2023-01-99:injection',
+        url: 'https://mastodon.test/users/testuser_toots/statuses/injection',
+        content: '<p>=cmd|"/c calc"!A1</p>',
+        reblogsCount: 0,
+        favouritesCount: 0,
+        repliesCount: 0,
+        createdAt: new Date(new Date().setDate(new Date().getDate() - 1)),
+        language: 'en',
+        visibility: 'public',
+        fetchedAt: new Date(),
+      });
+      await emFork.persistAndFlush(maliciousToot);
+
+      const response = await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/csv?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      // The Content cell should be prefixed with a single quote so spreadsheets
+      // render it as text instead of evaluating it as a formula.
+      expect(response.text).toContain(`'=cmd|""/c calc""!A1`);
+    });
   });
 
   describe('Account Setup Incomplete', () => {

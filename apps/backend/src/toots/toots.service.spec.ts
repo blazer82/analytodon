@@ -369,6 +369,32 @@ describe('TootsService', () => {
       expect(mockStringifier.end).toHaveBeenCalled();
     });
 
+    it('should prefix CSV-injection-prone Content and URL cells with a single quote', async () => {
+      const toots: TootEntity[] = [
+        {
+          ...mockTootEntities[0],
+          content: '<p>=cmd|"/c calc"!A1</p>',
+          createdAt: new Date('2023-01-15T10:00:00.000Z'),
+          url: '=HYPERLINK("http://bad.example","click")',
+          visibility: 'public',
+          language: 'en',
+          repliesCount: 0,
+          reblogsCount: 0,
+          favouritesCount: 0,
+        },
+      ];
+      mockTootRepository.find.mockResolvedValue(toots);
+
+      await service.exportCsv(mockAccount, 'last30days', mockRes);
+
+      expect(mockStringifier.write).toHaveBeenCalledWith(
+        expect.objectContaining({
+          URL: `'=HYPERLINK("http://bad.example","click")`,
+          Content: `'=cmd|"/c calc"!A1`,
+        }),
+      );
+    });
+
     it('should handle errors and respond 500 when headers not yet sent', async () => {
       mockTootRepository.find.mockResolvedValue([]);
       const testError = new Error('CSV error');

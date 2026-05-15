@@ -6,6 +6,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { stringify } from 'csv-stringify';
 import { Response } from 'express';
 
+import { escapeCsvCell } from '../shared/utils/csv-cell';
 import { stripHtml } from '../shared/utils/strip-html';
 import { formatDateISO, resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
@@ -133,13 +134,13 @@ export class TootsService {
     toots.forEach((toot) => {
       stringifier.write({
         Date: formatDateISO(toot.createdAt, account.timezone) ?? '',
-        URL: toot.url,
+        URL: escapeCsvCell(toot.url),
         Visibility: toot.visibility,
         Language: toot.language,
         Replies: toot.repliesCount,
         Boosts: toot.reblogsCount,
         Favorites: toot.favouritesCount,
-        Content: stripHtml(toot.content),
+        Content: escapeCsvCell(stripHtml(toot.content)),
       });
     });
     stringifier.end();

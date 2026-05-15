@@ -115,7 +115,7 @@ export default function TopPostsPage() {
   const topByBoostsData = fetcher.data?.topByBoosts ?? topByBoosts;
   const topByFavoritesData = fetcher.data?.topByFavorites ?? topByFavorites;
   const isLoadingData = fetcher.state === 'loading';
-  const [currentDateRange, setCurrentDateRange] = React.useState<DateRange | null>(
+  const [currentDateRange, setCurrentDateRange] = React.useState<DateRange | null>(() =>
     initialDateFrom && initialDateTo ? { from: initialDateFrom, to: initialDateTo } : null,
   );
 

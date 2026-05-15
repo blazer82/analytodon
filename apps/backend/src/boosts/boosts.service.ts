@@ -6,7 +6,7 @@ import { stringify } from 'csv-stringify';
 import { Response } from 'express';
 
 import { AccountsService } from '../accounts/accounts.service';
-import { buildDailyStatsCsvRows, DailyStatsCsvRow } from '../shared/utils/daily-stats-csv.helper';
+import { DailyStatsCsvRow, getDailyStatsCsvRows } from '../shared/utils/daily-stats-csv.helper';
 import {
   formatDateISO,
   getDaysToMonthBeginning,
@@ -188,13 +188,6 @@ export class BoostsService {
   }
 
   /**
-   * Exports boosts data as a CSV file for a specific account and timeframe.
-   * @param account - The loaded account entity.
-   * @param timeframe - The timeframe for the data to export.
-   * @param res - The Express response object to stream the CSV to.
-   * @returns A promise that resolves when the CSV has been streamed.
-   */
-  /**
    * Returns one row per calendar day in the requested range with both the absolute
    * cumulative boost count and the day-over-day delta. Missing source rows are
    * backfilled with carry-forward absolutes and a delta of 0.
@@ -205,24 +198,19 @@ export class BoostsService {
     customDateFrom?: string,
     customDateTo?: string,
   ): Promise<DailyStatsCsvRow[]> {
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
-      dateFrom: customDateFrom,
-      dateTo: customDateTo,
+    return getDailyStatsCsvRows(this.dailyTootStatsRepository, account, timeframe, (e) => e.boostsCount, {
+      customDateFrom,
+      customDateTo,
     });
-    const oneDayEarlier = new Date(dateFrom);
-    oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
-    const entries = await this.dailyTootStatsRepository.find(
-      { account: account.id, day: { $gte: oneDayEarlier, $lte: dateTo } },
-      { orderBy: { day: 'ASC' } },
-    );
-    return buildDailyStatsCsvRows(
-      entries.map((e) => ({ day: e.day, value: e.boostsCount })),
-      dateFrom,
-      dateTo,
-      account.timezone,
-    );
   }
 
+  /**
+   * Exports boosts data as a CSV file for a specific account and timeframe.
+   * @param account - The loaded account entity.
+   * @param timeframe - The timeframe for the data to export.
+   * @param res - The Express response object to stream the CSV to.
+   * @returns A promise that resolves when the CSV has been streamed.
+   */
   async exportCsv(
     account: Loaded<AccountEntity>,
     timeframe: string,
