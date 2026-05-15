@@ -354,10 +354,11 @@ describe('FavoritesController (e2e)', () => {
       expect(response.headers['content-disposition']).toBe(
         `attachment; filename=favorites-${testAccount.id}-${timeframe}.csv`,
       );
-      expect(response.text).toContain('Date;Favorites');
-      // Based on seeded data, (40-30)=10, (50-40)=10
-      // The exact dates depend on test execution time.
-      expect(response.text).toContain(';10');
+      expect(response.text).toContain('Date;New Favorites;Total Favorites');
+      // Seeded absolute favorite counts that fall inside last7days: 30 (two days ago) and 40
+      // (yesterday). Today's snapshot (50) is excluded because dateTo is exclusive.
+      expect(response.text).toMatch(/;30\b/);
+      expect(response.text).toMatch(/;40\b/);
     });
 
     it('should return 400 if timeframe is missing for CSV export', async () => {

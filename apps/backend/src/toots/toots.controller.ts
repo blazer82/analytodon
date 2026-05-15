@@ -1,6 +1,7 @@
 import { AccountEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
-import { Controller, Get, HttpStatus, Logger, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Logger, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 
 // To get account timezone // No longer needed directly if GetAccount provides it
 import { CheckAccount } from '../auth/decorators/check-account.decorator';
@@ -80,5 +81,24 @@ export class TootsController {
       topByBoosts: { data: mapToRankedTootDto(topByBoostsEntities), timeframe: resolvedTimeframe },
       topByFavorites: { data: mapToRankedTootDto(topByFavoritesEntities), timeframe: resolvedTimeframe },
     };
+  }
+
+  @Get('csv')
+  @Roles(UserRole.AccountOwner)
+  @CheckAccount({ requireSetupComplete: true })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Export all toots in the timeframe as CSV (capped at 5000 rows, newest first)' })
+  @ApiParam({ name: 'accountId', description: 'The ID of the account' })
+  @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'CSV file of top posts.' })
+  async exportCsv(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @Query() query: TimeframeQueryDto,
+    @GetUser() user: UserEntity,
+    @Res() res: Response,
+  ): Promise<void> {
+    this.logger.log(`Exporting top posts CSV for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
+    await this.tootsService.exportCsv(account, query.timeframe, res, query.dateFrom, query.dateTo);
   }
 }

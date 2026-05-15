@@ -294,9 +294,10 @@ describe('FollowersController (e2e)', () => {
       expect(response.headers['content-disposition']).toBe(
         `attachment; filename=followers-${testAccount.id}-${timeframe}.csv`,
       );
-      expect(response.text).toContain('Date;Followers');
-      // The exact dates depend on test execution time.
-      expect(response.text).toContain(';180');
+      expect(response.text).toContain('Date;Followers;New Followers');
+      // Seeded absolute follower count of 180 (today's snapshot) should appear in the
+      // Followers column.
+      expect(response.text).toMatch(/;180\b/);
     });
 
     it('should return 400 if timeframe is missing for CSV export', async () => {

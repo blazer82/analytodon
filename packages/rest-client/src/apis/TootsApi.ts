@@ -22,6 +22,13 @@ import {
     AllTopTootsResponseDtoToJSON,
 } from '../models/index';
 
+export interface TootsControllerExportCsvRequest {
+    accountId: string;
+    timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
+}
+
 export interface TootsControllerGetTopTootsSummaryRequest {
     accountId: string;
     timeframe: string;
@@ -33,6 +40,65 @@ export interface TootsControllerGetTopTootsSummaryRequest {
  * 
  */
 export class TootsApi extends runtime.BaseAPI {
+
+    /**
+     * Export all toots in the timeframe as CSV (capped at 5000 rows, newest first)
+     */
+    async tootsControllerExportCsvRaw(requestParameters: TootsControllerExportCsvRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['accountId'] == null) {
+            throw new runtime.RequiredError(
+                'accountId',
+                'Required parameter "accountId" was null or undefined when calling tootsControllerExportCsv().'
+            );
+        }
+
+        if (requestParameters['timeframe'] == null) {
+            throw new runtime.RequiredError(
+                'timeframe',
+                'Required parameter "timeframe" was null or undefined when calling tootsControllerExportCsv().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['timeframe'] != null) {
+            queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/accounts/{accountId}/toots/csv`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Export all toots in the timeframe as CSV (capped at 5000 rows, newest first)
+     */
+    async tootsControllerExportCsv(requestParameters: TootsControllerExportCsvRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.tootsControllerExportCsvRaw(requestParameters, initOverrides);
+    }
 
     /**
      * Get a summary of top toots by various rankings for an account

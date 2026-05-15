@@ -8,6 +8,7 @@ import { Response } from 'express';
 import { AccountsService } from '../accounts/accounts.service';
 import { ChartDataPointDto } from '../shared/dto/chart-data-point.dto';
 import { TotalSnapshotDto } from '../shared/dto/total-snapshot.dto';
+import { buildDailyStatsCsvRows, DailyStatsCsvRow } from '../shared/utils/daily-stats-csv.helper';
 import {
   formatDateISO,
   getDaysToMonthBeginning,
@@ -212,6 +213,30 @@ export class RepliesService {
    * @param res - The Express response object to stream the CSV to.
    * @returns A promise that resolves when the CSV has been streamed.
    */
+  async getDailyStatsForCsv(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<DailyStatsCsvRow[]> {
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
+    const oneDayEarlier = new Date(dateFrom);
+    oneDayEarlier.setUTCDate(oneDayEarlier.getUTCDate() - 1);
+    const entries = await this.dailyTootStatsRepository.find(
+      { account: account.id, day: { $gte: oneDayEarlier, $lte: dateTo } },
+      { orderBy: { day: 'ASC' } },
+    );
+    return buildDailyStatsCsvRows(
+      entries.map((e) => ({ day: e.day, value: e.repliesCount })),
+      dateFrom,
+      dateTo,
+      account.timezone,
+    );
+  }
+
   async exportCsv(
     account: Loaded<AccountEntity>,
     timeframe: string,
@@ -219,7 +244,7 @@ export class RepliesService {
     customDateFrom?: string,
     customDateTo?: string,
   ): Promise<void> {
-    const chartData = await this.getChartData(account, timeframe, customDateFrom, customDateTo);
+    const rows = await this.getDailyStatsForCsv(account, timeframe, customDateFrom, customDateTo);
 
     const filenameSuffix =
       timeframe === 'custom' && customDateFrom && customDateTo ? `custom_${customDateFrom}_${customDateTo}` : timeframe;
@@ -236,8 +261,12 @@ export class RepliesService {
       }
     });
 
-    chartData.forEach((row) => {
-      stringifier.write({ Date: row.time, Replies: row.value });
+    rows.forEach((row) => {
+      stringifier.write({
+        Date: row.day,
+        'New Replies': row.delta ?? '',
+        'Total Replies': row.absolute,
+      });
     });
     stringifier.end();
   }
