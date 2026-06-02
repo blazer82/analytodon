@@ -23,12 +23,12 @@
     "@mui/icons-material": "^7.3.11",
     "@mui/material": "^7.3.11",
     "@mui/x-date-pickers": "^9.3.0",
-    "@remix-run/express": "^2.17.4",
-    "@remix-run/node": "^2.17.4",
-    "@remix-run/react": "^2.17.4",
-    "@remix-run/serve": "^2.17.4",
+    "@remix-run/express": "^2.17.5",
+    "@remix-run/node": "^2.17.5",
+    "@remix-run/react": "^2.17.5",
+    "@remix-run/serve": "^2.17.5",
     "compression": "^1.8.1",
-    "dayjs": "^1.11.20",
+    "dayjs": "^1.11.21",
     "express": "^5.2.1",
     "i18next": "^25.10.10",
     "i18next-browser-languagedetector": "^8.2.1",
@@ -47,7 +47,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
-    "@remix-run/dev": "^2.17.4",
+    "@remix-run/dev": "^2.17.5",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.5.0",
@@ -59,10 +59,10 @@
     "postcss": "^8.5.15",
     "prettier": "^3.8.3",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.60.0",
-    "vite": "^6.4.2",
+    "typescript-eslint": "^8.60.1",
+    "vite": "^6.4.3",
     "vite-tsconfig-paths": "^4.3.2",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.8"
   },
   "engines": {
     "node": ">=20.0.0"
