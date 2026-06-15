@@ -26,9 +26,9 @@
     "@eslint/js": "^9.39.4",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "eslint": "^9.39.4",
-    "prettier": "^3.8.3",
+    "prettier": "^3.8.4",
     "shx": "^0.4.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.60.0"
+    "typescript-eslint": "^8.61.0"
   }
 }
