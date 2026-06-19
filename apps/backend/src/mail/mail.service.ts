@@ -76,9 +76,10 @@ export class MailService {
     private readonly hashtagsService: HashtagsService,
   ) {
     this.frontendURL = this.configService.getOrThrow<string>('FRONTEND_URL');
-    this.supportEmail = this.configService.getOrThrow<string>('EMAIL_FROM_ADDRESS');
+    // EMAIL_* settings are optional so the app can run without a mail server configured.
+    this.supportEmail = this.configService.get<string>('EMAIL_FROM_ADDRESS', 'noreply@analytodon.local');
     this.marketingURL = this.configService.getOrThrow<string>('MARKETING_URL');
-    this.emailSenderName = this.configService.getOrThrow<string>('EMAIL_FROM_NAME');
+    this.emailSenderName = this.configService.get<string>('EMAIL_FROM_NAME', 'Analytodon');
   }
 
   /**

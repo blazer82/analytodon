@@ -162,7 +162,7 @@ Analytodon runs as three Docker containers -- a **backend** API (NestJS), a **fr
 
 - Docker and Docker Compose
 - A reverse proxy (Caddy, nginx, or Traefik) for TLS termination
-- An SMTP server or transactional email service (for verification and notification emails)
+- _(Optional)_ An SMTP server or transactional email service for verification and notification emails. Without one, leave `EMAIL_HOST` unset and set `DISABLE_EMAIL_VERIFICATION=true` -- emails are then logged instead of sent and new sign-ups are auto-verified (see [Configuration](#️-configuration))
 - A domain name with DNS pointing to your server
 
 ### 🔑 Generate Secrets
@@ -215,6 +215,8 @@ services:
       FRONTEND_URL: https://<your-domain>
       MASTODON_APP_NAME: Analytodon
       MARKETING_URL: https://<your-domain>
+      # Email is optional. To run without a mail server, omit the EMAIL_* block
+      # below and set DISABLE_EMAIL_VERIFICATION: "true" instead.
       EMAIL_HOST: <smtp-host>
       EMAIL_PORT: "587"
       EMAIL_USER: <smtp-user>
@@ -262,6 +264,8 @@ A few notes:
 - Backend and frontend bind to `127.0.0.1` so they are only reachable through the reverse proxy
 - The **CLI container** runs a cron daemon in the foreground -- it handles all scheduled data fetching, aggregation, emails, and cleanup automatically
 - Set `EMAIL_SECURE` to `"true"` for port 465 (implicit TLS) or `"false"` for port 587 (STARTTLS)
+- `EMAIL_USER`/`EMAIL_PASS` are only used when both are set -- omit them for relays that accept unauthenticated senders
+- Running **without email**: omit the `EMAIL_*` variables and set `DISABLE_EMAIL_VERIFICATION: "true"`. Emails are then logged instead of sent, and new accounts are verified automatically so they aren't stuck on the verification screen
 
 Build and start:
 
@@ -296,13 +300,14 @@ Initial data population can take several hours depending on the account's histor
 
 Optional settings you may want to adjust:
 
-| Variable                       | Where              | Description                                                           |
-| ------------------------------ | ------------------ | --------------------------------------------------------------------- |
-| `DISABLE_NEW_REGISTRATIONS`    | backend + frontend | Set to `true` to close signups after creating your account            |
-| `MASTODON_APP_NAME`            | backend            | Name shown to users during Mastodon OAuth (default: `Analytodon`)     |
-| `LOG_LEVEL`                    | cli                | Logging verbosity: `debug`, `info`, `warn`, `error` (default: `info`) |
-| `JWT_EXPIRES_IN`               | backend            | Access token lifetime (default: `1h`)                                 |
-| `JWT_REFRESH_TOKEN_EXPIRES_IN` | backend            | Refresh token lifetime (default: `7d`)                                |
+| Variable                       | Where              | Description                                                               |
+| ------------------------------ | ------------------ | ------------------------------------------------------------------------- |
+| `DISABLE_NEW_REGISTRATIONS`    | backend + frontend | Set to `true` to close signups after creating your account                |
+| `DISABLE_EMAIL_VERIFICATION`   | backend            | Set to `true` to auto-verify new sign-ups (use when running without SMTP) |
+| `MASTODON_APP_NAME`            | backend            | Name shown to users during Mastodon OAuth (default: `Analytodon`)         |
+| `LOG_LEVEL`                    | cli                | Logging verbosity: `debug`, `info`, `warn`, `error` (default: `info`)     |
+| `JWT_EXPIRES_IN`               | backend            | Access token lifetime (default: `1h`)                                     |
+| `JWT_REFRESH_TOKEN_EXPIRES_IN` | backend            | Refresh token lifetime (default: `7d`)                                    |
 
 ### 🔄 Updating
 

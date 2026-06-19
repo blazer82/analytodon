@@ -73,7 +73,12 @@ describe('MailService', () => {
               }
               throw new Error(`Config key ${key} not found`);
             }),
-            get: jest.fn(), // For non-essential configs if any
+            get: jest.fn((key: string, defaultValue?: unknown) => {
+              if (key in mockConfigValues) {
+                return mockConfigValues[key as keyof typeof mockConfigValues];
+              }
+              return defaultValue;
+            }),
           },
         },
         {

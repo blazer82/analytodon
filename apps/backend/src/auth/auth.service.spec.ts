@@ -376,6 +376,33 @@ describe('AuthService', () => {
       expect(result.expiresIn).toBe(3600); // 1h = 3600s
     });
 
+    it('should mark user verified and skip verification email when DISABLE_EMAIL_VERIFICATION is true', async () => {
+      mockConfigService.get.mockImplementation((key: string, defaultValue?: unknown) => {
+        if (key === 'DISABLE_EMAIL_VERIFICATION') {
+          return 'true';
+        }
+        if (key === 'JWT_REFRESH_TOKEN_EXPIRES_IN_KEY') {
+          return '7d';
+        }
+        if (key === 'JWT_EXPIRES_IN_KEY') {
+          return '1h';
+        }
+        return defaultValue;
+      });
+
+      await service.registerUser(registerUserDto);
+
+      expect(mockUserRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          emailVerified: true,
+          emailVerificationCode: undefined,
+        }),
+      );
+      expect(mockMailService.sendEmailVerificationMail).not.toHaveBeenCalled();
+      // Signup notification is still attempted.
+      expect(mockMailService.sendSignupNotificationMail).toHaveBeenCalledWith(mockCreatedUser);
+    });
+
     it('should throw ConflictException if user already exists', async () => {
       mockUserRepository.findOne.mockResolvedValue({} as UserEntity); // User exists
       await expect(service.registerUser(registerUserDto)).rejects.toThrow(ConflictException);

@@ -368,6 +368,10 @@ export class AuthService {
     // Validate locale to ensure only supported locales are stored
     const finalLocale = this.validateLocale(locale || detectedLocale);
 
+    // Self-hosted/local setups without a mail server can disable email verification,
+    // marking new users as verified immediately and skipping the verification email.
+    const isEmailVerificationDisabled = this.configService.get<string>('DISABLE_EMAIL_VERIFICATION') === 'true';
+
     const user = this.userRepository.create({
       email,
       serverURLOnSignUp,
@@ -375,8 +379,8 @@ export class AuthService {
       locale: finalLocale,
       role: UserRole.AccountOwner,
       isActive: true,
-      emailVerified: false,
-      emailVerificationCode: uuidv4(),
+      emailVerified: isEmailVerificationDisabled,
+      emailVerificationCode: isEmailVerificationDisabled ? undefined : uuidv4(),
       maxAccounts: 10,
     });
 
@@ -394,11 +398,13 @@ export class AuthService {
       await this.userCredentialsRepository.getEntityManager().persistAndFlush(userCredentials);
 
       try {
-        if (user.emailVerificationCode) {
+        if (!isEmailVerificationDisabled && user.emailVerificationCode) {
           await this.mailService.sendEmailVerificationMail(user, user.emailVerificationCode);
+          this.logger.log(`User registered: ${user.email}. Verification email sent.`);
+        } else {
+          this.logger.log(`User registered: ${user.email}. Email verification disabled.`);
         }
         await this.mailService.sendSignupNotificationMail(user);
-        this.logger.log(`User registered: ${user.email}. Verification email sent.`);
       } catch (mailError) {
         this.logger.error(`Failed to send registration related emails for ${user.email}`, mailError.stack);
         // Decide if registration should fail if email sending fails.
