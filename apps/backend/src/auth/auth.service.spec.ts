@@ -71,20 +71,14 @@ const mockEntityManager = {
   flush: jest.fn(),
 };
 
+// Base ConfigService.get implementation: every key falls back to the default the
+// service itself supplies (e.g. login() passes '7d'/'1h' for the JWT expiries).
+// Individual tests can override this for the specific key they care about; the
+// override is reset in beforeEach so it never leaks into later tests.
+const baseConfigGet = (_key: string, defaultValue?: unknown) => defaultValue;
+
 const mockConfigService = {
-  get: jest.fn((key: string, defaultValue?: unknown) => {
-    if (key === 'JWT_REFRESH_TOKEN_EXPIRES_IN_KEY') {
-      // Corrected key name
-      return '7d';
-    }
-    if (key === 'JWT_EXPIRES_IN_KEY') {
-      return '1h'; // Mock value for access token expiry
-    }
-    // For JWT_DEFAULT_EXPIRES_IN_SECONDS, the service uses authConstants directly if ms fails.
-    // We can assume authConstants.JWT_DEFAULT_EXPIRES_IN_SECONDS is available.
-    // If the service logic were to fetch JWT_DEFAULT_EXPIRES_IN_SECONDS via config, we'd add it here.
-    return defaultValue;
-  }),
+  get: jest.fn(baseConfigGet),
 };
 
 describe('AuthService', () => {
@@ -93,6 +87,9 @@ describe('AuthService', () => {
   beforeEach(async () => {
     // Reset all mocks before each test
     jest.clearAllMocks();
+    // clearAllMocks() clears call data but not implementations, so reapply the
+    // base ConfigService.get to discard any per-test mockImplementation override.
+    mockConfigService.get.mockImplementation(baseConfigGet);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
     (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
@@ -377,18 +374,9 @@ describe('AuthService', () => {
     });
 
     it('should mark user verified and skip verification email when DISABLE_EMAIL_VERIFICATION is true', async () => {
-      mockConfigService.get.mockImplementation((key: string, defaultValue?: unknown) => {
-        if (key === 'DISABLE_EMAIL_VERIFICATION') {
-          return 'true';
-        }
-        if (key === 'JWT_REFRESH_TOKEN_EXPIRES_IN_KEY') {
-          return '7d';
-        }
-        if (key === 'JWT_EXPIRES_IN_KEY') {
-          return '1h';
-        }
-        return defaultValue;
-      });
+      mockConfigService.get.mockImplementation((key: string, defaultValue?: unknown) =>
+        key === 'DISABLE_EMAIL_VERIFICATION' ? 'true' : defaultValue,
+      );
 
       await service.registerUser(registerUserDto);
 
