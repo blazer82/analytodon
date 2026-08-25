@@ -158,6 +158,16 @@ pnpm --filter @analytodon/cli run analytodon-cli help
 
 Analytodon runs as three Docker containers -- a **backend** API (NestJS), a **frontend** web app (Remix), and a **CLI** cron worker -- plus a **MongoDB** database. The recommended way to self-host is with Docker Compose.
 
+Prebuilt images are published publicly to the GitHub Container Registry -- no need to build them yourself, and no authentication required to pull:
+
+```
+ghcr.io/blazer82/analytodon-backend:latest
+ghcr.io/blazer82/analytodon-frontend:latest
+ghcr.io/blazer82/analytodon-cli:latest
+```
+
+Every image is also tagged with the commit SHA it was built from, so you can pin to an exact version instead of tracking `latest`. Images are currently built for `linux/amd64` only -- on other architectures, see [Building From Source](#-building-from-source).
+
 ### 📋 Prerequisites
 
 - Docker and Docker Compose
@@ -198,9 +208,7 @@ services:
       - mongodb_data:/data/db
 
   backend:
-    build:
-      context: .
-      dockerfile: deploy/docker/backend.Dockerfile
+    image: ghcr.io/blazer82/analytodon-backend:latest
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:3000"
@@ -226,9 +234,7 @@ services:
       EMAIL_FROM_ADDRESS: <noreply@your-domain>
 
   frontend:
-    build:
-      context: .
-      dockerfile: deploy/docker/frontend.Dockerfile
+    image: ghcr.io/blazer82/analytodon-frontend:latest
     restart: unless-stopped
     ports:
       - "127.0.0.1:3002:3000"
@@ -241,9 +247,7 @@ services:
       SUPPORT_EMAIL: <your-email>
 
   cli:
-    build:
-      context: .
-      dockerfile: deploy/docker/cli.Dockerfile
+    image: ghcr.io/blazer82/analytodon-cli:latest
     restart: unless-stopped
     depends_on:
       - mongodb
@@ -267,10 +271,10 @@ A few notes:
 - `EMAIL_USER`/`EMAIL_PASS` are only used when both are set -- omit them for relays that accept unauthenticated senders
 - Running **without email**: omit the `EMAIL_*` variables and set `DISABLE_EMAIL_VERIFICATION: "true"`. Emails are then logged instead of sent, and new accounts are verified automatically so they aren't stuck on the verification screen
 
-Build and start:
+Pull the images and start:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### 🔀 Reverse Proxy
@@ -289,7 +293,7 @@ nginx, Traefik, or any other reverse proxy works equally well -- just proxy all 
 
 ### 🚀 First Run
 
-1. Start the stack: `docker compose -f docker-compose.prod.yml up -d --build`
+1. Start the stack: `docker compose -f docker-compose.prod.yml up -d`
 2. Verify all containers are running: `docker compose -f docker-compose.prod.yml ps`
 3. Open `https://your-domain.com` and create an account
 4. Connect a Mastodon account -- the CLI will begin fetching initial stats within one minute
@@ -311,10 +315,33 @@ Optional settings you may want to adjust:
 
 ### 🔄 Updating
 
-Pull the latest changes and rebuild:
+Pull the latest images and restart:
 
 ```bash
-git pull
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Docker Compose recreates only the containers whose image actually changed. The MongoDB volume is untouched, so your data survives updates.
+
+### 🔨 Building From Source
+
+The published images cover the common case. Build your own if you are running on an architecture other than `amd64`, or if you have modified the code. Replace the `image:` line of each service with a `build:` block:
+
+```yaml
+backend:
+  build:
+    context: .
+    dockerfile: deploy/docker/backend.Dockerfile
+  restart: unless-stopped
+  # ...environment as above
+```
+
+The frontend and CLI use `deploy/docker/frontend.Dockerfile` and `deploy/docker/cli.Dockerfile` respectively. Building requires a clone of this repository, since the build context is the repository root:
+
+```bash
+git clone https://github.com/blazer82/analytodon.git
+cd analytodon
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
