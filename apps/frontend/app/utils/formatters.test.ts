@@ -113,6 +113,10 @@ describe('shortenToot', () => {
     );
   });
 
+  it('should keep encoded markup as literal text', () => {
+    expect(shortenToot('<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>')).toBe('<script>alert(1)</script>');
+  });
+
   it('should measure length after decoding entities', () => {
     expect(shortenToot('&quot;'.repeat(10), 20)).toBe('"'.repeat(10));
   });
@@ -142,6 +146,10 @@ describe('decodeEntities', () => {
 
   it('should not decode the same text twice', () => {
     expect(decodeEntities('&amp;#39; &amp;quot; &amp;amp;')).toBe('&#39; &quot; &amp;');
+  });
+
+  it('should replace NUL and lone surrogates with U+FFFD', () => {
+    expect(decodeEntities('a&#0;b&#xD800;c')).toBe('a\uFFFDb\uFFFDc');
   });
 
   it('should leave out-of-range and unknown entities intact', () => {

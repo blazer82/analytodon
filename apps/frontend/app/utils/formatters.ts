@@ -30,6 +30,7 @@ export function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num);
 }
 
+// Keep entity decoding in sync with apps/backend/src/shared/utils/strip-html.ts
 const NAMED_ENTITIES: Record<string, string> = {
   amp: '&',
   lt: '<',
@@ -42,6 +43,8 @@ const NAMED_ENTITIES: Record<string, string> = {
 // String.fromCodePoint throws RangeError for code points > 0x10FFFF, so keep
 // the original entity text for malformed input instead of failing to render.
 const safeFromCodePoint = (num: number, original: string): string => {
+  // Like browsers, replace NUL and lone surrogates with U+FFFD
+  if (num === 0 || (num >= 0xd800 && num <= 0xdfff)) return '\uFFFD';
   try {
     return String.fromCodePoint(num);
   } catch {

@@ -1,3 +1,4 @@
+// Keep entity decoding in sync with apps/frontend/app/utils/formatters.ts
 const NAMED_ENTITIES: Record<string, string> = {
   amp: '&',
   lt: '<',
@@ -11,6 +12,8 @@ const NAMED_ENTITIES: Record<string, string> = {
 // Return the original entity text on failure so one malformed entity can't
 // break the whole CSV stream.
 const safeFromCodePoint = (num: number, original: string): string => {
+  // Like browsers, replace NUL and lone surrogates with U+FFFD
+  if (num === 0 || (num >= 0xd800 && num <= 0xdfff)) return '\uFFFD';
   try {
     return String.fromCodePoint(num);
   } catch {

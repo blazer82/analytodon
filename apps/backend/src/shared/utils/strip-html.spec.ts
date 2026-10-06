@@ -42,4 +42,8 @@ describe('stripHtml', () => {
   it('does not decode the same text twice', () => {
     expect(stripHtml('&amp;#39; &amp;quot; &amp;amp;')).toBe('&#39; &quot; &amp;');
   });
+
+  it('replaces NUL and lone surrogates with U+FFFD', () => {
+    expect(stripHtml('a&#0;b&#xD800;c')).toBe('a\uFFFDb\uFFFDc');
+  });
 });
