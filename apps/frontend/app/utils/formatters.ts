@@ -30,13 +30,59 @@ export function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num);
 }
 
+// Keep entity decoding in sync with apps/backend/src/shared/utils/strip-html.ts
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+
+// String.fromCodePoint throws RangeError for code points > 0x10FFFF, so keep
+// the original entity text for malformed input instead of failing to render.
+const safeFromCodePoint = (num: number, original: string): string => {
+  // Like browsers, replace NUL and lone surrogates with U+FFFD
+  if (num === 0 || (num >= 0xd800 && num <= 0xdfff)) return '\uFFFD';
+  try {
+    return String.fromCodePoint(num);
+  } catch {
+    return original;
+  }
+};
+
 /**
- * Shortens a toot's content to a specified length, removing HTML tags.
+ * Decodes the HTML entities Mastodon emits in status content. Done in a single
+ * pass so already-decoded text (e.g. `&amp;#39;` -> `&#39;`) isn't decoded again.
+ * @param input The text to decode.
+ * @returns The decoded text.
+ */
+export function decodeEntities(input: string): string {
+  return input.replace(
+    /&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|(amp|lt|gt|quot|apos|nbsp));/g,
+    (match, dec?: string, hex?: string, name?: string) => {
+      if (dec) return safeFromCodePoint(Number(dec), match);
+      if (hex) return safeFromCodePoint(parseInt(hex, 16), match);
+      return NAMED_ENTITIES[name as string] ?? match;
+    },
+  );
+}
+
+/**
+ * Shortens a toot's content to a specified length for single-line display:
+ * removes HTML tags, decodes entities and collapses whitespace.
  * @param content The toot content to shorten.
- * @param length The maximum length of the shortened content.
+ * @param length The maximum length (in characters) of the shortened content.
  * @returns The shortened content string.
  */
 export function shortenToot(content: string, length = 95): string {
-  const cleaned = content.replace(/<[^>]*>/g, '');
-  return cleaned.length > length ? cleaned.substring(0, length - 1) + '…' : cleaned;
+  const withoutTags = content
+    // Keep line and paragraph breaks as word separators
+    .replace(/<br\s*\/?>|<\/(p|li|h[1-6]|div|blockquote)>/gi, ' ')
+    .replace(/<[^>]*>/g, '');
+  const cleaned = decodeEntities(withoutTags).replace(/\s+/g, ' ').trim();
+  // Iterate by code point so emoji and other astral characters aren't split in half
+  const chars = Array.from(cleaned);
+  return chars.length > length ? chars.slice(0, length - 1).join('') + '…' : cleaned;
 }

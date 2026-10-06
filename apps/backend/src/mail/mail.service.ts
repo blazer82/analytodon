@@ -13,6 +13,7 @@ import { FavoritesService } from '../favorites/favorites.service';
 import { FollowersService } from '../followers/followers.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
 import { RepliesService } from '../replies/replies.service';
+import { stripHtml } from '../shared/utils/strip-html';
 import { KpiDto, resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { TootsService } from '../toots/toots.service';
@@ -129,17 +130,11 @@ export class MailService {
   }
 
   private stripHtmlAndTruncate(html: string, maxLength: number): string {
-    let text = html.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '');
-    text = text
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, ' ');
-    text = text.replace(/\s+/g, ' ').trim();
-    if (text.length > maxLength) {
-      return text.substring(0, maxLength).trimEnd() + '...';
+    const text = stripHtml(html).replace(/\s+/g, ' ');
+    // Iterate by code point so emoji and other astral characters aren't split in half
+    const chars = Array.from(text);
+    if (chars.length > maxLength) {
+      return chars.slice(0, maxLength).join('').trimEnd() + '...';
     }
     return text;
   }

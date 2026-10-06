@@ -38,4 +38,12 @@ describe('stripHtml', () => {
     expect(stripHtml('bogus &#9999999999; here')).toBe('bogus &#9999999999; here');
     expect(stripHtml('bogus &#x110000; here')).toBe('bogus &#x110000; here');
   });
+
+  it('does not decode the same text twice', () => {
+    expect(stripHtml('&amp;#39; &amp;quot; &amp;amp;')).toBe('&#39; &quot; &amp;');
+  });
+
+  it('replaces NUL and lone surrogates with U+FFFD', () => {
+    expect(stripHtml('a&#0;b&#xD800;c')).toBe('a\uFFFDb\uFFFDc');
+  });
 });
