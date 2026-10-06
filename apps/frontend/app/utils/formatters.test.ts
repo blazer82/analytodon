@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDate, formatNumber, shortenToot } from './formatters';
+import { decodeEntities, formatDate, formatNumber, shortenToot } from './formatters';
 
 describe('formatDate', () => {
   it('should format a Date object', () => {
@@ -105,5 +105,46 @@ describe('shortenToot', () => {
 
   it('should return empty string for HTML-only content', () => {
     expect(shortenToot('<br><hr><img src="x">')).toBe('');
+  });
+
+  it('should decode HTML entities', () => {
+    expect(shortenToot('<p>David Bowie&#39;s &quot;Telling Lies&quot; &amp; more</p>')).toBe(
+      'David Bowie\'s "Telling Lies" & more',
+    );
+  });
+
+  it('should measure length after decoding entities', () => {
+    expect(shortenToot('&quot;'.repeat(10), 20)).toBe('"'.repeat(10));
+  });
+
+  it('should separate paragraphs and line breaks with a space', () => {
+    expect(shortenToot('<p>First line<br>second line</p><p>Next paragraph</p>')).toBe(
+      'First line second line Next paragraph',
+    );
+  });
+
+  it('should not split emoji when truncating', () => {
+    const result = shortenToot('A'.repeat(18) + '😀😀😀', 20);
+    expect(result).toBe('A'.repeat(18) + '😀…');
+  });
+});
+
+describe('decodeEntities', () => {
+  it('should decode named entities', () => {
+    expect(decodeEntities('Rock &amp; Roll &lt;tag&gt; &apos;a&apos; &quot;b&quot;&nbsp;c')).toBe(
+      'Rock & Roll <tag> \'a\' "b" c',
+    );
+  });
+
+  it('should decode decimal and hex character references', () => {
+    expect(decodeEntities('Bowie&#8217;s &#39;x&#39; &#x22;Lies&#X22;')).toBe('Bowie’s \'x\' "Lies"');
+  });
+
+  it('should not decode the same text twice', () => {
+    expect(decodeEntities('&amp;#39; &amp;quot; &amp;amp;')).toBe('&#39; &quot; &amp;');
+  });
+
+  it('should leave out-of-range and unknown entities intact', () => {
+    expect(decodeEntities('&#9999999999; &#x110000; &copy;')).toBe('&#9999999999; &#x110000; &copy;');
   });
 });

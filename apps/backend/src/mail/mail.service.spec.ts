@@ -1036,6 +1036,24 @@ describe('MailService', () => {
       const result = (service as any).stripHtmlAndTruncate('Line 1<br>Line 2<br />Line 3', 100);
       expect(result).toBe('Line 1 Line 2 Line 3');
     });
+
+    it('should separate paragraphs with a space', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).stripHtmlAndTruncate('<p>First</p><p>Second</p>', 100);
+      expect(result).toBe('First Second');
+    });
+
+    it('should decode quotes and numeric entities', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).stripHtmlAndTruncate('Bowie&#39;s &quot;Lies&quot; &#8217;', 100);
+      expect(result).toBe('Bowie\'s "Lies" ’');
+    });
+
+    it('should not split emoji when truncating', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = (service as any).stripHtmlAndTruncate('A'.repeat(9) + '😀😀', 10);
+      expect(result).toBe('A'.repeat(9) + '😀...');
+    });
   });
 
   describe('computeTotalEngagement', () => {
