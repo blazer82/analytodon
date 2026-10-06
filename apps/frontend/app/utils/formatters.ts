@@ -30,13 +30,40 @@ export function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num);
 }
 
+const HTML_ENTITIES: Record<string, string> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&apos;': "'",
+  '&nbsp;': ' ',
+};
+
+const safeFromCodePoint = (num: number, original: string): string => {
+  if (!Number.isFinite(num)) return original;
+  try {
+    return String.fromCodePoint(num);
+  } catch {
+    return original;
+  }
+};
+
+const decodeEntities = (input: string): string =>
+  input
+    .replace(/&(amp|lt|gt|quot|apos|nbsp|#39);/g, (match) => HTML_ENTITIES[match] ?? match)
+    .replace(/&#(\d+);/g, (match, code: string) => safeFromCodePoint(Number(code), match))
+    .replace(/&#x([0-9a-fA-F]+);/g, (match, hex: string) => safeFromCodePoint(parseInt(hex, 16), match));
+
 /**
- * Shortens a toot's content to a specified length, removing HTML tags.
+ * Shortens a toot's content to a specified length, removing HTML tags and decoding entities.
  * @param content The toot content to shorten.
  * @param length The maximum length of the shortened content.
  * @returns The shortened content string.
  */
 export function shortenToot(content: string, length = 95): string {
-  const cleaned = content.replace(/<[^>]*>/g, '');
-  return cleaned.length > length ? cleaned.substring(0, length - 1) + '…' : cleaned;
+  const withoutTags = content.replace(/<[^>]*>/g, '');
+  const decoded = decodeEntities(withoutTags);
+  return decoded.length > length ? decoded.substring(0, length - 1) + '…' : decoded;
 }
+

@@ -106,4 +106,28 @@ describe('shortenToot', () => {
   it('should return empty string for HTML-only content', () => {
     expect(shortenToot('<br><hr><img src="x">')).toBe('');
   });
+
+  it('should decode HTML entities such as quotes and apostrophes', () => {
+    expect(shortenToot('&quot;Last year, the world’s oceans absorbed heat&quot;')).toBe(
+      '"Last year, the world’s oceans absorbed heat"',
+    );
+    expect(shortenToot('<p>David Bowie&#39;s &quot;Telling Lies&quot; was the first</p>')).toBe(
+      'David Bowie\'s "Telling Lies" was the first',
+    );
+    expect(shortenToot('Rock &amp; Roll &lt;tag&gt; &apos;single&apos; &nbsp; spaced')).toBe(
+      "Rock & Roll <tag> 'single'   spaced",
+    );
+  });
+
+  it('should decode numeric decimal and hex character references', () => {
+    expect(shortenToot('Bowie&#8217;s music &#x22;Lies&#x22;')).toBe('Bowie’s music "Lies"');
+  });
+
+  it('should measure character length after decoding entities for truncation', () => {
+    // 10 quotes when decoded = 10 chars. Encoded &quot; = 60 chars.
+    // Truncating at limit 20 should NOT truncate decoded content.
+    const encoded = '&quot;'.repeat(10);
+    expect(shortenToot(encoded, 20)).toBe('"'.repeat(10));
+  });
 });
+
