@@ -53,6 +53,7 @@ export * from './ServerDistributionDto';
 export * from './SessionAccountDto';
 export * from './SessionUserDto';
 export * from './StaleAccountDto';
+export * from './StaleAccountMailDto';
 export * from './SystemHealthResponseDto';
 export * from './TimingMarginDetailDto';
 export * from './TimingMarginPairDto';

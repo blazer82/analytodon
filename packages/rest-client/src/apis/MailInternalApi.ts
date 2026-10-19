@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   FirstStatsMailDto,
   OldAccountMailDto,
+  StaleAccountMailDto,
   WeeklyStatsMailDto,
 } from '../models/index';
 import {
@@ -24,6 +25,8 @@ import {
     FirstStatsMailDtoToJSON,
     OldAccountMailDtoFromJSON,
     OldAccountMailDtoToJSON,
+    StaleAccountMailDtoFromJSON,
+    StaleAccountMailDtoToJSON,
     WeeklyStatsMailDtoFromJSON,
     WeeklyStatsMailDtoToJSON,
 } from '../models/index';
@@ -34,6 +37,10 @@ export interface MailControllerSendFirstStatsMailRequest {
 
 export interface MailControllerSendOldAccountWarningMailRequest {
     oldAccountMailDto: OldAccountMailDto;
+}
+
+export interface MailControllerSendStaleAccountNoticeMailRequest {
+    staleAccountMailDto: StaleAccountMailDto;
 }
 
 export interface MailControllerSendWeeklyStatsMailRequest {
@@ -133,6 +140,51 @@ export class MailInternalApi extends runtime.BaseAPI {
      */
     async mailControllerSendOldAccountWarningMail(requestParameters: MailControllerSendOldAccountWarningMailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.mailControllerSendOldAccountWarningMailRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Called by a worker or scheduler for accounts whose stats stopped updating. Accounts not owned by the user or already notified are ignored. This endpoint is intended for internal use.
+     * Trigger \"Stale Account Notice\" email (internal)
+     */
+    async mailControllerSendStaleAccountNoticeMailRaw(requestParameters: MailControllerSendStaleAccountNoticeMailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['staleAccountMailDto'] == null) {
+            throw new runtime.RequiredError(
+                'staleAccountMailDto',
+                'Required parameter "staleAccountMailDto" was null or undefined when calling mailControllerSendStaleAccountNoticeMail().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/mail/stale-account`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: StaleAccountMailDtoToJSON(requestParameters['staleAccountMailDto']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Called by a worker or scheduler for accounts whose stats stopped updating. Accounts not owned by the user or already notified are ignored. This endpoint is intended for internal use.
+     * Trigger \"Stale Account Notice\" email (internal)
+     */
+    async mailControllerSendStaleAccountNoticeMail(requestParameters: MailControllerSendStaleAccountNoticeMailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.mailControllerSendStaleAccountNoticeMailRaw(requestParameters, initOverrides);
     }
 
     /**

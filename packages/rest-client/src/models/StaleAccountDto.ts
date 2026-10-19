@@ -55,6 +55,12 @@ export interface StaleAccountDto {
      * @memberof StaleAccountDto
      */
     daysSinceLastUpdate: number;
+    /**
+     * When the owner was notified that stats stopped updating
+     * @type {string}
+     * @memberof StaleAccountDto
+     */
+    staleNoticeSentAt?: string | null;
 }
 
 /**
@@ -86,6 +92,7 @@ export function StaleAccountDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
         'ownerEmail': json['ownerEmail'],
         'lastStatsDate': json['lastStatsDate'],
         'daysSinceLastUpdate': json['daysSinceLastUpdate'],
+        'staleNoticeSentAt': json['staleNoticeSentAt'] == null ? undefined : json['staleNoticeSentAt'],
     };
 }
 
@@ -106,6 +113,7 @@ export function StaleAccountDtoToJSONTyped(value?: StaleAccountDto | null, ignor
         'ownerEmail': value['ownerEmail'],
         'lastStatsDate': value['lastStatsDate'],
         'daysSinceLastUpdate': value['daysSinceLastUpdate'],
+        'staleNoticeSentAt': value['staleNoticeSentAt'],
     };
 }
 
