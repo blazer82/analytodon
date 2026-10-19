@@ -28,6 +28,6 @@ export const formatBucketLabel = (day: string, bucket: PostActivityBucket, local
     ? dateFormat(locale, { month: 'long', year: 'numeric' }).format(parseDay(day))
     : formatDay(day, locale);
 
-/** Average posts per day with at most one decimal, e.g. "1.3" (en) / "1,3" (de). */
-export const formatPostsPerDay = (total: number, days: number, locale: string): string =>
-  new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(days > 0 ? total / days : 0);
+/** Average posts per day with at most one decimal, e.g. "1.3" (en-US, like formatNumber). */
+export const formatPostsPerDay = (total: number, days: number): string =>
+  new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(days > 0 ? total / days : 0);

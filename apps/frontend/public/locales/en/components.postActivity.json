@@ -1,6 +1,7 @@
 {
   "title": "Posts",
   "previousPeriod": "vs. {{amount}} in the previous period",
+  "previousPeriodSoFar": "vs. {{amount}} at the same point of the previous period",
   "facts": {
     "perDay": "per day",
     "busiestDay": "busiest day",
@@ -16,5 +17,5 @@
     "dataLabel": "Posts",
     "weekOf": "Week of {{date}}"
   },
-  "footnote": "Counts your own public and unlisted posts (including your replies, excluding boosts) that Analytodon has stored, by day in your account's timezone. Posts you deleted later are still counted. The trend compares with the previous period of the same length. The chart shows posts per day for periods of up to 93 days, per week up to 186 days and per month for longer periods."
+  "footnote": "Counts your own public and unlisted posts (including your replies, excluding boosts) that Analytodon has stored, by day in your account's timezone. Posts you deleted later are still counted. The trend compares with the previous period of the same length; while the selected period is still running, only up to the same point in time. The chart shows posts per day for periods of up to 93 days, per week up to 186 days and per month for longer periods."
 }

@@ -51,8 +51,19 @@ const PostActivity: React.FunctionComponent<{ activity: PostActivityDto | null; 
 
   if (!activity) return null;
 
-  const { total, previousPeriodTotal, trend, bucket, chart, dateFrom, dateTo, days, daysWithoutPosts, busiestDay } =
-    activity;
+  const {
+    total,
+    previousPeriodTotal,
+    inProgress,
+    trend,
+    bucket,
+    chart,
+    dateFrom,
+    dateTo,
+    days,
+    daysWithoutPosts,
+    busiestDay,
+  } = activity;
   const loadingSx = { opacity: isLoading ? 0.5 : 1, transition: 'opacity 0.2s ease' };
 
   return (
@@ -84,7 +95,7 @@ const PostActivity: React.FunctionComponent<{ activity: PostActivityDto | null; 
           </Box>
           <Typography color="text.secondary" sx={{ fontSize: '0.9rem', mt: 0.5 }}>
             {formatDayRange(dateFrom, dateTo, locale)} ·{' '}
-            {t('previousPeriod', { amount: formatNumber(previousPeriodTotal) })}
+            {t(inProgress ? 'previousPeriodSoFar' : 'previousPeriod', { amount: formatNumber(previousPeriodTotal) })}
           </Typography>
           <Box
             sx={{
@@ -97,7 +108,7 @@ const PostActivity: React.FunctionComponent<{ activity: PostActivityDto | null; 
               gap: 2,
             }}
           >
-            <Fact value={formatPostsPerDay(total, days, locale)} label={t('facts.perDay')} />
+            <Fact value={formatPostsPerDay(total, days)} label={t('facts.perDay')} />
             <Fact
               value={formatNumber(busiestDay?.count ?? 0)}
               label={

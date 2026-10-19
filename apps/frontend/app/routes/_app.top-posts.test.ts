@@ -51,6 +51,7 @@ function makeActivity() {
   return {
     total: 3,
     previousPeriodTotal: 2,
+    inProgress: false,
     trend: 0.5,
     bucket: 'day',
     chart: [{ time: '2024-01-14', value: 3 }],

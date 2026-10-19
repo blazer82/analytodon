@@ -27,10 +27,10 @@ describe('PostActivity formatters', () => {
     expect(formatBucketLabel('2026-09-01', 'month', 'de')).toBe('September 2026');
   });
 
-  it('formats posts per day with at most one decimal in the given locale', () => {
-    expect(formatPostsPerDay(40, 30, 'en')).toBe('1.3');
-    expect(formatPostsPerDay(40, 30, 'de')).toBe('1,3');
-    expect(formatPostsPerDay(14, 7, 'en')).toBe('2');
-    expect(formatPostsPerDay(0, 0, 'en')).toBe('0');
+  it('formats posts per day with at most one decimal, like formatNumber (en-US)', () => {
+    expect(formatPostsPerDay(40, 30)).toBe('1.3');
+    expect(formatPostsPerDay(14, 7)).toBe('2');
+    expect(formatPostsPerDay(12345, 1)).toBe('12,345');
+    expect(formatPostsPerDay(0, 0)).toBe('0');
   });
 });
