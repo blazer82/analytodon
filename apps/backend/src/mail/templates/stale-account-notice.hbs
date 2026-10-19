@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ subject }}</title>
+  <style>
+    body {
+      font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      line-height: 1.6;
+      color: #455a64;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .logo {
+      margin-bottom: 15px;
+    }
+    .content {
+      padding: 20px 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #455a64 0%, #1c313a 100%);
+      color: #ffffff;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .warning {
+      background-color: #fff8e1;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+    }
+    .feedback {
+      background-color: #f0f4f8;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 14px;
+      color: #607d8b;
+    }
+    .social-link {
+      color: #607d8b;
+      text-decoration: none;
+    }
+    .account {
+      background-color: #f0f4f8;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 12px 0;
+    }
+    .account p {
+      margin: 4px 0;
+    }
+    .account .button {
+      margin: 12px 0 4px;
+    }
+    h2 {
+      color: #455a64;
+      font-size: 18px;
+      font-weight: 700;
+      margin: 24px 0 8px;
+    }
+    ul {
+      margin: 8px 0 16px;
+      padding-left: 20px;
+    }
+    li {
+      margin: 4px 0;
+    }
+    h1 {
+      color: #455a64;
+      font-weight: 700;
+    }
+    p {
+      margin: 16px 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121212 !important;
+        color: #e0e0e0 !important;
+      }
+      .container {
+        background-color: #1e1e1e !important;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3) !important;
+      }
+      .header {
+        border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+      }
+      .footer {
+        border-top-color: rgba(255, 255, 255, 0.12) !important;
+        color: #8eacbb !important;
+      }
+      .footer p {
+        color: #8eacbb !important;
+      }
+      h1 {
+        color: #8eb2c3 !important;
+      }
+      p:not(.footer p) {
+         color: #e0e0e0 !important;
+      }
+      p strong, strong {
+         color: #e8e8e8 !important;
+      }
+      .button {
+        background: linear-gradient(135deg, #8eb2c3 0%, #607d8b 100%) !important;
+        color: #ffffff !important;
+      }
+      .social-link {
+        color: #8eacbb !important;
+      }
+      a:not(.button):not(.social-link) {
+        color: #8eb2c3 !important;
+      }
+      .warning {
+        background-color: #4A3E1A !important;
+        border-left-color: #ffab00 !important;
+        color: #f5f5f5 !important;
+      }
+      .warning p, .warning p strong {
+         color: #f5f5f5 !important;
+      }
+      h2 {
+        color: #8eb2c3 !important;
+      }
+      li {
+        color: #e0e0e0 !important;
+      }
+      .account {
+        background-color: #2a2a2a !important;
+      }
+      .account p {
+        color: #e0e0e0 !important;
+      }
+      .feedback {
+        background-color: #2a2a2a !important;
+      }
+      .feedback p {
+        color: #e0e0e0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <img src="cid:logo@analytodon.com" alt="Analytodon Logo" width="120" height="77" style="width:120px; height:77px">
+      </div>
+      <h1>{{ t.title }}</h1>
+    </div>
+
+    <div class="content">
+      <p>{{ t.greeting }}</p>
+
+      <div class="warning">
+        <p><strong>{{ t.message }}</strong></p>
+      </div>
+
+      {{#each accounts}}
+      <div class="account">
+        <p><strong>{{ this.accountName }}</strong></p>
+        <p>{{ ../t.server }} {{ this.server }}</p>
+        <p>{{ ../t.lastUpdate }} {{#if this.lastUpdate}}{{ this.lastUpdate }}{{else}}{{ ../t.noStats }}{{/if}}</p>
+      </div>
+      {{/each}}
+
+      <h2>{{ t.causesHeading }}</h2>
+      <ul>
+        <li>{{ t.causeRevoked }}</li>
+        <li>{{ t.causeMoved }}</li>
+        <li>{{ t.causeInstance }}</li>
+      </ul>
+
+      <h2>{{ t.actionHeading }}</h2>
+      <p>{{ t.actionMessage }}</p>
+
+      {{#each accounts}}
+      <div style="text-align: center;">
+        <a href="{{ this.reconnectURL }}" class="button">{{ this.reconnectLabel }}</a>
+      </div>
+      {{/each}}
+
+      <p>{{ t.support }}</p>
+
+      <div class="feedback">
+        <p style="font-weight: 600; margin-top: 0;">{{ t.notUsingHeading }}</p>
+        <p>{{ t.notUsingMessage }}</p>
+      </div>
+
+      <p>{{ t.signature }}<br>{{ emailSenderName }}</p>
+    </div>
+
+    <div class="footer">
+      <p>
+        {{ t.email }} <a href="mailto:{{ supportEmail }}" class="social-link">{{ supportEmail }}</a><br>
+        {{ t.website }} <a href="{{ marketingURL }}" class="social-link">{{ marketingURL }}</a><br>
+        {{ t.mastodon }} <a href="https://undefined.social/@analytodon" class="social-link">{{ t.mastodonHandle }}</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

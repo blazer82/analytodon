@@ -16,13 +16,15 @@
     "createdDate": "Erstellt",
     "daysSinceCreation": "Tage seit Erstellung",
     "lastLogin": "Letzte Anmeldung",
-    "deletionNotice": "Löschhinweis"
+    "deletionNotice": "Löschhinweis",
+    "staleNotice": "Hinweis gesendet"
   },
   "labels": {
     "lastUpdated": "Zuletzt aktualisiert: {{date}}",
     "never": "Nie",
     "unknown": "Unbekannt",
     "sent": "Gesendet",
+    "sentOn": "Gesendet am {{date}}",
     "notSent": "Nicht gesendet",
     "noStats": "Keine Statistiken"
   },

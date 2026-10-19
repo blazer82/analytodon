@@ -145,6 +145,7 @@ export default function AdminAccountsHealth() {
                     <TableCell>{t('columns.owner')}</TableCell>
                     <TableCell>{t('columns.lastStats')}</TableCell>
                     <TableCell>{t('columns.daysSinceUpdate')}</TableCell>
+                    <TableCell>{t('columns.staleNotice')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -163,6 +164,17 @@ export default function AdminAccountsHealth() {
                           label={account.daysSinceLastUpdate}
                           size="small"
                           color={account.daysSinceLastUpdate > 7 ? 'error' : 'warning'}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={
+                            account.staleNoticeSentAt
+                              ? t('labels.sentOn', { date: new Date(account.staleNoticeSentAt).toLocaleDateString() })
+                              : t('labels.notSent')
+                          }
+                          size="small"
+                          color={account.staleNoticeSentAt ? 'default' : 'warning'}
                         />
                       </TableCell>
                     </TableRow>

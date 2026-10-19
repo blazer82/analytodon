@@ -16,13 +16,15 @@
     "createdDate": "Created",
     "daysSinceCreation": "Days Since Creation",
     "lastLogin": "Last Login",
-    "deletionNotice": "Deletion Notice"
+    "deletionNotice": "Deletion Notice",
+    "staleNotice": "Notice Sent"
   },
   "labels": {
     "lastUpdated": "Last updated: {{date}}",
     "never": "Never",
     "unknown": "Unknown",
     "sent": "Sent",
+    "sentOn": "Sent {{date}}",
     "notSent": "Not Sent",
     "noStats": "No stats"
   },

@@ -2,10 +2,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { AccountEntity, UserEntity } from '@analytodon/shared-orm';
+import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as handlebars from 'handlebars';
 import { I18nService } from 'nestjs-i18n';
 
 import { BoostsService } from '../boosts/boosts.service';
@@ -17,8 +19,9 @@ import { TootsService } from '../toots/toots.service';
 import { UsersService } from '../users/users.service';
 import { FirstStatsMailDto } from './dto/first-stats-mail.dto';
 import { OldAccountMailDto } from './dto/old-account-mail.dto';
+import { StaleAccountMailDto } from './dto/stale-account-mail.dto';
 import { WeeklyStatsMailDto } from './dto/weekly-stats-mail.dto';
-import { MailService } from './mail.service';
+import { MailService, StaleAccountItem } from './mail.service';
 
 describe('MailService', () => {
   let service: MailService;
@@ -30,6 +33,7 @@ describe('MailService', () => {
   let tootsService: jest.Mocked<TootsService>;
   let hashtagsService: jest.Mocked<HashtagsService>;
   let mailerService: jest.Mocked<MailerService>;
+  let accountEntityManager: { persistAndFlush: jest.Mock };
   let loggerLogSpy: jest.SpyInstance;
   let loggerErrorSpy: jest.SpyInstance;
   let readFileSyncSpy: jest.SpyInstance;
@@ -54,6 +58,7 @@ describe('MailService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks(); // Clear mocks before each test
+    accountEntityManager = { persistAndFlush: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -84,7 +89,7 @@ describe('MailService', () => {
         {
           provide: I18nService,
           useValue: {
-            translate: jest.fn((key: string) => {
+            translate: jest.fn((key: string, options?: { args?: Record<string, string | number> }) => {
               // Mock translations mapping - return actual English text
               const translations: Record<string, string> = {
                 'email.passwordReset.subject': 'Reset your Analytodon password!',
@@ -166,13 +171,27 @@ describe('MailService', () => {
                 'email.weeklyStats.dashboardButton': 'Go to Dashboard',
                 'email.weeklyStats.unsubscribe': "If you don't want to receive any more messages like this you can",
                 'email.weeklyStats.unsubscribeLink': 'unsubscribe here',
+                'email.staleAccountNotice.subject': "We can't update your Analytodon stats for {accountName}",
+                'email.staleAccountNotice.subjectMultiple':
+                  "We can't update your Analytodon stats for some of your accounts",
+                'email.staleAccountNotice.title': 'Your Stats Stopped Updating',
+                'email.staleAccountNotice.message':
+                  "We haven't been able to collect new stats for the following Mastodon account:",
+                'email.staleAccountNotice.messageMultiple':
+                  "We haven't been able to collect new stats for the following Mastodon accounts:",
+                'email.staleAccountNotice.reconnectButton': 'Reconnect {accountName}',
                 'email.broadcast.signature': 'Best regards,',
                 'email.common.email': 'Email:',
                 'email.common.website': 'Website:',
                 'email.common.mastodon': 'Mastodon:',
                 'email.common.mastodonHandle': '@analytodon@undefined.social',
               };
-              return Promise.resolve(translations[key] || key);
+              const translation = translations[key] || key;
+              return Promise.resolve(
+                translation.replace(/\{(\w+)\}/g, (match, name) =>
+                  options?.args && name in options.args ? String(options.args[name]) : match,
+                ),
+              );
             }),
           },
         },
@@ -189,6 +208,7 @@ describe('MailService', () => {
             getWeeklyKpi: jest.fn(),
             getWeeklyPostingActivity: jest.fn().mockResolvedValue({ currentPeriod: 0 }),
             getAverageFollowerCount: jest.fn().mockResolvedValue(null),
+            getTotalSnapshot: jest.fn().mockResolvedValue(null),
           },
         },
         {
@@ -220,6 +240,12 @@ describe('MailService', () => {
           provide: HashtagsService,
           useValue: {
             getEngagement: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: getRepositoryToken(AccountEntity),
+          useValue: {
+            getEntityManager: jest.fn(() => accountEntityManager),
           },
         },
       ],
@@ -413,6 +439,102 @@ describe('MailService', () => {
         `Error while sending old account warning mail to ${mockUser.email}`,
         error.stack,
       );
+    });
+  });
+
+  describe('sendStaleAccountNoticeMail', () => {
+    const mockTextTemplate = '{{#each accounts}}{{ this.accountName }} {{ this.reconnectURL }};{{/each}}';
+    const singleAccount: StaleAccountItem = {
+      accountName: '@user@mastodon.social',
+      server: 'mastodon.social',
+      lastUpdate: 'January 1, 2026',
+      reconnectURL: 'http://localhost:3000/settings/accounts/account-id-456',
+      reconnectLabel: 'Reconnect @user@mastodon.social',
+    };
+    const secondAccount: StaleAccountItem = {
+      accountName: '@other@example.social',
+      server: 'example.social',
+      lastUpdate: null,
+      reconnectURL: 'http://localhost:3000/settings/accounts/account-id-789',
+      reconnectLabel: 'Reconnect @other@example.social',
+    };
+
+    it('should send a stale account notice for a single account with the account in the subject', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
+      mailerService.sendMail.mockResolvedValueOnce(undefined);
+
+      await service.sendStaleAccountNoticeMail(mockUser, [singleAccount]);
+
+      expect(readFileSyncSpy).toHaveBeenCalledWith(
+        path.join(__dirname, 'templates', 'stale-account-notice.txt'),
+        'utf-8',
+      );
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: mockUser.email,
+          subject: "We can't update your Analytodon stats for @user@mastodon.social",
+          template: './stale-account-notice',
+          text: `${singleAccount.accountName} ${singleAccount.reconnectURL};`,
+          context: expect.objectContaining({
+            accounts: [singleAccount],
+            appURL: mockConfigValues.FRONTEND_URL,
+            supportEmail: mockConfigValues.EMAIL_FROM_ADDRESS,
+            t: expect.objectContaining({
+              message: "We haven't been able to collect new stats for the following Mastodon account:",
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should use a generic subject when several accounts are affected', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
+      mailerService.sendMail.mockResolvedValueOnce(undefined);
+
+      await service.sendStaleAccountNoticeMail(mockUser, [singleAccount, secondAccount]);
+
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subject: "We can't update your Analytodon stats for some of your accounts",
+          context: expect.objectContaining({
+            accounts: [singleAccount, secondAccount],
+            t: expect.objectContaining({
+              message: "We haven't been able to collect new stats for the following Mastodon accounts:",
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should log an error and re-throw if sending fails', async () => {
+      readFileSyncSpy.mockReturnValue(mockTextTemplate);
+      const error = new Error('Mail sending failed');
+      mailerService.sendMail.mockRejectedValueOnce(error);
+
+      await expect(service.sendStaleAccountNoticeMail(mockUser, [singleAccount])).rejects.toThrow(error);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        `Error while sending stale account notice mail to ${mockUser.email}`,
+        error.stack,
+      );
+    });
+
+    it('should render the real templates without errors', async () => {
+      readFileSyncSpy.mockRestore();
+      mailerService.sendMail.mockResolvedValueOnce(undefined);
+
+      await service.sendStaleAccountNoticeMail(mockUser, [singleAccount, secondAccount]);
+
+      const { text, context } = mailerService.sendMail.mock.calls[0][0] as { text: string; context: object };
+      expect(text).toContain(singleAccount.accountName);
+      expect(text).toContain(singleAccount.reconnectURL);
+      expect(text).toContain(secondAccount.reconnectURL);
+      expect(text).toContain('January 1, 2026');
+
+      // The HTML template is rendered by the mailer in strict mode, so make sure it compiles with the context
+      const htmlSource = fs.readFileSync(path.join(__dirname, 'templates', 'stale-account-notice.hbs'), 'utf-8');
+      const html = handlebars.compile(htmlSource, { strict: true })(context);
+      expect(html).toContain(singleAccount.reconnectURL);
+      expect(html).toContain(secondAccount.reconnectLabel);
     });
   });
 
@@ -762,6 +884,155 @@ describe('MailService', () => {
       expect(loggerErrorSpy).toHaveBeenCalledWith(
         `User not found: ${dto.userID} for old account warning. Email not sent.`,
       );
+    });
+  });
+
+  describe('processAndSendStaleAccountNoticeMail', () => {
+    const ownAccount1 = {
+      id: 'account-id-1',
+      accountName: '@one@mastodon.social',
+      serverURL: 'https://mastodon.social',
+      timezone: 'Europe/Berlin',
+    } as AccountEntity;
+    const ownAccount2 = {
+      id: 'account-id-2',
+      name: 'Two',
+      serverURL: 'https://example.social/',
+      timezone: 'Invalid/Timezone',
+    } as AccountEntity;
+    const notifiedAccount = {
+      id: 'account-id-3',
+      accountName: '@three@mastodon.social',
+      serverURL: 'https://mastodon.social',
+      timezone: 'UTC',
+      staleNoticeSentAt: new Date('2026-01-01T00:00:00.000Z'),
+    } as AccountEntity;
+
+    const createUser = (accounts: AccountEntity[], locale = 'en') =>
+      ({
+        ...mockUser,
+        locale,
+        accounts: {
+          init: jest.fn().mockResolvedValue(undefined),
+          getItems: jest.fn().mockReturnValue(accounts),
+        },
+      }) as unknown as UserEntity;
+
+    let sendSpy: jest.SpyInstance;
+    let accounts: AccountEntity[];
+
+    beforeEach(() => {
+      accounts = [{ ...ownAccount1 }, { ...ownAccount2 }, { ...notifiedAccount }] as AccountEntity[];
+      sendSpy = jest.spyOn(service, 'sendStaleAccountNoticeMail').mockResolvedValue(undefined);
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      usersService.findById.mockResolvedValue(null);
+      const dto: StaleAccountMailDto = { userID: 'missing', accountIDs: ['account-id-1'] };
+
+      await expect(service.processAndSendStaleAccountNoticeMail(dto)).rejects.toThrow(NotFoundException);
+      expect(sendSpy).not.toHaveBeenCalled();
+    });
+
+    it('should send one email for all own stale accounts and flag them afterwards', async () => {
+      usersService.findById.mockResolvedValue(createUser(accounts));
+      followersService.getTotalSnapshot.mockImplementation(async (account) =>
+        account.id === 'account-id-1' ? { amount: 10, day: new Date('2026-01-01T23:00:00.000Z') } : null,
+      );
+
+      await service.processAndSendStaleAccountNoticeMail({
+        userID: mockUser.id,
+        accountIDs: ['account-id-1', 'account-id-2'],
+      });
+
+      expect(sendSpy).toHaveBeenCalledTimes(1);
+      const [, items] = sendSpy.mock.calls[0];
+      expect(items).toEqual([
+        {
+          accountName: '@one@mastodon.social',
+          server: 'mastodon.social',
+          lastUpdate: 'January 2, 2026', // formatted in the account's timezone
+          reconnectURL: 'http://localhost:3000/settings/accounts/account-id-1',
+          reconnectLabel: 'Reconnect @one@mastodon.social',
+        },
+        {
+          accountName: 'Two',
+          server: 'example.social',
+          lastUpdate: null,
+          reconnectURL: 'http://localhost:3000/settings/accounts/account-id-2',
+          reconnectLabel: 'Reconnect Two',
+        },
+      ]);
+
+      expect(accounts[0].staleNoticeSentAt).toBeInstanceOf(Date);
+      expect(accounts[1].staleNoticeSentAt).toBeInstanceOf(Date);
+      expect(accountEntityManager.persistAndFlush).toHaveBeenCalledWith([accounts[0], accounts[1]]);
+      // The flag is persisted only after the email was sent
+      expect(sendSpy.mock.invocationCallOrder[0]).toBeLessThan(
+        accountEntityManager.persistAndFlush.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('should ignore accounts that do not belong to the user', async () => {
+      usersService.findById.mockResolvedValue(createUser(accounts));
+
+      await service.processAndSendStaleAccountNoticeMail({
+        userID: mockUser.id,
+        accountIDs: ['account-id-1', 'foreign-account-id'],
+      });
+
+      const [, items] = sendSpy.mock.calls[0];
+      expect(items.map((item: StaleAccountItem) => item.accountName)).toEqual(['@one@mastodon.social']);
+      expect(accountEntityManager.persistAndFlush).toHaveBeenCalledWith([accounts[0]]);
+    });
+
+    it('should not send anything if only foreign accounts are given', async () => {
+      usersService.findById.mockResolvedValue(createUser(accounts));
+
+      await service.processAndSendStaleAccountNoticeMail({
+        userID: mockUser.id,
+        accountIDs: ['foreign-account-id'],
+      });
+
+      expect(sendSpy).not.toHaveBeenCalled();
+      expect(accountEntityManager.persistAndFlush).not.toHaveBeenCalled();
+      expect(loggerWarnSpy).toHaveBeenCalled();
+    });
+
+    it('should skip accounts that were already notified', async () => {
+      usersService.findById.mockResolvedValue(createUser(accounts));
+
+      await service.processAndSendStaleAccountNoticeMail({
+        userID: mockUser.id,
+        accountIDs: ['account-id-3'],
+      });
+
+      expect(sendSpy).not.toHaveBeenCalled();
+      expect(accountEntityManager.persistAndFlush).not.toHaveBeenCalled();
+      expect(accounts[2].staleNoticeSentAt).toEqual(notifiedAccount.staleNoticeSentAt);
+    });
+
+    it('should not flag accounts if sending the email fails', async () => {
+      usersService.findById.mockResolvedValue(createUser(accounts));
+      const error = new Error('SMTP down');
+      sendSpy.mockRejectedValueOnce(error);
+
+      await expect(
+        service.processAndSendStaleAccountNoticeMail({ userID: mockUser.id, accountIDs: ['account-id-1'] }),
+      ).rejects.toThrow(error);
+
+      expect(accounts[0].staleNoticeSentAt).toBeUndefined();
+      expect(accountEntityManager.persistAndFlush).not.toHaveBeenCalled();
+    });
+
+    it('should format the last update date in the user locale', async () => {
+      usersService.findById.mockResolvedValue(createUser(accounts, 'de'));
+      followersService.getTotalSnapshot.mockResolvedValue({ amount: 10, day: new Date('2026-01-01T12:00:00.000Z') });
+
+      await service.processAndSendStaleAccountNoticeMail({ userID: mockUser.id, accountIDs: ['account-id-1'] });
+
+      const [, items] = sendSpy.mock.calls[0];
+      expect(items[0].lastUpdate).toBe('1. Januar 2026');
     });
   });
 

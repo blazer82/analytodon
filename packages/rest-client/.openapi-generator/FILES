@@ -69,6 +69,7 @@ src/models/ServerDistributionDto.ts
 src/models/SessionAccountDto.ts
 src/models/SessionUserDto.ts
 src/models/StaleAccountDto.ts
+src/models/StaleAccountMailDto.ts
 src/models/SystemHealthResponseDto.ts
 src/models/TimingMarginDetailDto.ts
 src/models/TimingMarginPairDto.ts

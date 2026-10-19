@@ -7,7 +7,7 @@
     "button": "Verify Email Address",
     "fallback": "If the button doesn't work, you can copy and paste this link into your browser:",
     "signature": "Best regards,"
-   },
+  },
   "passwordReset": {
     "subject": "Reset your Analytodon password!",
     "title": "Password Reset Request",
@@ -48,6 +48,28 @@
     "txtInstruction": "If you don't want your data to be deleted just log in to your dashboard:",
     "txtFeedbackHeading": "Before you go — I'd love your feedback",
     "txtFeedbackMessage": "I'm Raphael, the creator of Analytodon. If you have a moment, I'd really appreciate hearing what you expected from Analytodon or why it wasn't the right fit. Just reply to this email with your thoughts — every bit of feedback helps me improve the tool."
+  },
+  "staleAccountNotice": {
+    "subject": "We can't update your Analytodon stats for {accountName}",
+    "subjectMultiple": "We can't update your Analytodon stats for some of your accounts",
+    "title": "Your Stats Stopped Updating",
+    "greeting": "Hi,",
+    "message": "We haven't been able to collect new stats for the following Mastodon account:",
+    "messageMultiple": "We haven't been able to collect new stats for the following Mastodon accounts:",
+    "server": "Server:",
+    "lastUpdate": "Last successful update:",
+    "noStats": "No stats collected yet",
+    "causesHeading": "Common causes",
+    "causeRevoked": "Analytodon's access was revoked in your Mastodon account settings",
+    "causeMoved": "The account was moved or deleted",
+    "causeInstance": "Your Mastodon server is offline or blocking requests",
+    "actionHeading": "What you can do",
+    "actionMessage": "Reconnecting the account usually fixes this. Open the account settings in Analytodon and connect it again:",
+    "reconnectButton": "Reconnect {accountName}",
+    "support": "If that doesn't help, just reply to this email and we'll look into it.",
+    "notUsingHeading": "No longer using Analytodon?",
+    "notUsingMessage": "You can remove the account yourself in your account settings. If you'd like your whole Analytodon user account and all associated data deleted, just reply to this email and we'll take care of it.",
+    "signature": "Best regards,"
   },
   "weeklyStats": {
     "subject": "Your Week on Mastodon",

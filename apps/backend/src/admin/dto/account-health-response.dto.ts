@@ -22,6 +22,14 @@ export class StaleAccountDto {
 
   @ApiProperty({ example: 8, description: 'Days since last stats update' })
   daysSinceLastUpdate: number;
+
+  @ApiProperty({
+    example: '2026-02-11T18:00:00.000Z',
+    description: 'When the owner was notified that stats stopped updating',
+    nullable: true,
+    required: false,
+  })
+  staleNoticeSentAt?: string | null;
 }
 
 export class IncompleteAccountDto {

@@ -7,6 +7,7 @@ import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { FirstStatsMailDto } from '../../src/mail/dto/first-stats-mail.dto';
 import { OldAccountMailDto } from '../../src/mail/dto/old-account-mail.dto';
+import { StaleAccountMailDto } from '../../src/mail/dto/stale-account-mail.dto';
 import { WeeklyStatsMailDto } from '../../src/mail/dto/weekly-stats-mail.dto';
 import { MailService } from '../../src/mail/mail.service';
 
@@ -21,6 +22,7 @@ describe('MailController (e2e)', () => {
     processAndSendFirstStatsAvailableMail: jest.fn().mockResolvedValue(undefined),
     processAndSendWeeklyStatsMail: jest.fn().mockResolvedValue(undefined),
     processAndSendOldAccountWarningMail: jest.fn().mockResolvedValue(undefined),
+    processAndSendStaleAccountNoticeMail: jest.fn().mockResolvedValue(undefined),
     // Add any other methods of MailService that might be called indirectly or need mocking
   };
 
@@ -62,6 +64,7 @@ describe('MailController (e2e)', () => {
     mockMailService.processAndSendFirstStatsAvailableMail.mockClear();
     mockMailService.processAndSendWeeklyStatsMail.mockClear();
     mockMailService.processAndSendOldAccountWarningMail.mockClear();
+    mockMailService.processAndSendStaleAccountNoticeMail.mockClear();
   });
 
   const validUserId = new ObjectId().toHexString();
@@ -194,6 +197,53 @@ describe('MailController (e2e)', () => {
         .post(oldAccountPath)
         .set('Authorization', `Bearer ${apiKey}`)
         .send(invalidDto)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+  });
+
+  describe('/mail/stale-account (POST)', () => {
+    const staleAccountPath = '/mail/stale-account';
+    const validDto: StaleAccountMailDto = {
+      userID: validUserId,
+      accountIDs: [validAccountId1, validAccountId2],
+    };
+
+    it('should accept the request with valid API key and DTO', async () => {
+      await request(app.getHttpServer())
+        .post(staleAccountPath)
+        .set('Authorization', `Bearer ${apiKey}`)
+        .send(validDto)
+        .expect(HttpStatus.ACCEPTED);
+
+      expect(mockMailService.processAndSendStaleAccountNoticeMail).toHaveBeenCalledWith(validDto);
+    });
+
+    it('should reject with Unauthorized if API key is missing', async () => {
+      await request(app.getHttpServer()).post(staleAccountPath).send(validDto).expect(HttpStatus.UNAUTHORIZED);
+      expect(mockMailService.processAndSendStaleAccountNoticeMail).not.toHaveBeenCalled();
+    });
+
+    it('should reject with Unauthorized if API key is invalid', async () => {
+      await request(app.getHttpServer())
+        .post(staleAccountPath)
+        .set('Authorization', 'Bearer invalidapikey')
+        .send(validDto)
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should reject with Bad Request if accountIDs is empty', async () => {
+      await request(app.getHttpServer())
+        .post(staleAccountPath)
+        .set('Authorization', `Bearer ${apiKey}`)
+        .send({ userID: validUserId, accountIDs: [] })
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should reject with Bad Request if DTO has invalid account ID', async () => {
+      await request(app.getHttpServer())
+        .post(staleAccountPath)
+        .set('Authorization', `Bearer ${apiKey}`)
+        .send({ userID: validUserId, accountIDs: ['invalid-id'] })
         .expect(HttpStatus.BAD_REQUEST);
     });
   });

@@ -2,6 +2,7 @@ import { Flags } from '@oclif/core';
 import { MongoClient, ObjectId } from 'mongodb';
 
 import { BaseCommand } from '../../base';
+import { findStaleAccounts, getStaleCutoff, STALE_ACCOUNT_DAYS } from '../../helpers/staleAccounts';
 import { trackJobRun } from '../../helpers/trackJobRun';
 
 export default class AccountHealth extends BaseCommand {
@@ -41,62 +42,10 @@ export default class AccountHealth extends BaseCommand {
 
         const accountsCol = db.collection('accounts');
         const usersCol = db.collection('users');
-        const dailyAccountStatsCol = db.collection('dailyaccountstats');
 
-        const [staleAccountsRaw, noStatsAccounts, incompleteAccountsRaw, abandonedUsersRaw] = await Promise.all([
-          // Stale accounts: active + setupComplete accounts whose latest stats date is older than 3 days
-          dailyAccountStatsCol
-            .aggregate([
-              { $group: { _id: '$account', lastStatsDate: { $max: '$day' } } },
-              { $match: { lastStatsDate: { $lt: daysAgo(3) } } },
-              {
-                $lookup: {
-                  from: 'accounts',
-                  localField: '_id',
-                  foreignField: '_id',
-                  as: 'account',
-                },
-              },
-              { $unwind: '$account' },
-              { $match: { 'account.isActive': true, 'account.setupComplete': true } },
-              {
-                $lookup: {
-                  from: 'users',
-                  localField: 'account.owner',
-                  foreignField: '_id',
-                  as: 'owner',
-                },
-              },
-              { $unwind: '$owner' },
-              { $sort: { lastStatsDate: 1 } },
-            ])
-            .toArray(),
-
-          // Active + setupComplete accounts with zero stats records
-          accountsCol
-            .aggregate([
-              { $match: { isActive: true, setupComplete: true } },
-              {
-                $lookup: {
-                  from: 'dailyaccountstats',
-                  localField: '_id',
-                  foreignField: 'account',
-                  as: 'stats',
-                },
-              },
-              { $match: { stats: { $size: 0 } } },
-              {
-                $lookup: {
-                  from: 'users',
-                  localField: 'owner',
-                  foreignField: '_id',
-                  as: 'ownerDoc',
-                },
-              },
-              { $unwind: '$ownerDoc' },
-              { $sort: { createdAt: 1 } },
-            ])
-            .toArray(),
+        const [staleRecords, incompleteAccountsRaw, abandonedUsersRaw] = await Promise.all([
+          // Stale accounts: active + setupComplete accounts without new stats for 3+ days
+          findStaleAccounts(db, getStaleCutoff(STALE_ACCOUNT_DAYS, now)),
 
           // Incomplete setups: accounts where setupComplete is false
           accountsCol
@@ -142,26 +91,19 @@ export default class AccountHealth extends BaseCommand {
             .toArray(),
         ]);
 
-        // Map stale accounts (from aggregation pipeline)
-        const staleAccounts = [
-          ...staleAccountsRaw.map((doc) => ({
-            accountId: (doc._id as ObjectId).toHexString(),
-            accountName: doc.account.accountName || doc.account.name || null,
-            serverURL: doc.account.serverURL,
-            ownerEmail: doc.owner.email,
-            lastStatsDate: (doc.lastStatsDate as Date).toISOString(),
-            daysSinceLastUpdate: daysBetween(doc.lastStatsDate as Date, now),
-          })),
-          // Also include active+complete accounts with zero stats
-          ...noStatsAccounts.map((doc) => ({
-            accountId: (doc._id as ObjectId).toHexString(),
-            accountName: doc.accountName || doc.name || null,
-            serverURL: doc.serverURL,
-            ownerEmail: doc.ownerDoc.email,
-            lastStatsDate: null,
-            daysSinceLastUpdate: daysBetween(doc.createdAt as Date, now),
-          })),
-        ];
+        // Map stale accounts (accounts without any stats count from their creation date)
+        const staleAccounts = staleRecords.map(({ account, owner, lastStatsDate }) => {
+          const referenceDate = lastStatsDate ?? (account.createdAt as Date | undefined);
+          return {
+            accountId: (account._id as ObjectId).toHexString(),
+            accountName: account.accountName || account.name || null,
+            serverURL: account.serverURL,
+            ownerEmail: owner.email,
+            lastStatsDate: lastStatsDate ? lastStatsDate.toISOString() : null,
+            daysSinceLastUpdate: referenceDate ? daysBetween(referenceDate, now) : 0,
+            staleNoticeSentAt: account.staleNoticeSentAt ? (account.staleNoticeSentAt as Date).toISOString() : null,
+          };
+        });
 
         // Map incomplete accounts
         const incompleteAccounts = incompleteAccountsRaw.map((doc) => ({

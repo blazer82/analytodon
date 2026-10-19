@@ -45,6 +45,7 @@ USAGE
 * [`analytodon-cli hello world`](#analytodon-cli-hello-world)
 * [`analytodon-cli help [COMMAND]`](#analytodon-cli-help-command)
 * [`analytodon-cli mail oldaccounts`](#analytodon-cli-mail-oldaccounts)
+* [`analytodon-cli mail staleaccounts`](#analytodon-cli-mail-staleaccounts)
 * [`analytodon-cli mail weeklystats`](#analytodon-cli-mail-weeklystats)
 * [`analytodon-cli plugins`](#analytodon-cli-plugins)
 * [`analytodon-cli plugins add PLUGIN`](#analytodon-cli-plugins-add-plugin)
@@ -421,6 +422,34 @@ EXAMPLES
 ```
 
 _See code: [src/commands/mail/oldaccounts.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/mail/oldaccounts.ts)_
+
+## `analytodon-cli mail staleaccounts`
+
+Notify users once when stats for one of their accounts stop updating
+
+```
+USAGE
+  $ analytodon-cli mail staleaccounts [-c <value>] [-d <value>] [-h <value>] [-t <value>] [-u <value>] [-x] [--days <value>]
+    [--maxStaleRatio <value>]
+
+FLAGS
+  -c, --connectionString=<value>  [default: mongodb://localhost:27017] MongoDB connection string
+  -d, --database=<value>          [default: analytodon] Source database name
+  -h, --host=<value>              [default: http://localhost:3000] App host URL
+  -t, --authorization=<value>     [default: no-key] Authorization header
+  -u, --user=<value>              Only process specific user
+  -x, --dryRun                    Dry run, no actual changes made
+      --days=<value>              [default: 3] Days without new stats after which an account counts as stale
+      --maxStaleRatio=<value>     [default: 0.2] Send nothing if more than this share (0-1) of active accounts is newly stale
+
+DESCRIPTION
+  Notify users once when stats for one of their accounts stop updating
+
+EXAMPLES
+  $ analytodon-cli mail staleaccounts
+```
+
+_See code: [src/commands/mail/staleaccounts.ts](https://github.com/blazer82/analytodon/blob/v0.0.0/src/commands/mail/staleaccounts.ts)_
 
 ## `analytodon-cli mail weeklystats`
 
