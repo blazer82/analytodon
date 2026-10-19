@@ -24,12 +24,26 @@ export interface ChartData {
 
 export type ChartType = 'line' | 'bar' | 'area';
 
+const formatDefaultDate = (value: string) =>
+  new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
+
 const Chart: React.FunctionComponent<{
   title?: string;
   data: ChartData[];
   dataLabel?: string;
   type?: ChartType;
-}> = ({ title, data, dataLabel, type = 'line' }) => {
+  /** Formats the x-axis ticks (defaults to "MMM D, YYYY") */
+  tickFormatter?: (time: string) => string;
+  /** Formats the tooltip label (defaults to "MMM D, YYYY") */
+  labelFormatter?: (time: string) => string;
+}> = ({
+  title,
+  data,
+  dataLabel,
+  type = 'line',
+  tickFormatter = formatDefaultDate,
+  labelFormatter = formatDefaultDate,
+}) => {
   const theme = useTheme();
 
   const isLineChart = React.useMemo(() => type === 'line', [type]);
@@ -43,8 +57,7 @@ const Chart: React.FunctionComponent<{
     stroke: theme.palette.text.secondary,
     style: theme.typography.body2,
     tick: { fill: theme.palette.text.secondary, fontSize: 12 },
-    tickFormatter: (tick: string) =>
-      new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(tick)),
+    tickFormatter,
   };
 
   const commonYAxisProps = {
@@ -68,8 +81,7 @@ const Chart: React.FunctionComponent<{
       boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
       border: 'none',
     },
-    labelFormatter: (label: string) =>
-      new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(label)),
+    labelFormatter,
   };
 
   return (

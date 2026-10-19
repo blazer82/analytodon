@@ -30,6 +30,7 @@ src/models/AllTopTootsResponseDto.ts
 src/models/AuthResponseDto.ts
 src/models/BoostedTootDto.ts
 src/models/BoostsKpiDto.ts
+src/models/BusiestDayDto.ts
 src/models/ChartDataPointDto.ts
 src/models/CollectionSizesDto.ts
 src/models/ConnectAccountResponseDto.ts
@@ -53,6 +54,8 @@ src/models/LoginActivityDto.ts
 src/models/LoginDto.ts
 src/models/ManageSubscriptionDto.ts
 src/models/OldAccountMailDto.ts
+src/models/PostActivityBucket.ts
+src/models/PostActivityDto.ts
 src/models/RankedTootDto.ts
 src/models/RecentFailureDto.ts
 src/models/RecipientCountResponseDto.ts

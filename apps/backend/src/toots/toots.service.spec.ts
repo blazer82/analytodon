@@ -9,7 +9,14 @@ import { Response } from 'express';
 
 import * as timeframeHelper from '../shared/utils/timeframe.helper';
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
-import { TootsService, TOP_POSTS_CSV_MAX_ROWS } from './toots.service';
+import { PostActivityBucketEnum } from './dto/post-activity.dto';
+import {
+  pickPostActivityBucket,
+  POST_ACTIVITY_DAILY_MAX_DAYS,
+  POST_ACTIVITY_WEEKLY_MAX_DAYS,
+  TootsService,
+  TOP_POSTS_CSV_MAX_ROWS,
+} from './toots.service';
 
 jest.mock('csv-stringify');
 jest.mock('../shared/utils/timeframe.helper', () => {
@@ -77,6 +84,7 @@ describe('TootsService', () => {
     // Mock TootRepository
     mockTootRepository = {
       find: jest.fn(),
+      count: jest.fn(),
     } as unknown as jest.Mocked<EntityRepository<TootEntity>>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -407,6 +415,311 @@ describe('TootsService', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.send).toHaveBeenCalledWith('Error generating CSV');
+    });
+  });
+
+  describe('pickPostActivityBucket', () => {
+    it('should bucket per day up to the daily threshold, per week up to the weekly threshold, else per month', () => {
+      expect(pickPostActivityBucket(1)).toBe(PostActivityBucketEnum.DAY);
+      expect(pickPostActivityBucket(POST_ACTIVITY_DAILY_MAX_DAYS)).toBe(PostActivityBucketEnum.DAY);
+      expect(pickPostActivityBucket(POST_ACTIVITY_DAILY_MAX_DAYS + 1)).toBe(PostActivityBucketEnum.WEEK);
+      expect(pickPostActivityBucket(POST_ACTIVITY_WEEKLY_MAX_DAYS)).toBe(PostActivityBucketEnum.WEEK);
+      expect(pickPostActivityBucket(POST_ACTIVITY_WEEKLY_MAX_DAYS + 1)).toBe(PostActivityBucketEnum.MONTH);
+      expect(pickPostActivityBucket(366)).toBe(PostActivityBucketEnum.MONTH);
+    });
+  });
+
+  describe('getPostActivity', () => {
+    // September 2026 in Europe/Berlin (UTC+2): [Sep 1 00:00 local, Oct 1 00:00 local)
+    const septemberFrom = new Date('2026-08-31T22:00:00.000Z');
+    const septemberTo = new Date('2026-09-30T22:00:00.000Z');
+
+    it('should count posts per local day with zero-filled buckets in the account timezone', async () => {
+      mockEm.aggregate.mockResolvedValue([
+        { _id: '2026-09-01', count: 1 },
+        { _id: '2026-09-09', count: 4 },
+        { _id: '2026-09-30', count: 2 },
+      ]);
+      mockTootRepository.count.mockResolvedValue(0);
+
+      const result = await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom: septemberFrom,
+        dateTo: septemberTo,
+      });
+
+      expect(mockEm.aggregate).toHaveBeenCalledWith(TootEntity, [
+        {
+          $match: { account: new ObjectId(mockAccountId), createdAt: { $gte: septemberFrom, $lt: septemberTo } },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'Europe/Berlin' } },
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+      expect(result.bucket).toBe(PostActivityBucketEnum.DAY);
+      expect(result.days).toBe(30);
+      expect(result.dateFrom).toBe('2026-09-01');
+      expect(result.dateTo).toBe('2026-09-30');
+      expect(result.chart).toHaveLength(30);
+      expect(result.chart[0]).toEqual({ time: '2026-09-01', value: 1 });
+      expect(result.chart[1]).toEqual({ time: '2026-09-02', value: 0 });
+      expect(result.chart[8]).toEqual({ time: '2026-09-09', value: 4 });
+      expect(result.chart[29]).toEqual({ time: '2026-09-30', value: 2 });
+      expect(result.total).toBe(7);
+      expect(result.daysWithoutPosts).toBe(27);
+      expect(result.busiestDay).toEqual({ date: '2026-09-09', count: 4 });
+    });
+
+    it('should compare against the preceding period of equal length', async () => {
+      mockEm.aggregate.mockResolvedValue([{ _id: '2026-09-10', count: 40 }]);
+      mockTootRepository.count.mockResolvedValue(32);
+
+      const result = await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom: septemberFrom,
+        dateTo: septemberTo,
+      });
+
+      expect(mockTootRepository.count).toHaveBeenCalledWith({
+        account: mockAccountId,
+        createdAt: { $gte: new Date('2026-08-01T22:00:00.000Z'), $lt: septemberFrom },
+      });
+      expect(result.previousPeriodTotal).toBe(32);
+      expect(result.trend).toBeCloseTo(0.25);
+    });
+
+    it('should return a null trend when the previous period has no posts', async () => {
+      mockEm.aggregate.mockResolvedValue([{ _id: '2026-09-10', count: 3 }]);
+      mockTootRepository.count.mockResolvedValue(0);
+
+      const result = await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom: septemberFrom,
+        dateTo: septemberTo,
+      });
+
+      expect(result.previousPeriodTotal).toBe(0);
+      expect(result.trend).toBeNull();
+    });
+
+    it('should handle a period without posts', async () => {
+      mockEm.aggregate.mockResolvedValue([]);
+      mockTootRepository.count.mockResolvedValue(5);
+
+      const result = await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom: septemberFrom,
+        dateTo: septemberTo,
+      });
+
+      expect(result.total).toBe(0);
+      expect(result.trend).toBe(-1);
+      expect(result.busiestDay).toBeNull();
+      expect(result.daysWithoutPosts).toBe(30);
+      expect(result.chart.every((point) => point.value === 0)).toBe(true);
+    });
+
+    it('should handle a DST transition without duplicating or skipping days', async () => {
+      // October 2026 in Europe/Berlin: DST ends on Oct 25, so the period has 31 days but not 31 * 24h
+      mockEm.aggregate.mockResolvedValue([{ _id: '2026-10-25', count: 2 }]);
+      mockTootRepository.count.mockResolvedValue(0);
+
+      const result = await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom: new Date('2026-09-30T22:00:00.000Z'),
+        dateTo: new Date('2026-10-31T23:00:00.000Z'),
+      });
+
+      expect(result.days).toBe(31);
+      expect(result.chart.map((point) => point.time)).toEqual(
+        Array.from({ length: 31 }, (_, i) => `2026-10-${String(i + 1).padStart(2, '0')}`),
+      );
+      expect(result.chart[24]).toEqual({ time: '2026-10-25', value: 2 });
+    });
+
+    it('should bucket per Monday-based week for longer periods, labelling a partial first week with its first day', async () => {
+      // 2026-03-04 (Wednesday) .. 2026-07-01 (Wednesday): 120 days, UTC
+      mockEm.aggregate.mockResolvedValue([
+        { _id: '2026-03-04', count: 1 },
+        { _id: '2026-03-08', count: 2 }, // Sunday, same week as Mar 4
+        { _id: '2026-03-09', count: 3 }, // Monday, next week
+        { _id: '2026-07-01', count: 4 },
+      ]);
+      mockTootRepository.count.mockResolvedValue(0);
+
+      const result = await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'UTC',
+        dateFrom: new Date('2026-03-04T00:00:00.000Z'),
+        dateTo: new Date('2026-07-02T00:00:00.000Z'),
+      });
+
+      expect(result.days).toBe(120);
+      expect(result.bucket).toBe(PostActivityBucketEnum.WEEK);
+      expect(result.chart).toHaveLength(18);
+      expect(result.chart[0]).toEqual({ time: '2026-03-04', value: 3 });
+      expect(result.chart[1]).toEqual({ time: '2026-03-09', value: 3 });
+      expect(result.chart[2]).toEqual({ time: '2026-03-16', value: 0 });
+      expect(result.chart[17]).toEqual({ time: '2026-06-29', value: 4 });
+      expect(result.total).toBe(10);
+      expect(result.busiestDay).toEqual({ date: '2026-07-01', count: 4 });
+    });
+
+    it('should bucket per calendar month for year-long periods', async () => {
+      mockEm.aggregate.mockResolvedValue([
+        { _id: '2025-01-15', count: 2 },
+        { _id: '2025-01-31', count: 1 },
+        { _id: '2025-12-31', count: 5 },
+      ]);
+      mockTootRepository.count.mockResolvedValue(4);
+
+      const result = await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'UTC',
+        dateFrom: new Date('2025-01-01T00:00:00.000Z'),
+        dateTo: new Date('2026-01-01T00:00:00.000Z'),
+      });
+
+      expect(result.bucket).toBe(PostActivityBucketEnum.MONTH);
+      expect(result.days).toBe(365);
+      expect(result.chart).toHaveLength(12);
+      expect(result.chart[0]).toEqual({ time: '2025-01-01', value: 3 });
+      expect(result.chart[1]).toEqual({ time: '2025-02-01', value: 0 });
+      expect(result.chart[11]).toEqual({ time: '2025-12-01', value: 5 });
+      expect(result.trend).toBeCloseTo(1);
+    });
+
+    it('should start the previous period on local midnight across a DST switch (summer -> winter)', async () => {
+      // October 2025 in Europe/Berlin (31 days); the previous period starts Aug 31, still in summer time
+      mockEm.aggregate.mockResolvedValue([]);
+      mockTootRepository.count.mockResolvedValue(0);
+      const dateFrom = new Date('2025-09-30T22:00:00.000Z');
+
+      await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom,
+        dateTo: new Date('2025-10-31T23:00:00.000Z'),
+      });
+
+      expect(mockTootRepository.count).toHaveBeenCalledWith({
+        account: mockAccountId,
+        createdAt: { $gte: new Date('2025-08-30T22:00:00.000Z'), $lt: dateFrom },
+      });
+    });
+
+    it('should start the previous period on local midnight across a DST switch (winter -> summer)', async () => {
+      // November 2025 in Europe/Berlin (30 days, winter time); the previous period starts Oct 2 (summer time)
+      mockEm.aggregate.mockResolvedValue([]);
+      mockTootRepository.count.mockResolvedValue(0);
+      const dateFrom = new Date('2025-10-31T23:00:00.000Z');
+
+      await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom,
+        dateTo: new Date('2025-11-30T23:00:00.000Z'),
+      });
+
+      expect(mockTootRepository.count).toHaveBeenCalledWith({
+        account: mockAccountId,
+        createdAt: { $gte: new Date('2025-10-01T22:00:00.000Z'), $lt: dateFrom },
+      });
+    });
+
+    describe('for a period that is still in progress', () => {
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('should compare with the previous period only up to the same elapsed time', async () => {
+        // "This month" on Oct 19, 2026, 12:00 in Europe/Berlin: Oct 1 .. Oct 19 (19 days)
+        jest.useFakeTimers({ now: new Date('2026-10-19T10:00:00.000Z'), doNotFake: ['nextTick', 'setImmediate'] });
+        mockEm.aggregate.mockResolvedValue([{ _id: '2026-10-05', count: 6 }]);
+        mockTootRepository.count.mockResolvedValue(4);
+
+        const result = await service.getPostActivity({
+          accountId: mockAccountId,
+          timezone: 'Europe/Berlin',
+          dateFrom: new Date('2026-09-30T22:00:00.000Z'),
+          dateTo: new Date('2026-10-19T22:00:00.000Z'),
+        });
+
+        // Previous period: Sep 12 .. Sep 30, cut off at Sep 30, 12:00 local time
+        expect(mockTootRepository.count).toHaveBeenCalledWith({
+          account: mockAccountId,
+          createdAt: {
+            $gte: new Date('2026-09-11T22:00:00.000Z'),
+            $lt: new Date('2026-09-30T10:00:00.000Z'),
+          },
+        });
+        expect(result.inProgress).toBe(true);
+        expect(result.total).toBe(6);
+        expect(result.days).toBe(19);
+        expect(result.previousPeriodTotal).toBe(4);
+        expect(result.trend).toBeCloseTo(0.5);
+      });
+
+      it('should compare full periods once the period has ended', async () => {
+        jest.useFakeTimers({ now: new Date('2026-10-19T10:00:00.000Z'), doNotFake: ['nextTick', 'setImmediate'] });
+        mockEm.aggregate.mockResolvedValue([]);
+        mockTootRepository.count.mockResolvedValue(0);
+
+        const result = await service.getPostActivity({
+          accountId: mockAccountId,
+          timezone: 'Europe/Berlin',
+          dateFrom: septemberFrom,
+          dateTo: septemberTo,
+        });
+
+        expect(result.inProgress).toBe(false);
+        expect(mockTootRepository.count).toHaveBeenCalledWith({
+          account: mockAccountId,
+          createdAt: { $gte: new Date('2026-08-01T22:00:00.000Z'), $lt: septemberFrom },
+        });
+      });
+    });
+
+    it('should normalize timezones stored with spaces', async () => {
+      mockEm.aggregate.mockResolvedValue([]);
+      mockTootRepository.count.mockResolvedValue(0);
+
+      await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'America/New York',
+        dateFrom: new Date('2026-09-01T04:00:00.000Z'),
+        dateTo: new Date('2026-09-08T04:00:00.000Z'),
+      });
+
+      const pipeline = mockEm.aggregate.mock.calls[0][1] as { $group?: { _id: unknown } }[];
+      expect(pipeline[1].$group?._id).toEqual({
+        $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'America/New_York' },
+      });
+    });
+
+    it('should return an empty chart for an empty period', async () => {
+      mockEm.aggregate.mockResolvedValue([]);
+      mockTootRepository.count.mockResolvedValue(0);
+
+      const date = new Date('2026-09-01T00:00:00.000Z');
+      const result = await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'UTC',
+        dateFrom: date,
+        dateTo: date,
+      });
+
+      expect(result.days).toBe(0);
+      expect(result.chart).toEqual([]);
+      expect(result.daysWithoutPosts).toBe(0);
     });
   });
 });
