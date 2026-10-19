@@ -48,11 +48,17 @@ export interface PostActivityDto {
      */
     total: number;
     /**
-     * Number of posts in the period of equal length immediately before the selected period
+     * Number of posts in the period with the same number of days immediately before the selected period. While the selected period is in progress, only counts up to the same elapsed time into that period.
      * @type {number}
      * @memberof PostActivityDto
      */
     previousPeriodTotal: number;
+    /**
+     * Whether the selected period has not ended yet (e.g. "this month")
+     * @type {boolean}
+     * @memberof PostActivityDto
+     */
+    inProgress: boolean;
     /**
      * Relative change vs. the previous period (0.11 = +11%). Null when the previous period has no posts.
      * @type {number}
@@ -111,6 +117,7 @@ export interface PostActivityDto {
 export function instanceOfPostActivityDto(value: object): value is PostActivityDto {
     if (!('total' in value) || value['total'] === undefined) return false;
     if (!('previousPeriodTotal' in value) || value['previousPeriodTotal'] === undefined) return false;
+    if (!('inProgress' in value) || value['inProgress'] === undefined) return false;
     if (!('trend' in value) || value['trend'] === undefined) return false;
     if (!('bucket' in value) || value['bucket'] === undefined) return false;
     if (!('chart' in value) || value['chart'] === undefined) return false;
@@ -134,6 +141,7 @@ export function PostActivityDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
         
         'total': json['total'],
         'previousPeriodTotal': json['previousPeriodTotal'],
+        'inProgress': json['inProgress'],
         'trend': json['trend'],
         'bucket': PostActivityBucketFromJSON(json['bucket']),
         'chart': ((json['chart'] as Array<any>).map(ChartDataPointDtoFromJSON)),
@@ -158,6 +166,7 @@ export function PostActivityDtoToJSONTyped(value?: PostActivityDto | null, ignor
         
         'total': value['total'],
         'previousPeriodTotal': value['previousPeriodTotal'],
+        'inProgress': value['inProgress'],
         'trend': value['trend'],
         'bucket': PostActivityBucketToJSON(value['bucket']),
         'chart': ((value['chart'] as Array<any>).map(ChartDataPointDtoToJSON)),
