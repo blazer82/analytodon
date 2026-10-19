@@ -14,7 +14,7 @@ import megalodon, { Entity as MegalodonEntities, Response as MegalodonResponse }
 import { v4 as uuidv4 } from 'uuid';
 
 import { EncryptionService } from '../shared/services/encryption.service'; // Import EncryptionService
-
+import { MASTODON_USER_AGENT } from '../shared/utils/mastodon-client';
 import { UsersService } from '../users/users.service';
 import { AccountsService } from './accounts.service';
 import { ConnectAccountCallbackQueryDto } from './dto/connect-account-callback.dto';
@@ -430,6 +430,13 @@ describe('AccountsService', () => {
 
       const result = await service.initiateConnection(accountId, mockOwner);
 
+      expect(megalodon).toHaveBeenCalledWith(
+        'mastodon',
+        mockAccountEntity.serverURL,
+        null,
+        MASTODON_USER_AGENT,
+        expect.anything(),
+      );
       expect(mockMegalodonClient.registerApp).toHaveBeenCalled();
       expect(mockEncryptionService.encrypt).toHaveBeenCalledWith(rawClientSecret);
       expect(mastodonAppRepository.create).toHaveBeenCalledWith(
@@ -564,6 +571,13 @@ describe('AccountsService', () => {
       );
       expect(mockEncryptionService.encrypt).toHaveBeenCalledWith(rawAccessToken);
       expect(mockMegalodonClient.verifyAccountCredentials).toHaveBeenCalledWith(); // Called with raw token by megalodon client
+      expect(megalodon).toHaveBeenCalledWith(
+        'mastodon',
+        populatedAccountCredentials.account.serverURL,
+        rawAccessToken,
+        MASTODON_USER_AGENT,
+        expect.anything(),
+      );
       expect(mockEntityAssignFunction).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Mastodon User',

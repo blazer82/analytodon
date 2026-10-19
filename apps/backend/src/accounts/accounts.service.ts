@@ -11,11 +11,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ObjectId } from 'bson';
-import generator, { Entity as MegalodonEntities, MegalodonInterface } from 'megalodon';
+import { Entity as MegalodonEntities, MegalodonInterface } from 'megalodon';
 import { v4 as uuidv4 } from 'uuid';
 
 import { EncryptionService } from '../shared/services/encryption.service'; // Import EncryptionService
-
+import { createMastodonClient } from '../shared/utils/mastodon-client';
 import { ConnectAccountCallbackQueryDto } from './dto/connect-account-callback.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -215,7 +215,7 @@ export class AccountsService {
     try {
       if (!mastodonApp) {
         this.logger.log(`No Mastodon app registered for server ${account.serverURL}. Registering now.`);
-        megalodonClient = generator('mastodon', account.serverURL);
+        megalodonClient = createMastodonClient(account.serverURL);
         let appName = this.configService.get<string>('MASTODON_APP_NAME', 'Analytodon');
         const nodeEnv = this.configService.get<string>('NODE_ENV');
         if (nodeEnv && nodeEnv !== 'production') {
@@ -336,7 +336,7 @@ export class AccountsService {
         throw new InternalServerErrorException('Failed to retrieve client credentials for authentication.');
       }
 
-      oauthClient = generator('mastodon', account.serverURL);
+      oauthClient = createMastodonClient(account.serverURL);
       const tokenData: MegalodonEntities.Token = await oauthClient.fetchAccessToken(
         mastodonApp.clientID,
         decryptedClientSecret, // Use decrypted client secret
@@ -356,7 +356,7 @@ export class AccountsService {
       accountCredentials.legacyClientSecret = undefined;
 
       // Use the original, unencrypted access token for the Megalodon client
-      mastodonClient = generator('mastodon', account.serverURL, tokenData.access_token);
+      mastodonClient = createMastodonClient(account.serverURL, tokenData.access_token);
       const mastodonAccountInfoResponse = await mastodonClient.verifyAccountCredentials();
       const mastodonAccountInfo: MegalodonEntities.Account = mastodonAccountInfoResponse.data;
 
