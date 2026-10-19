@@ -20,7 +20,7 @@ jest.mock('../shared/utils/timeframe.helper', () => ({
 
 describe('TootsController', () => {
   let controller: TootsController;
-  let tootsService: jest.Mocked<Pick<TootsService, 'getPostActivity' | 'getPostingTimes'>>;
+  let tootsService: jest.Mocked<Pick<TootsService, 'getPostActivity' | 'getPostingTimes' | 'getTopToots'>>;
 
   const account = { id: '60d0fe4f5311236168a109ca', timezone: 'Europe/Berlin' } as AccountEntity;
   const user = { id: '60d0fe4f5311236168a109cb' } as UserEntity;
@@ -30,7 +30,14 @@ describe('TootsController', () => {
     tootsService = {
       getPostActivity: jest.fn(),
       getPostingTimes: jest.fn(),
+      getTopToots: jest.fn().mockResolvedValue([]),
     };
+    mockedResolveTimeframe.mockReset();
+    mockedResolveTimeframe.mockReturnValue({
+      dateFrom: new Date('2024-01-01T00:00:00.000Z'),
+      dateTo: new Date('2024-02-01T00:00:00.000Z'),
+      timeframe: 'last30days',
+    });
 
     const allowGuard = { canActivate: () => true };
     const module: TestingModule = await Test.createTestingModule({
@@ -132,6 +139,34 @@ describe('TootsController', () => {
       );
 
       expect(tootsService.getPostingTimes).toHaveBeenCalledWith(account, 'custom', '2024-01-01', '2024-01-31');
+    });
+  });
+
+  describe('getTopTootsSummary', () => {
+    it.each([
+      ['Europe/Berlin', 'Europe/Berlin'],
+      ['America/New York', 'America/New_York'],
+      ['europe/berlin', 'Europe/Berlin'],
+      ['Not/AZone', 'UTC'],
+    ])('resolves the timeframe in the normalized account timezone (%p -> %p)', async (timezone, expected) => {
+      await controller.getTopTootsSummary(
+        account.id,
+        { ...account, timezone } as AccountEntity,
+        { timeframe: 'last30days' },
+        user,
+      );
+
+      expect(mockedResolveTimeframe).toHaveBeenCalledTimes(1);
+      expect(mockedResolveTimeframe).toHaveBeenCalledWith(expected, 'last30days', {
+        dateFrom: undefined,
+        dateTo: undefined,
+      });
+      expect(tootsService.getTopToots).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dateFrom: new Date('2024-01-01T00:00:00.000Z'),
+          dateTo: new Date('2024-02-01T00:00:00.000Z'),
+        }),
+      );
     });
   });
 });

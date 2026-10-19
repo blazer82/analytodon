@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { TimeframeQueryDto } from '../shared/dto/timeframe-query.dto';
 import { resolveTimeframe } from '../shared/utils/timeframe.helper';
+import { resolveTimezone } from '../shared/utils/timezone';
 import { AllTopTootsResponseDto } from './dto/all-top-toots-response.dto';
 import { TootRankingEnum } from './dto/get-top-toots-query.dto';
 import { PostActivityDto } from './dto/post-activity.dto';
@@ -50,7 +51,7 @@ export class TootsController {
       dateFrom,
       dateTo,
       timeframe: resolvedTimeframe,
-    } = resolveTimeframe(account.timezone, query.timeframe, {
+    } = resolveTimeframe(resolveTimezone(account.timezone), query.timeframe, {
       dateFrom: query.dateFrom,
       dateTo: query.dateTo,
     });
