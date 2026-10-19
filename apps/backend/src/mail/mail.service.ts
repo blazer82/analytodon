@@ -759,7 +759,7 @@ export class MailService {
   private formatStatsDay(day: Date, locale: string, timezone?: string): string {
     const options: Intl.DateTimeFormatOptions = { dateStyle: 'long' };
     try {
-      return new Intl.DateTimeFormat(locale, { ...options, timeZone: timezone?.replace(' ', '_') }).format(day);
+      return new Intl.DateTimeFormat(locale, { ...options, timeZone: timezone?.replace(/ /g, '_') }).format(day);
     } catch {
       // Invalid or unknown timezone
       return new Intl.DateTimeFormat(locale, { ...options, timeZone: 'UTC' }).format(day);
