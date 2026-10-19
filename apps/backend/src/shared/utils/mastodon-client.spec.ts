@@ -31,6 +31,13 @@ describe('createMastodonClient', () => {
     expect(receivedHeaders[0].authorization).toBe('Bearer token');
   });
 
+  it('should send the Analytodon user agent when registering an app', async () => {
+    await createMastodonClient(serverURL).registerApp('Analytodon', { scopes: ['read'] });
+
+    expect(receivedHeaders.length).toBeGreaterThan(0);
+    expect(receivedHeaders[0]['user-agent']).toBe(MASTODON_USER_AGENT);
+  });
+
   it('should send the Analytodon user agent on OAuth requests without an access token', async () => {
     await createMastodonClient(serverURL).fetchAccessToken('client-id', 'client-secret', 'code', 'http://localhost');
 
