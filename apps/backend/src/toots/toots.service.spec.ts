@@ -597,26 +597,95 @@ describe('TootsService', () => {
       expect(result.trend).toBeCloseTo(1);
     });
 
-    it('should fall back to UTC for a missing or unknown timezone', async () => {
+    it('should start the previous period on local midnight across a DST switch (summer -> winter)', async () => {
+      // October 2025 in Europe/Berlin (31 days); the previous period starts Aug 31, still in summer time
       mockEm.aggregate.mockResolvedValue([]);
       mockTootRepository.count.mockResolvedValue(0);
+      const dateFrom = new Date('2025-09-30T22:00:00.000Z');
 
-      for (const timezone of [undefined, null, 'Not/AZone']) {
-        mockEm.aggregate.mockClear();
+      await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom,
+        dateTo: new Date('2025-10-31T23:00:00.000Z'),
+      });
+
+      expect(mockTootRepository.count).toHaveBeenCalledWith({
+        account: mockAccountId,
+        createdAt: { $gte: new Date('2025-08-30T22:00:00.000Z'), $lt: dateFrom },
+      });
+    });
+
+    it('should start the previous period on local midnight across a DST switch (winter -> summer)', async () => {
+      // November 2025 in Europe/Berlin (30 days, winter time); the previous period starts Oct 2 (summer time)
+      mockEm.aggregate.mockResolvedValue([]);
+      mockTootRepository.count.mockResolvedValue(0);
+      const dateFrom = new Date('2025-10-31T23:00:00.000Z');
+
+      await service.getPostActivity({
+        accountId: mockAccountId,
+        timezone: 'Europe/Berlin',
+        dateFrom,
+        dateTo: new Date('2025-11-30T23:00:00.000Z'),
+      });
+
+      expect(mockTootRepository.count).toHaveBeenCalledWith({
+        account: mockAccountId,
+        createdAt: { $gte: new Date('2025-10-01T22:00:00.000Z'), $lt: dateFrom },
+      });
+    });
+
+    describe('for a period that is still in progress', () => {
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('should compare with the previous period only up to the same elapsed time', async () => {
+        // "This month" on Oct 19, 2026, 12:00 in Europe/Berlin: Oct 1 .. Oct 19 (19 days)
+        jest.useFakeTimers({ now: new Date('2026-10-19T10:00:00.000Z'), doNotFake: ['nextTick', 'setImmediate'] });
+        mockEm.aggregate.mockResolvedValue([{ _id: '2026-10-05', count: 6 }]);
+        mockTootRepository.count.mockResolvedValue(4);
+
         const result = await service.getPostActivity({
           accountId: mockAccountId,
-          timezone,
-          dateFrom: new Date('2026-09-01T00:00:00.000Z'),
-          dateTo: new Date('2026-09-08T00:00:00.000Z'),
+          timezone: 'Europe/Berlin',
+          dateFrom: new Date('2026-09-30T22:00:00.000Z'),
+          dateTo: new Date('2026-10-19T22:00:00.000Z'),
         });
 
-        const pipeline = mockEm.aggregate.mock.calls[0][1] as { $group?: { _id: unknown } }[];
-        expect(pipeline[1].$group?._id).toEqual({
-          $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'UTC' },
+        // Previous period: Sep 12 .. Sep 30, cut off at Sep 30, 12:00 local time
+        expect(mockTootRepository.count).toHaveBeenCalledWith({
+          account: mockAccountId,
+          createdAt: {
+            $gte: new Date('2026-09-11T22:00:00.000Z'),
+            $lt: new Date('2026-09-30T10:00:00.000Z'),
+          },
         });
-        expect(result.dateFrom).toBe('2026-09-01');
-        expect(result.dateTo).toBe('2026-09-07');
-      }
+        expect(result.inProgress).toBe(true);
+        expect(result.total).toBe(6);
+        expect(result.days).toBe(19);
+        expect(result.previousPeriodTotal).toBe(4);
+        expect(result.trend).toBeCloseTo(0.5);
+      });
+
+      it('should compare full periods once the period has ended', async () => {
+        jest.useFakeTimers({ now: new Date('2026-10-19T10:00:00.000Z'), doNotFake: ['nextTick', 'setImmediate'] });
+        mockEm.aggregate.mockResolvedValue([]);
+        mockTootRepository.count.mockResolvedValue(0);
+
+        const result = await service.getPostActivity({
+          accountId: mockAccountId,
+          timezone: 'Europe/Berlin',
+          dateFrom: septemberFrom,
+          dateTo: septemberTo,
+        });
+
+        expect(result.inProgress).toBe(false);
+        expect(mockTootRepository.count).toHaveBeenCalledWith({
+          account: mockAccountId,
+          createdAt: { $gte: new Date('2026-08-01T22:00:00.000Z'), $lt: septemberFrom },
+        });
+      });
     });
 
     it('should normalize timezones stored with spaces', async () => {

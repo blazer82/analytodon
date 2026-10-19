@@ -242,6 +242,74 @@ describe('TootsController (e2e)', () => {
   });
 
   describe('GET /accounts/:accountId/toots/activity', () => {
+    let otherAccount: AccountEntity;
+    let otherUserAccessToken: string;
+
+    beforeAll(async () => {
+      // A second user with their own account and posts in the same timeframe
+      const emFork = orm.em.fork();
+      const otherUser = await usersService.create({ ...testUserData, email: 'toots-e2e-other@example.com' });
+      otherUser.emailVerified = true;
+      await emFork.persistAndFlush(otherUser);
+      otherUserAccessToken = jwtService.sign(
+        { sub: otherUser.id, email: otherUser.email, role: otherUser.role },
+        {
+          secret: configService.get<string>(authConstants.JWT_SECRET_KEY, authConstants.JWT_DEFAULT_SECRET),
+          expiresIn: configService.get<StringValue>(
+            authConstants.JWT_EXPIRES_IN_KEY,
+            authConstants.JWT_DEFAULT_EXPIRES_IN,
+          ),
+        },
+      );
+
+      otherAccount = await accountsService.create(
+        { ...createAccountDto, name: 'Other Toots Account', serverURL: 'https://other.test' },
+        otherUser,
+      );
+      otherAccount.setupComplete = true;
+      await emFork.persistAndFlush(otherAccount);
+
+      const otherToots = [1, 2].map((daysAgo) =>
+        emFork.create(TootEntity, {
+          account: otherAccount,
+          uri: `tag:other.test,2023-01-01:other${daysAgo}`,
+          url: `https://other.test/users/other/statuses/${daysAgo}`,
+          content: 'Another account posting',
+          reblogsCount: 0,
+          favouritesCount: 0,
+          repliesCount: 0,
+          createdAt: new Date(new Date().setDate(new Date().getDate() - daysAgo)),
+          language: 'en',
+          visibility: 'public',
+          fetchedAt: new Date(),
+        }),
+      );
+      await emFork.persistAndFlush(otherToots);
+    });
+
+    it('should only count posts of the requested account', async () => {
+      const [own, other] = await Promise.all([
+        request(app.getHttpServer())
+          .get(`/accounts/${testAccount.id}/toots/activity?timeframe=last7days`)
+          .set('Authorization', `Bearer ${testUserAccessToken}`)
+          .expect(HttpStatus.OK),
+        request(app.getHttpServer())
+          .get(`/accounts/${otherAccount.id}/toots/activity?timeframe=last7days`)
+          .set('Authorization', `Bearer ${otherUserAccessToken}`)
+          .expect(HttpStatus.OK),
+      ]);
+
+      expect(own.body.total).toBe(4);
+      expect(other.body.total).toBe(2);
+    });
+
+    it("should return 404 for another user's account", async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${otherAccount.id}/toots/activity?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+
     it('should count posts per day for the timeframe', async () => {
       const response = await request(app.getHttpServer())
         .get(`/accounts/${testAccount.id}/toots/activity?timeframe=last7days`)
@@ -257,6 +325,7 @@ describe('TootsController (e2e)', () => {
       expect(response.body.busiestDay).toEqual({ date: expect.any(String), count: 1 });
       expect(response.body.previousPeriodTotal).toBe(0);
       expect(response.body.trend).toBeNull();
+      expect(response.body.inProgress).toBe(false);
     });
 
     it('should bucket a year-long custom range per month', async () => {

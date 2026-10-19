@@ -60,6 +60,7 @@ describe('TootsController', () => {
       const activity: PostActivityDto = {
         total: 1,
         previousPeriodTotal: 0,
+        inProgress: false,
         trend: null,
         bucket: PostActivityBucketEnum.DAY,
         chart: [],

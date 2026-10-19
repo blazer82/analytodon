@@ -25,7 +25,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface GetPostActivityOptions {
   accountId: string;
-  timezone?: string | null;
+  timezone: string;
   dateFrom: Date;
   dateTo: Date;
 }
@@ -37,17 +37,11 @@ export const pickPostActivityBucket = (days: number): PostActivityBucketEnum => 
   return PostActivityBucketEnum.MONTH;
 };
 
-/** Returns a timezone identifier usable by both Intl and MongoDB, falling back to UTC. */
-const normalizeTimezone = (timezone?: string | null): string => {
-  const candidate = timezone?.trim().replace(/ /g, '_');
-  if (!candidate) return 'UTC';
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: candidate });
-    return candidate;
-  } catch {
-    return 'UTC';
-  }
-};
+/**
+ * Same normalization as resolveTimeframe (which has already rejected unknown timezones
+ * by the time we get here), so the Mongo grouping and the timeframe bounds agree.
+ */
+const normalizeTimezone = (timezone: string): string => timezone.replace(' ', '_');
 
 /** Calendar day (YYYY-MM-DD) of the given instant in the given timezone. */
 const toLocalDay = (date: Date, timezone: string): string =>
@@ -58,6 +52,42 @@ const toLocalDay = (date: Date, timezone: string): string =>
 /** Pure calendar arithmetic on YYYY-MM-DD strings (no timezone involved). */
 const addDays = (day: string, amount: number): string =>
   new Date(Date.parse(`${day}T00:00:00.000Z`) + amount * DAY_MS).toISOString().slice(0, 10);
+
+/** Number of calendar days from `from` to `to` (YYYY-MM-DD). */
+const daysBetween = (from: string, to: string): number =>
+  Math.round((Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / DAY_MS);
+
+/** UTC offset (local minus UTC, in ms) of the given timezone at the given instant. */
+const timezoneOffsetMs = (instant: number, timezone: string): number => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(new Date(instant));
+  const part = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((p) => p.type === type)?.value);
+  const localAsUtc = Date.UTC(
+    part('year'),
+    part('month') - 1,
+    part('day'),
+    part('hour'),
+    part('minute'),
+    part('second'),
+  );
+  return localAsUtc - Math.floor(instant / 1000) * 1000;
+};
+
+/** Instant of local midnight at the start of the given calendar day in the given timezone. */
+const localDayStart = (day: string, timezone: string): Date => {
+  const midnightAsUtc = Date.parse(`${day}T00:00:00.000Z`);
+  const firstGuess = midnightAsUtc - timezoneOffsetMs(midnightAsUtc, timezone);
+  // Re-evaluate the offset at the guessed instant so days with a DST switch resolve correctly
+  return new Date(midnightAsUtc - timezoneOffsetMs(firstGuess, timezone));
+};
 
 /** First day of the bucket (Monday-based weeks, calendar months) that contains the given day. */
 const bucketStart = (day: string, bucket: PostActivityBucketEnum): string => {
@@ -141,11 +171,12 @@ export class TootsService {
 
   /**
    * Counts the account's posts in the [dateFrom, dateTo) window and buckets them by
-   * calendar day in the account's timezone (falling back to UTC). The chart is
-   * zero-filled and bucketed per day, week or month depending on the period length
-   * (see POST_ACTIVITY_DAILY_MAX_DAYS / POST_ACTIVITY_WEEKLY_MAX_DAYS); a partial first
-   * week/month bucket is labelled with the period's first day. The trend compares
-   * against the immediately preceding period of equal length.
+   * calendar day in the account's timezone. The chart is zero-filled and bucketed per
+   * day, week or month depending on the period length (see POST_ACTIVITY_DAILY_MAX_DAYS /
+   * POST_ACTIVITY_WEEKLY_MAX_DAYS); a partial first week/month bucket is labelled with
+   * the period's first day. The trend compares against the immediately preceding period
+   * with the same number of days, cut off at the same elapsed time while the current
+   * period is still in progress.
    *
    * "Posts" are the toots Analytodon stores: the account's own public and unlisted
    * statuses including its replies, excluding boosts.
@@ -153,7 +184,34 @@ export class TootsService {
   async getPostActivity(options: GetPostActivityOptions): Promise<PostActivityDto> {
     const { accountId, dateFrom, dateTo } = options;
     const timezone = normalizeTimezone(options.timezone);
-    const previousDateFrom = new Date(dateFrom.getTime() - (dateTo.getTime() - dateFrom.getTime()));
+
+    const days: string[] = [];
+    if (dateFrom < dateTo) {
+      const lastDay = toLocalDay(new Date(dateTo.getTime() - 1), timezone);
+      for (let day = toLocalDay(dateFrom, timezone); day <= lastDay; day = addDays(day, 1)) {
+        days.push(day);
+      }
+    }
+
+    // The previous period has the same number of calendar days (in the account's timezone,
+    // so DST shifts don't move its start). For a period that is still in progress, only the
+    // part of the previous period up to the same point in time is compared, like-for-like.
+    const now = new Date();
+    const inProgress = dateFrom < now && now < dateTo;
+    let previousDateFrom = dateFrom;
+    let previousDateTo = dateFrom;
+    if (days.length > 0) {
+      const previousFirstDay = addDays(days[0], -days.length);
+      previousDateFrom = localDayStart(previousFirstDay, timezone);
+      if (inProgress) {
+        const today = toLocalDay(now, timezone);
+        const elapsedSinceMidnight = now.getTime() - localDayStart(today, timezone).getTime();
+        const comparableDay = addDays(previousFirstDay, daysBetween(days[0], today));
+        previousDateTo = new Date(
+          Math.min(localDayStart(comparableDay, timezone).getTime() + elapsedSinceMidnight, dateFrom.getTime()),
+        );
+      }
+    }
 
     const [dailyCounts, previousPeriodTotal] = await Promise.all([
       this.em.aggregate(TootEntity, [
@@ -165,16 +223,8 @@ export class TootsService {
           },
         },
       ]) as Promise<{ _id: string; count: number }[]>,
-      this.tootRepository.count({ account: accountId, createdAt: { $gte: previousDateFrom, $lt: dateFrom } }),
+      this.tootRepository.count({ account: accountId, createdAt: { $gte: previousDateFrom, $lt: previousDateTo } }),
     ]);
-
-    const days: string[] = [];
-    if (dateFrom < dateTo) {
-      const lastDay = toLocalDay(new Date(dateTo.getTime() - 1), timezone);
-      for (let day = toLocalDay(dateFrom, timezone); day <= lastDay; day = addDays(day, 1)) {
-        days.push(day);
-      }
-    }
 
     const countsByDay = new Map(dailyCounts.map(({ _id, count }) => [_id, count]));
     const bucket = pickPostActivityBucket(days.length);
@@ -192,9 +242,12 @@ export class TootsService {
       if (count > 0 && (!busiestDay || count > busiestDay.count)) busiestDay = { date: day, count };
     }
 
+    // Posts can't lie in the future, so for an in-progress period `total` already is the
+    // count up to now and compares like-for-like with `previousPeriodTotal`.
     return {
       total,
       previousPeriodTotal,
+      inProgress,
       trend: previousPeriodTotal > 0 ? (total - previousPeriodTotal) / previousPeriodTotal : null,
       bucket,
       chart: Array.from(buckets, ([time, value]) => ({ time, value })),

@@ -22,9 +22,17 @@ export class PostActivityDto {
 
   @ApiProperty({
     example: 36,
-    description: 'Number of posts in the period of equal length immediately before the selected period',
+    description:
+      'Number of posts in the period with the same number of days immediately before the selected period. ' +
+      'While the selected period is in progress, only counts up to the same elapsed time into that period.',
   })
   previousPeriodTotal!: number;
+
+  @ApiProperty({
+    example: false,
+    description: 'Whether the selected period has not ended yet (e.g. "this month")',
+  })
+  inProgress!: boolean;
 
   @ApiProperty({
     example: 0.11,
