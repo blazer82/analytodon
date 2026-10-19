@@ -13,6 +13,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChartDataPointDto } from '../shared/dto/chart-data-point.dto';
 import { TimeframeQueryDto } from '../shared/dto/timeframe-query.dto';
 import { TotalSnapshotDto } from '../shared/dto/total-snapshot.dto';
+import { FollowerServersDto, FollowerServersQueryDto } from './dto/follower-servers.dto';
 import { FollowersKpiDto } from './dto/followers-kpi.dto';
 import { FollowersService } from './followers.service';
 
@@ -83,6 +84,22 @@ export class FollowersController {
   ): Promise<TotalSnapshotDto | null> {
     this.logger.log(`Getting total followers snapshot for account ${account.id}, user ${user.id}`);
     return this.followersService.getTotalSnapshot(account);
+  }
+
+  @Get('servers')
+  @Roles(UserRole.AccountOwner)
+  @ApiOperation({ summary: "Get the distribution of an account's followers across servers (latest weekly snapshot)" })
+  @ApiParam({ name: 'accountId', description: 'The ID of the account' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of top servers (default 10)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Follower servers distribution.', type: FollowerServersDto })
+  async getFollowerServers(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @Query() query: FollowerServersQueryDto,
+    @GetUser() user: UserEntity,
+  ): Promise<FollowerServersDto> {
+    this.logger.log(`Getting follower servers for account ${account.id}, user ${user.id}`);
+    return this.followersService.getFollowerServers(account, query.limit ?? 10);
   }
 
   @Get('chart')

@@ -1,4 +1,4 @@
-import { AccountEntity, DailyAccountStatsEntity } from '@analytodon/shared-orm';
+import { AccountEntity, DailyAccountStatsEntity, FollowerServerSnapshotEntity } from '@analytodon/shared-orm';
 import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, Logger } from '@nestjs/common';
@@ -19,6 +19,7 @@ import {
   PeriodKPIOptions,
   resolveTimeframe,
 } from '../shared/utils/timeframe.helper';
+import { FollowerServersDto, FollowerServersStatus } from './dto/follower-servers.dto';
 import { FollowersKpiDto } from './dto/followers-kpi.dto';
 
 @Injectable()
@@ -29,6 +30,8 @@ export class FollowersService {
     private readonly em: EntityManager,
     @InjectRepository(DailyAccountStatsEntity)
     private readonly dailyAccountStatsRepository: EntityRepository<DailyAccountStatsEntity>,
+    @InjectRepository(FollowerServerSnapshotEntity)
+    private readonly followerServerSnapshotRepository: EntityRepository<FollowerServerSnapshotEntity>,
     private readonly accountsService: AccountsService,
   ) {}
 
@@ -134,6 +137,61 @@ export class FollowersService {
       };
     }
     return null;
+  }
+
+  /**
+   * Retrieves the distribution of an account's followers across servers from the latest weekly snapshot.
+   * @param account - The loaded account entity.
+   * @param limit - Number of top servers to return; all other servers are aggregated.
+   * @returns A promise that resolves to the follower servers DTO.
+   */
+  async getFollowerServers(account: Loaded<AccountEntity>, limit = 10): Promise<FollowerServersDto> {
+    const [snapshot] = await this.followerServerSnapshotRepository.find(
+      { account: account.id },
+      { orderBy: { fetchedAt: 'DESC' }, limit: 1 },
+    );
+
+    if (!snapshot) {
+      return { status: FollowerServersStatus.Pending };
+    }
+
+    if (snapshot.hidden) {
+      return {
+        status: FollowerServersStatus.Hidden,
+        day: snapshot.day,
+        totalFollowers: snapshot.totalFollowers,
+      };
+    }
+
+    const servers = [...(snapshot.servers ?? [])].sort((a, b) => b.count - a.count);
+    const counted = servers.reduce((sum, { count }) => sum + count, 0);
+    const share = (count: number) => (counted > 0 ? count / counted : 0);
+    const homeServer = snapshot.homeServer ?? this.getHostname(account.serverURL);
+    const homeCount = servers.find(({ domain }) => domain === homeServer)?.count ?? 0;
+
+    const top = servers.slice(0, limit);
+    const rest = servers.slice(limit);
+    const otherCount = rest.reduce((sum, { count }) => sum + count, 0);
+
+    return {
+      status: FollowerServersStatus.Available,
+      day: snapshot.day,
+      totalFollowers: snapshot.totalFollowers,
+      sampledFollowers: snapshot.sampledFollowers,
+      serverCount: servers.length,
+      homeServer,
+      homeShare: share(homeCount),
+      top: top.map(({ domain, count }) => ({ domain, count, share: share(count) })),
+      other: { servers: rest.length, count: otherCount, share: share(otherCount) },
+    };
+  }
+
+  private getHostname(serverURL: string): string {
+    try {
+      return new URL(serverURL).hostname;
+    } catch {
+      return serverURL;
+    }
   }
 
   /**

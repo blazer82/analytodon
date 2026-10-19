@@ -1,6 +1,7 @@
 import {
   AccountEntity,
   DailyAccountStatsEntity,
+  FollowerServerSnapshotEntity,
   UserCredentialsEntity,
   UserEntity,
   UserRole,
@@ -165,6 +166,7 @@ describe('FollowersController (e2e)', () => {
 
   const clearDatabase = async () => {
     await entityManager.nativeDelete(DailyAccountStatsEntity, {});
+    await entityManager.nativeDelete(FollowerServerSnapshotEntity, {});
     await entityManager.nativeDelete(AccountEntity, {});
     await entityManager.nativeDelete(UserCredentialsEntity, {});
     await entityManager.nativeDelete(UserEntity, {});
@@ -305,6 +307,106 @@ describe('FollowersController (e2e)', () => {
         .get(`${baseFollowersPath(testAccount.id)}/csv`)
         .set('Authorization', `Bearer ${testUserAccessToken}`)
         .expect(HttpStatus.BAD_REQUEST);
+    });
+  });
+
+  describe(`GET ${baseFollowersPath(':id')}/servers`, () => {
+    afterEach(async () => {
+      await orm.em.fork().nativeDelete(FollowerServerSnapshotEntity, {});
+    });
+
+    const seedSnapshot = async (data: Partial<FollowerServerSnapshotEntity>) => {
+      const em = orm.em.fork();
+      const snapshot = em.create(FollowerServerSnapshotEntity, {
+        account: testAccount,
+        day: new Date('2026-10-12T00:00:00.000Z'),
+        fetchedAt: new Date('2026-10-12T04:25:00.000Z'),
+        totalFollowers: 0,
+        sampledFollowers: 0,
+        servers: [],
+        ...data,
+      } as FollowerServerSnapshotEntity);
+      await em.persistAndFlush(snapshot);
+    };
+
+    it('should return pending status when no snapshot exists', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`${baseFollowersPath(testAccount.id)}/servers`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toEqual({ status: 'pending' });
+    });
+
+    it('should return the distribution from the latest snapshot', async () => {
+      await seedSnapshot({
+        day: new Date('2026-10-05T00:00:00.000Z'),
+        fetchedAt: new Date('2026-10-05T04:25:00.000Z'),
+        totalFollowers: 1,
+        sampledFollowers: 1,
+        servers: [{ domain: 'old.example', count: 1 }],
+      });
+      await seedSnapshot({
+        totalFollowers: 12,
+        sampledFollowers: 10,
+        homeServer: 'mastodon.test',
+        servers: [
+          { domain: 'mastodon.social', count: 5 },
+          { domain: 'mastodon.test', count: 3 },
+          { domain: 'fosstodon.org', count: 2 },
+        ],
+      });
+
+      const response = await request(app.getHttpServer())
+        .get(`${baseFollowersPath(testAccount.id)}/servers?limit=2`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toEqual({
+        status: 'available',
+        day: '2026-10-12T00:00:00.000Z',
+        totalFollowers: 12,
+        sampledFollowers: 10,
+        serverCount: 3,
+        homeServer: 'mastodon.test',
+        homeShare: 0.3,
+        top: [
+          { domain: 'mastodon.social', count: 5, share: 0.5 },
+          { domain: 'mastodon.test', count: 3, share: 0.3 },
+        ],
+        other: { servers: 1, count: 2, share: 0.2 },
+      });
+    });
+
+    it('should return hidden status when the follower list is not available', async () => {
+      await seedSnapshot({ totalFollowers: 12, hidden: true });
+
+      const response = await request(app.getHttpServer())
+        .get(`${baseFollowersPath(testAccount.id)}/servers`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toEqual({ status: 'hidden', day: '2026-10-12T00:00:00.000Z', totalFollowers: 12 });
+    });
+
+    it('should return 400 for an invalid limit', async () => {
+      await request(app.getHttpServer())
+        .get(`${baseFollowersPath(testAccount.id)}/servers?limit=0`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 401 if not authenticated', async () => {
+      await request(app.getHttpServer())
+        .get(`${baseFollowersPath(testAccount.id)}/servers`)
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 404 if account not found', async () => {
+      await request(app.getHttpServer())
+        .get(`${baseFollowersPath(new ObjectId().toHexString())}/servers`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
     });
   });
 
