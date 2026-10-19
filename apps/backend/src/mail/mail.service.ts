@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { AccountEntity, UserEntity } from '@analytodon/shared-orm';
+import { EntityRepository } from '@mikro-orm/mongodb';
+import { InjectRepository } from '@mikro-orm/nestjs';
 import { MailerService } from '@nestjs-modules/mailer';
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -20,6 +22,7 @@ import { TootsService } from '../toots/toots.service';
 import { UsersService } from '../users/users.service';
 import { FirstStatsMailDto } from './dto/first-stats-mail.dto';
 import { OldAccountMailDto } from './dto/old-account-mail.dto';
+import { StaleAccountMailDto } from './dto/stale-account-mail.dto';
 import { WeeklyStatsMailDto } from './dto/weekly-stats-mail.dto';
 
 interface FormattedKpi {
@@ -56,6 +59,15 @@ interface WeeklyStatItem {
   topHashtags?: TopHashtagItem[];
 }
 
+export interface StaleAccountItem {
+  accountName: string;
+  server: string;
+  /** Formatted date of the last successful stats update, or null if no stats were ever collected */
+  lastUpdate: string | null;
+  reconnectURL: string;
+  reconnectLabel: string;
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -75,6 +87,8 @@ export class MailService {
     private readonly favoritesService: FavoritesService,
     private readonly tootsService: TootsService,
     private readonly hashtagsService: HashtagsService,
+    @InjectRepository(AccountEntity)
+    private readonly accountRepository: EntityRepository<AccountEntity>,
   ) {
     this.frontendURL = this.configService.getOrThrow<string>('FRONTEND_URL');
     // EMAIL_* settings are optional so the app can run without a mail server configured.
@@ -399,6 +413,80 @@ export class MailService {
   }
 
   /**
+   * Sends a notice to a user that stats for one or more of their accounts stopped updating.
+   * @param user - The user entity.
+   * @param accounts - The affected accounts, prepared for the template.
+   * @returns A promise that resolves when the email is sent.
+   * @throws Error if sending the email fails.
+   */
+  async sendStaleAccountNoticeMail(user: UserEntity, accounts: StaleAccountItem[]) {
+    const locale = this.getUserLocale(user);
+    const isSingle = accounts.length === 1;
+    const subject = isSingle
+      ? await this.translate('email.staleAccountNotice.subject', locale, { accountName: accounts[0].accountName })
+      : await this.translate('email.staleAccountNotice.subjectMultiple', locale);
+
+    const context = {
+      ...this.getCommonContext(),
+      accounts,
+      subject,
+      t: {
+        title: await this.translate('email.staleAccountNotice.title', locale),
+        greeting: await this.translate('email.staleAccountNotice.greeting', locale),
+        message: await this.translate(
+          isSingle ? 'email.staleAccountNotice.message' : 'email.staleAccountNotice.messageMultiple',
+          locale,
+        ),
+        server: await this.translate('email.staleAccountNotice.server', locale),
+        lastUpdate: await this.translate('email.staleAccountNotice.lastUpdate', locale),
+        noStats: await this.translate('email.staleAccountNotice.noStats', locale),
+        causesHeading: await this.translate('email.staleAccountNotice.causesHeading', locale),
+        causeRevoked: await this.translate('email.staleAccountNotice.causeRevoked', locale),
+        causeMoved: await this.translate('email.staleAccountNotice.causeMoved', locale),
+        causeInstance: await this.translate('email.staleAccountNotice.causeInstance', locale),
+        actionHeading: await this.translate('email.staleAccountNotice.actionHeading', locale),
+        actionMessage: await this.translate('email.staleAccountNotice.actionMessage', locale),
+        support: await this.translate('email.staleAccountNotice.support', locale),
+        notUsingHeading: await this.translate('email.staleAccountNotice.notUsingHeading', locale),
+        notUsingMessage: await this.translate('email.staleAccountNotice.notUsingMessage', locale),
+        signature: await this.translate('email.staleAccountNotice.signature', locale),
+        email: await this.translate('email.common.email', locale),
+        website: await this.translate('email.common.website', locale),
+        mastodon: await this.translate('email.common.mastodon', locale),
+        mastodonHandle: await this.translate('email.common.mastodonHandle', locale),
+      },
+    };
+
+    const textTemplatePath = path.join(__dirname, 'templates', 'stale-account-notice.txt');
+    const textTemplateSource = fs.readFileSync(textTemplatePath, 'utf-8');
+    const compiledTextTemplate = handlebars.compile(textTemplateSource, { noEscape: true });
+    const textBody = compiledTextTemplate(context);
+
+    try {
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject,
+        template: './stale-account-notice', // HTML template
+        text: textBody, // Plain text version
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(__dirname, 'templates', 'assets', 'logo.png'),
+            cid: 'logo@analytodon.com',
+          },
+        ],
+        context, // Context for HTML template
+      });
+      this.logger.log(
+        `Stale account notice mail sent to ${user.email} for accounts ${accounts.map((a) => a.accountName).join(', ')}`,
+      );
+    } catch (error) {
+      this.logger.error(`Error while sending stale account notice mail to ${user.email}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
    * Sends an email notifying a user that their first stats are available.
    * @param user - The user entity.
    * @param account - The account entity for which stats are available.
@@ -663,6 +751,64 @@ export class MailService {
     await this.usersService.save(user);
 
     await this.sendOldAccountWarningMail(user);
+  }
+
+  /**
+   * Formats a stats day for display in emails, in the account's timezone.
+   */
+  private formatStatsDay(day: Date, locale: string, timezone?: string): string {
+    const options: Intl.DateTimeFormatOptions = { dateStyle: 'long' };
+    try {
+      return new Intl.DateTimeFormat(locale, { ...options, timeZone: timezone?.replace(' ', '_') }).format(day);
+    } catch {
+      // Invalid or unknown timezone
+      return new Intl.DateTimeFormat(locale, { ...options, timeZone: 'UTC' }).format(day);
+    }
+  }
+
+  async processAndSendStaleAccountNoticeMail(staleAccountDto: StaleAccountMailDto): Promise<void> {
+    const user = await this.usersService.findById(staleAccountDto.userID);
+    if (!user) {
+      this.logger.error(`User not found: ${staleAccountDto.userID} for stale account notice. Email not sent.`);
+      throw new NotFoundException(`User with ID ${staleAccountDto.userID} not found.`);
+    }
+
+    await user.accounts.init();
+    const userAccounts = user.accounts.getItems();
+    // Only accounts owned by this user that haven't been notified about yet
+    const accountsToNotify = userAccounts.filter(
+      (acc) => staleAccountDto.accountIDs.includes(acc.id) && !acc.staleNoticeSentAt,
+    );
+
+    if (accountsToNotify.length === 0) {
+      this.logger.warn(
+        `No matching accounts without a previous notice found for user ${user.email} (ID: ${user.id}) for stale account notice. Provided account IDs: ${staleAccountDto.accountIDs.join(', ')}. Email not sent.`,
+      );
+      return;
+    }
+
+    const locale = this.getUserLocale(user);
+    const items: StaleAccountItem[] = [];
+    for (const account of accountsToNotify) {
+      const accountName = account.accountName || account.name || account.serverURL;
+      const lastSnapshot = await this.followersService.getTotalSnapshot(account);
+      items.push({
+        accountName,
+        server: account.serverURL.replace(/^https?:\/\//, '').replace(/\/+$/, ''),
+        lastUpdate: lastSnapshot ? this.formatStatsDay(lastSnapshot.day, locale, account.timezone) : null,
+        reconnectURL: `${this.frontendURL}/settings/accounts/${account.id}`,
+        reconnectLabel: await this.translate('email.staleAccountNotice.reconnectButton', locale, { accountName }),
+      });
+    }
+
+    // Throws if sending fails, in which case the accounts are not flagged and will be retried
+    await this.sendStaleAccountNoticeMail(user, items);
+
+    const sentAt = new Date();
+    for (const account of accountsToNotify) {
+      account.staleNoticeSentAt = sentAt;
+    }
+    await this.accountRepository.getEntityManager().persistAndFlush(accountsToNotify);
   }
 
   async processAndSendWeeklyStatsMail(weeklyStatsDto: WeeklyStatsMailDto): Promise<void> {

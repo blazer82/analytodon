@@ -4,6 +4,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { ApiKeyAuthGuard } from '../auth/guards/api-key-auth.guard'; // Adjust path if your guard is elsewhere
 import { FirstStatsMailDto } from './dto/first-stats-mail.dto';
 import { OldAccountMailDto } from './dto/old-account-mail.dto';
+import { StaleAccountMailDto } from './dto/stale-account-mail.dto';
 import { WeeklyStatsMailDto } from './dto/weekly-stats-mail.dto';
 import { MailService } from './mail.service';
 
@@ -74,6 +75,28 @@ export class MailController {
     this.mailService.processAndSendOldAccountWarningMail(oldAccountDto).catch((error) => {
       this.logger.error(
         `Error processing old account warning email for user ${oldAccountDto.userID}: ${error.message}`,
+        error.stack,
+      );
+    });
+  }
+
+  @Post('stale-account')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({
+    summary: 'Trigger "Stale Account Notice" email (internal)',
+    description:
+      'Called by a worker or scheduler for accounts whose stats stopped updating. Accounts not owned by the user or already notified are ignored. This endpoint is intended for internal use.',
+  })
+  @ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Request accepted for processing.' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found.' })
+  async sendStaleAccountNoticeMail(@Body() staleAccountDto: StaleAccountMailDto): Promise<void> {
+    this.logger.log(
+      `Received request to send stale account notice email for user: ${staleAccountDto.userID}, accounts: ${staleAccountDto.accountIDs.join(', ')}`,
+    );
+    this.mailService.processAndSendStaleAccountNoticeMail(staleAccountDto).catch((error) => {
+      this.logger.error(
+        `Error processing stale account notice email for user ${staleAccountDto.userID}: ${error.message}`,
         error.stack,
       );
     });

@@ -1,0 +1,32 @@
+{{ t.greeting }}
+
+{{ t.message }}
+{{#each accounts}}
+
+- {{ this.accountName }}
+  {{ ../t.server }} {{ this.server }}
+  {{ ../t.lastUpdate }} {{#if this.lastUpdate}}{{ this.lastUpdate }}{{else}}{{ ../t.noStats }}{{/if}}
+{{/each}}
+
+{{ t.causesHeading }}
+- {{ t.causeRevoked }}
+- {{ t.causeMoved }}
+- {{ t.causeInstance }}
+
+{{ t.actionHeading }}
+{{ t.actionMessage }}
+{{#each accounts}}
+{{ this.accountName }}: {{ this.reconnectURL }}
+{{/each}}
+
+{{ t.support }}
+
+{{ t.notUsingHeading }}
+{{ t.notUsingMessage }}
+
+{{ t.signature }}
+{{ emailSenderName }}
+
+{{ t.email }} {{ supportEmail }}
+{{ t.website }} {{ marketingURL }}
+{{ t.mastodon }} https://undefined.social/@analytodon

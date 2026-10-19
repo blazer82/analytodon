@@ -49,6 +49,28 @@
     "txtFeedbackHeading": "Bevor Sie gehen — ich würde mich über Ihr Feedback freuen",
     "txtFeedbackMessage": "Ich bin Raphael, der Entwickler von Analytodon. Falls Sie einen Moment Zeit haben, würde ich mich sehr freuen zu erfahren, was Sie von Analytodon erwartet haben oder warum es nicht das Richtige für Sie war. Antworten Sie einfach auf diese E-Mail — jedes Feedback hilft mir, das Tool zu verbessern."
   },
+  "staleAccountNotice": {
+    "subject": "Wir können Ihre Analytodon-Statistiken für {accountName} nicht aktualisieren",
+    "subjectMultiple": "Wir können Ihre Analytodon-Statistiken für einige Ihrer Konten nicht aktualisieren",
+    "title": "Ihre Statistiken werden nicht mehr aktualisiert",
+    "greeting": "Hallo,",
+    "message": "Wir konnten für das folgende Mastodon-Konto keine neuen Statistiken mehr abrufen:",
+    "messageMultiple": "Wir konnten für die folgenden Mastodon-Konten keine neuen Statistiken mehr abrufen:",
+    "server": "Server:",
+    "lastUpdate": "Letzte erfolgreiche Aktualisierung:",
+    "noStats": "Bisher keine Statistiken erfasst",
+    "causesHeading": "Häufige Ursachen",
+    "causeRevoked": "Der Zugriff von Analytodon wurde in den Einstellungen Ihres Mastodon-Kontos widerrufen",
+    "causeMoved": "Das Konto wurde umgezogen oder gelöscht",
+    "causeInstance": "Ihr Mastodon-Server ist offline oder blockiert Anfragen",
+    "actionHeading": "Was Sie tun können",
+    "actionMessage": "Meist hilft es, das Konto erneut zu verbinden. Öffnen Sie dazu die Kontoeinstellungen in Analytodon und verbinden Sie es neu:",
+    "reconnectButton": "{accountName} neu verbinden",
+    "support": "Falls das nicht hilft, antworten Sie einfach auf diese E-Mail und wir sehen uns das an.",
+    "notUsingHeading": "Sie nutzen Analytodon nicht mehr?",
+    "notUsingMessage": "Sie können das Konto in Ihren Kontoeinstellungen selbst entfernen. Wenn Sie möchten, dass wir Ihr gesamtes Analytodon-Benutzerkonto und alle zugehörigen Daten löschen, antworten Sie einfach auf diese E-Mail und wir kümmern uns darum.",
+    "signature": "Beste Grüße,"
+  },
   "weeklyStats": {
     "subject": "Ihre Woche auf Mastodon",
     "title": "Wöchentliche Statistikübersicht für Ihre Mastodon-Konten",
