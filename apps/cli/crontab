@@ -27,6 +27,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # analytodon old accounts mail
 0 18 * * * analytodon /app/apps/cli/bin/run.js mail oldaccounts > /tmp/cron_job_pipe 2>&1
 
+# analytodon stale accounts mail
+10 18 * * * analytodon /app/apps/cli/bin/run.js mail staleaccounts > /tmp/cron_job_pipe 2>&1
+
 # analytodon cleanup
 45 11 * * * analytodon /app/apps/cli/bin/run.js cleanup users > /tmp/cron_job_pipe 2>&1
 46 11 * * * analytodon /app/apps/cli/bin/run.js cleanup usercredentials > /tmp/cron_job_pipe 2>&1
