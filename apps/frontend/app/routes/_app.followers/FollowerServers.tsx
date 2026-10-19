@@ -37,7 +37,7 @@ const BarRow: React.FC<BarRowProps> = ({ label, count, share, width, color, trac
     role="listitem"
     sx={{
       display: 'grid',
-      gridTemplateColumns: { xs: '1fr auto', sm: '200px 1fr 120px' },
+      gridTemplateColumns: { xs: '1fr auto', sm: '220px 1fr 120px', md: '260px 1fr 120px' },
       alignItems: 'center',
       columnGap: { xs: 1, sm: 1.5 },
       rowGap: 0.5,
@@ -46,9 +46,9 @@ const BarRow: React.FC<BarRowProps> = ({ label, count, share, width, color, trac
   >
     <Box
       sx={{
+        display: 'flex',
+        alignItems: 'center',
         minWidth: 0,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
         fontWeight: variant === 'home' ? 600 : undefined,
         color: variant === 'other' ? 'text.secondary' : undefined,
@@ -79,6 +79,8 @@ const BarRow: React.FC<BarRowProps> = ({ label, count, share, width, color, trac
   </Box>
 );
 
+const truncate = { minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' } as const;
+
 const ServerName: React.FC<{ domain: string }> = ({ domain }) =>
   DOMAIN_PATTERN.test(domain) ? (
     <Link
@@ -88,11 +90,14 @@ const ServerName: React.FC<{ domain: string }> = ({ domain }) =>
       color="inherit"
       underline="hover"
       title={domain}
+      sx={truncate}
     >
       {domain}
     </Link>
   ) : (
-    <span title={domain}>{domain}</span>
+    <Box component="span" title={domain} sx={truncate}>
+      {domain}
+    </Box>
   );
 
 const FollowerServers: React.FC<{ data: FollowerServersDto | null }> = ({ data }) => {
@@ -194,7 +199,7 @@ const FollowerServers: React.FC<{ data: FollowerServersDto | null }> = ({ data }
                         size="small"
                         variant="outlined"
                         color="primary"
-                        sx={{ ml: 0.75, height: 18, fontSize: '0.6875rem', fontWeight: 600 }}
+                        sx={{ ml: 0.75, height: 18, flexShrink: 0, fontSize: '0.6875rem', fontWeight: 600 }}
                       />
                     )}
                   </>
@@ -210,7 +215,11 @@ const FollowerServers: React.FC<{ data: FollowerServersDto | null }> = ({ data }
           })}
           {other && other.servers > 0 && (
             <BarRow
-              label={t('servers.otherServers', { count: other.servers })}
+              label={
+                <Box component="span" sx={truncate}>
+                  {t('servers.otherServers', { count: other.servers })}
+                </Box>
+              }
               count={other.count}
               share={other.share}
               width={(other.count / maxCount) * 100}
