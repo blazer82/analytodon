@@ -17,12 +17,15 @@ import * as runtime from '../runtime';
 import type {
   AllTopTootsResponseDto,
   PostActivityDto,
+  PostingTimesResponseDto,
 } from '../models/index';
 import {
     AllTopTootsResponseDtoFromJSON,
     AllTopTootsResponseDtoToJSON,
     PostActivityDtoFromJSON,
     PostActivityDtoToJSON,
+    PostingTimesResponseDtoFromJSON,
+    PostingTimesResponseDtoToJSON,
 } from '../models/index';
 
 export interface TootsControllerExportCsvRequest {
@@ -33,6 +36,13 @@ export interface TootsControllerExportCsvRequest {
 }
 
 export interface TootsControllerGetPostActivityRequest {
+    accountId: string;
+    timeframe: string;
+    dateFrom?: string;
+    dateTo?: string;
+}
+
+export interface TootsControllerGetPostingTimesRequest {
     accountId: string;
     timeframe: string;
     dateFrom?: string;
@@ -167,6 +177,66 @@ export class TootsApi extends runtime.BaseAPI {
      */
     async tootsControllerGetPostActivity(requestParameters: TootsControllerGetPostActivityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostActivityDto> {
         const response = await this.tootsControllerGetPostActivityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get the number of posts and their engagement by weekday and hour of publication
+     */
+    async tootsControllerGetPostingTimesRaw(requestParameters: TootsControllerGetPostingTimesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingTimesResponseDto>> {
+        if (requestParameters['accountId'] == null) {
+            throw new runtime.RequiredError(
+                'accountId',
+                'Required parameter "accountId" was null or undefined when calling tootsControllerGetPostingTimes().'
+            );
+        }
+
+        if (requestParameters['timeframe'] == null) {
+            throw new runtime.RequiredError(
+                'timeframe',
+                'Required parameter "timeframe" was null or undefined when calling tootsControllerGetPostingTimes().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['timeframe'] != null) {
+            queryParameters['timeframe'] = requestParameters['timeframe'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = requestParameters['dateFrom'];
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = requestParameters['dateTo'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/accounts/{accountId}/toots/posting-times`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostingTimesResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Get the number of posts and their engagement by weekday and hour of publication
+     */
+    async tootsControllerGetPostingTimes(requestParameters: TootsControllerGetPostingTimesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingTimesResponseDto> {
+        const response = await this.tootsControllerGetPostingTimesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
