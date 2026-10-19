@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
     followersControllerGetYearlyKpi: vi.fn(),
     followersControllerGetTotalSnapshot: vi.fn(),
     followersControllerGetChartData: vi.fn(),
+    followersControllerGetFollowerServers: vi.fn(),
   },
   mockLogger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
@@ -54,22 +55,29 @@ describe('followers loader', () => {
     const yearlyKPI = { currentPeriod: 500, trend: 100, isLastPeriod: true };
     const total = { amount: 2000, day: '2024-01-15' };
     const chartData = [{ day: '2024-01-14', value: 10 }];
+    const servers = { status: 'available', serverCount: 2, top: [{ domain: 'mastodon.social', count: 5, share: 1 }] };
 
     mocks.mockFollowersApi.followersControllerGetWeeklyKpi.mockResolvedValue(weeklyKPI);
     mocks.mockFollowersApi.followersControllerGetMonthlyKpi.mockResolvedValue(monthlyKPI);
     mocks.mockFollowersApi.followersControllerGetYearlyKpi.mockResolvedValue(yearlyKPI);
     mocks.mockFollowersApi.followersControllerGetTotalSnapshot.mockResolvedValue(total);
     mocks.mockFollowersApi.followersControllerGetChartData.mockResolvedValue(chartData);
+    mocks.mockFollowersApi.followersControllerGetFollowerServers.mockResolvedValue(servers);
 
     const request = makeRequestWithSession('http://localhost/followers');
     const result = await callLoader(request);
 
+    expect(mocks.mockFollowersApi.followersControllerGetFollowerServers).toHaveBeenCalledWith({
+      accountId: 'acc-1',
+      limit: 10,
+    });
     expect(result).toEqual({
       weeklyKPI,
       monthlyKPI,
       yearlyKPI,
       total,
       chart: chartData,
+      servers,
       initialTimeframe: 'last30days',
       initialDateFrom: null,
       initialDateTo: null,
@@ -128,6 +136,7 @@ describe('followers loader', () => {
       yearlyKPI: null,
       total: null,
       chart: [],
+      servers: null,
       initialTimeframe: 'last30days',
       initialDateFrom: null,
       initialDateTo: null,
@@ -145,6 +154,7 @@ describe('followers loader', () => {
     mocks.mockFollowersApi.followersControllerGetYearlyKpi.mockRejectedValue(new Error('fail'));
     mocks.mockFollowersApi.followersControllerGetTotalSnapshot.mockResolvedValue(total);
     mocks.mockFollowersApi.followersControllerGetChartData.mockRejectedValue(new Error('fail'));
+    mocks.mockFollowersApi.followersControllerGetFollowerServers.mockRejectedValue(new Error('fail'));
 
     const request = makeRequestWithSession('http://localhost/followers');
     const result = await callLoader(request);
@@ -154,6 +164,7 @@ describe('followers loader', () => {
     expect(result.yearlyKPI).toBeNull();
     expect(result.total).toEqual(total);
     expect(result.chart).toEqual([]);
+    expect(result.servers).toBeNull();
   });
 
   it('re-throws Response errors', async () => {
@@ -184,6 +195,7 @@ describe('followers loader', () => {
       yearlyKPI: null,
       total: null,
       chart: [],
+      servers: null,
       initialTimeframe: 'last30days',
       initialDateFrom: null,
       initialDateTo: null,

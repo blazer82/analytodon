@@ -1,4 +1,10 @@
-import { AccountEntity, DailyAccountStatsEntity, UserEntity, UserRole } from '@analytodon/shared-orm';
+import {
+  AccountEntity,
+  DailyAccountStatsEntity,
+  FollowerServerSnapshotEntity,
+  UserEntity,
+  UserRole,
+} from '@analytodon/shared-orm';
 import { EntityManager, EntityRepository, Loaded } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Logger } from '@nestjs/common';
@@ -20,6 +26,7 @@ describe('FollowersService', () => {
   let mockEm: jest.Mocked<EntityManager>;
   let mockDailyAccountStatsRepository: jest.Mocked<EntityRepository<DailyAccountStatsEntity>>;
   let mockAccountsService: jest.Mocked<AccountsService>;
+  let mockFollowerServerSnapshotRepository: jest.Mocked<EntityRepository<FollowerServerSnapshotEntity>>;
 
   const mockUser = {
     id: new ObjectId().toHexString(),
@@ -32,6 +39,7 @@ describe('FollowersService', () => {
     id: mockAccountId,
     owner: mockUser,
     timezone: 'Europe/Berlin',
+    serverURL: 'https://home.example',
     setupComplete: true,
   } as Loaded<AccountEntity>;
 
@@ -51,6 +59,10 @@ describe('FollowersService', () => {
       find: jest.fn(),
     } as unknown as jest.Mocked<EntityRepository<DailyAccountStatsEntity>>;
 
+    mockFollowerServerSnapshotRepository = {
+      find: jest.fn(),
+    } as unknown as jest.Mocked<EntityRepository<FollowerServerSnapshotEntity>>;
+
     mockAccountsService = {
       findById: jest.fn(),
       findByIdOrFail: jest.fn(),
@@ -61,6 +73,7 @@ describe('FollowersService', () => {
         FollowersService,
         { provide: EntityManager, useValue: mockEm },
         { provide: getRepositoryToken(DailyAccountStatsEntity), useValue: mockDailyAccountStatsRepository },
+        { provide: getRepositoryToken(FollowerServerSnapshotEntity), useValue: mockFollowerServerSnapshotRepository },
         { provide: AccountsService, useValue: mockAccountsService },
       ],
     })
@@ -254,6 +267,98 @@ describe('FollowersService', () => {
 
       expect(mockRes.status).not.toHaveBeenCalled();
       expect(mockRes.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getFollowerServers', () => {
+    const day = new Date('2026-10-12T00:00:00.000Z');
+
+    const makeSnapshot = (overrides: Partial<FollowerServerSnapshotEntity> = {}) =>
+      ({
+        day,
+        fetchedAt: day,
+        totalFollowers: 120,
+        sampledFollowers: 100,
+        homeServer: 'home.example',
+        servers: [
+          { domain: 'big.example', count: 50 },
+          { domain: 'home.example', count: 20 },
+          { domain: 'mid.example', count: 15 },
+          { domain: 'small.example', count: 10 },
+          { domain: 'tiny.example', count: 5 },
+        ],
+        ...overrides,
+      }) as FollowerServerSnapshotEntity;
+
+    it('should query the latest snapshot of the account', async () => {
+      mockFollowerServerSnapshotRepository.find.mockResolvedValue([]);
+
+      await service.getFollowerServers(mockAccount);
+
+      expect(mockFollowerServerSnapshotRepository.find).toHaveBeenCalledWith(
+        { account: mockAccountId },
+        { orderBy: { fetchedAt: 'DESC' }, limit: 1 },
+      );
+    });
+
+    it('should return pending status when there is no snapshot', async () => {
+      mockFollowerServerSnapshotRepository.find.mockResolvedValue([]);
+
+      const result = await service.getFollowerServers(mockAccount);
+
+      expect(result).toEqual({ status: 'pending' });
+    });
+
+    it('should return hidden status when the follower list was not available', async () => {
+      mockFollowerServerSnapshotRepository.find.mockResolvedValue([
+        makeSnapshot({ hidden: true, servers: [], sampledFollowers: 0 }),
+      ]);
+
+      const result = await service.getFollowerServers(mockAccount);
+
+      expect(result).toEqual({ status: 'hidden', day, totalFollowers: 120 });
+    });
+
+    it('should return top servers with shares and aggregate the rest', async () => {
+      mockFollowerServerSnapshotRepository.find.mockResolvedValue([makeSnapshot()]);
+
+      const result = await service.getFollowerServers(mockAccount, 3);
+
+      expect(result).toEqual({
+        status: 'available',
+        day,
+        totalFollowers: 120,
+        sampledFollowers: 100,
+        serverCount: 5,
+        homeServer: 'home.example',
+        homeShare: 0.2,
+        top: [
+          { domain: 'big.example', count: 50, share: 0.5 },
+          { domain: 'home.example', count: 20, share: 0.2 },
+          { domain: 'mid.example', count: 15, share: 0.15 },
+        ],
+        other: { servers: 2, count: 15, share: 0.15 },
+      });
+    });
+
+    it('should fall back to the server URL for the home server and handle empty snapshots', async () => {
+      mockFollowerServerSnapshotRepository.find.mockResolvedValue([
+        makeSnapshot({ homeServer: undefined, servers: [], totalFollowers: 0, sampledFollowers: 0 }),
+      ]);
+
+      const result = await service.getFollowerServers({
+        ...mockAccount,
+        serverURL: 'https://Home.Example.',
+      } as Loaded<AccountEntity>);
+
+      expect(result).toMatchObject({
+        status: 'available',
+        serverCount: 0,
+        homeServer: 'home.example',
+        homeShare: 0,
+        top: [],
+        other: { servers: 0, count: 0, share: 0 },
+      });
     });
   });
 });

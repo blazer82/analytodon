@@ -16,12 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   ChartDataPointDto,
+  FollowerServersDto,
   FollowersKpiDto,
   TotalSnapshotDto,
 } from '../models/index';
 import {
     ChartDataPointDtoFromJSON,
     ChartDataPointDtoToJSON,
+    FollowerServersDtoFromJSON,
+    FollowerServersDtoToJSON,
     FollowersKpiDtoFromJSON,
     FollowersKpiDtoToJSON,
     TotalSnapshotDtoFromJSON,
@@ -40,6 +43,11 @@ export interface FollowersControllerGetChartDataRequest {
     timeframe: string;
     dateFrom?: string;
     dateTo?: string;
+}
+
+export interface FollowersControllerGetFollowerServersRequest {
+    accountId: string;
+    limit?: number;
 }
 
 export interface FollowersControllerGetMonthlyKpiRequest {
@@ -179,6 +187,51 @@ export class FollowersApi extends runtime.BaseAPI {
      */
     async followersControllerGetChartData(requestParameters: FollowersControllerGetChartDataRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ChartDataPointDto>> {
         const response = await this.followersControllerGetChartDataRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get the distribution of an account\'s followers across servers (latest weekly snapshot)
+     */
+    async followersControllerGetFollowerServersRaw(requestParameters: FollowersControllerGetFollowerServersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FollowerServersDto>> {
+        if (requestParameters['accountId'] == null) {
+            throw new runtime.RequiredError(
+                'accountId',
+                'Required parameter "accountId" was null or undefined when calling followersControllerGetFollowerServers().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/accounts/{accountId}/followers/servers`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FollowerServersDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Get the distribution of an account\'s followers across servers (latest weekly snapshot)
+     */
+    async followersControllerGetFollowerServers(requestParameters: FollowersControllerGetFollowerServersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FollowerServersDto> {
+        const response = await this.followersControllerGetFollowerServersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

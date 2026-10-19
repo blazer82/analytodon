@@ -1,4 +1,4 @@
-import { DailyAccountStatsEntity } from '@analytodon/shared-orm';
+import { DailyAccountStatsEntity, FollowerServerSnapshotEntity } from '@analytodon/shared-orm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { forwardRef, Module } from '@nestjs/common';
 
@@ -9,7 +9,7 @@ import { FollowersService } from './followers.service';
 @Module({
   imports: [
     MikroOrmModule.forFeature({
-      entities: [DailyAccountStatsEntity],
+      entities: [DailyAccountStatsEntity, FollowerServerSnapshotEntity],
     }),
     forwardRef(() => AccountsModule),
   ],

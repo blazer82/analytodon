@@ -38,6 +38,34 @@ describe('createMastodonClient', () => {
     expect(receivedHeaders[0]['user-agent']).to.equal(MASTODON_USER_AGENT);
   });
 
+  it('applies the request timeout only when given', async () => {
+    const slowServer = createServer((_req, res) => {
+      setTimeout(() => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ id: '1', username: 'test', acct: 'test' }));
+      }, 300);
+    });
+    await new Promise<void>((resolve) => slowServer.listen(0, '127.0.0.1', resolve));
+    const slowURL = `http://127.0.0.1:${(slowServer.address() as AddressInfo).port}`;
+
+    try {
+      let timeoutError: any;
+      try {
+        await createMastodonClient(slowURL, 'token', { timeoutMs: 50 }).verifyAccountCredentials();
+      } catch (error) {
+        timeoutError = error;
+      }
+
+      expect(timeoutError?.code).to.equal('ECONNABORTED');
+
+      const response = await createMastodonClient(slowURL, 'token').verifyAccountCredentials();
+      expect(response.data.id).to.equal('1');
+    } finally {
+      slowServer.closeAllConnections();
+      await new Promise<void>((resolve) => slowServer.close(() => resolve()));
+    }
+  });
+
   it('does not share headers between clients', async () => {
     await createMastodonClient(serverURL, 'first').verifyAccountCredentials();
     await createMastodonClient(serverURL, 'second').verifyAccountCredentials();

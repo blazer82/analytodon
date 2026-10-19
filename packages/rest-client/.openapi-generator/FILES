@@ -43,6 +43,10 @@ src/models/DataVolumeMetricsDto.ts
 src/models/FavoritedTootDto.ts
 src/models/FavoritesKpiDto.ts
 src/models/FirstStatsMailDto.ts
+src/models/FollowerServerDto.ts
+src/models/FollowerServersDto.ts
+src/models/FollowerServersOtherDto.ts
+src/models/FollowerServersStatus.ts
 src/models/FollowersKpiDto.ts
 src/models/HashtagEngagementDto.ts
 src/models/HashtagOverTimeDto.ts

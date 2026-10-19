@@ -10,11 +10,19 @@ type MegalodonAxiosInstance = Parameters<typeof generator>[4];
 
 // Megalodon only applies its userAgent option to streaming connections, so REST calls
 // would otherwise go out as "axios/x.y.z", which some instances (e.g. social.lol) reject.
-export const createMastodonClient = (serverURL: string, accessToken?: string | null): MegalodonInterface =>
+// `timeoutMs` is opt-in so existing jobs keep axios' default behavior (no timeout).
+export const createMastodonClient = (
+  serverURL: string,
+  accessToken?: string | null,
+  options: { timeoutMs?: number } = {},
+): MegalodonInterface =>
   generator(
     'mastodon',
     serverURL,
     accessToken ?? null,
     MASTODON_USER_AGENT,
-    axios.create({ headers: { 'User-Agent': MASTODON_USER_AGENT } }) as unknown as MegalodonAxiosInstance,
+    axios.create({
+      headers: { 'User-Agent': MASTODON_USER_AGENT },
+      ...(options.timeoutMs ? { timeout: options.timeoutMs } : {}),
+    }) as unknown as MegalodonAxiosInstance,
   );
