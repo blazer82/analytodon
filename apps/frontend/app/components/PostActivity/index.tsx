@@ -136,11 +136,6 @@ const PostActivity: React.FunctionComponent<{ activity: PostActivityDto | null; 
           </Box>
         </EnhancedPaper>
       </Grid>
-      <Grid size={{ xs: 12 }} sx={{ mt: -1.5 }}>
-        <Typography color="text.secondary" sx={{ fontSize: '0.8rem', px: 0.5 }}>
-          {t('footnote')}
-        </Typography>
-      </Grid>
     </React.Fragment>
   );
 };
