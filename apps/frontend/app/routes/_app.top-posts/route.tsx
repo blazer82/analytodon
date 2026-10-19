@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { RankedTootDto } from '@analytodon/rest-client';
+import type { PostActivityDto, RankedTootDto } from '@analytodon/rest-client';
 import DownloadIcon from '@mui/icons-material/Download';
 import { Box, Container, Grid, IconButton, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { useFetcher, useLoaderData } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
 import PeriodSelector, { type DateRange, type Timeframe } from '~/components/PeriodSelector';
+import PostActivity from '~/components/PostActivity';
 import TopToots, { type Toot } from '~/components/TopToots';
 import { createTootsApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
@@ -21,7 +22,7 @@ export const meta: MetaFunction = () => {
 
 // Declare i18n namespace for this route
 export const handle = {
-  i18n: 'routes.topPosts',
+  i18n: ['routes.topPosts', 'components.postActivity'],
 };
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
@@ -35,6 +36,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       topByReplies: [],
       topByBoosts: [],
       topByFavorites: [],
+      activity: null as PostActivityDto | null,
       initialTimeframe: 'last30days' as Timeframe,
       initialDateFrom: null as string | null,
       initialDateTo: null as string | null,
@@ -49,12 +51,21 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 
   try {
     const tootsApi = await createTootsApiWithAuth(request);
-    const topTootsResponse = await tootsApi.tootsControllerGetTopTootsSummary({
-      accountId,
-      timeframe: timeframeParam,
-      dateFrom,
-      dateTo,
-    });
+    const [topTootsResponse, activity] = await Promise.all([
+      tootsApi.tootsControllerGetTopTootsSummary({
+        accountId,
+        timeframe: timeframeParam,
+        dateFrom,
+        dateTo,
+      }),
+      // Post activity is a nice-to-have on this page: don't let it take the top posts down with it
+      tootsApi
+        .tootsControllerGetPostActivity({ accountId, timeframe: timeframeParam, dateFrom, dateTo })
+        .catch((error: unknown): PostActivityDto | null => {
+          logger.error('Failed to load post activity:', error);
+          return null;
+        }),
+    ]);
 
     // Convert API response to Toot format for our components
     const mapToToots = (rankedToots: RankedTootDto[]): Toot[] => {
@@ -74,6 +85,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       topByReplies: mapToToots(topTootsResponse.topByReplies.data),
       topByBoosts: mapToToots(topTootsResponse.topByBoosts.data),
       topByFavorites: mapToToots(topTootsResponse.topByFavorites.data),
+      activity,
       initialTimeframe: timeframeParam,
       initialDateFrom: dateFrom || null,
       initialDateTo: dateTo || null,
@@ -86,6 +98,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       topByReplies: [],
       topByBoosts: [],
       topByFavorites: [],
+      activity: null,
       initialTimeframe: timeframeParam,
       initialDateFrom: dateFrom || null,
       initialDateTo: dateTo || null,
@@ -100,6 +113,7 @@ export default function TopPostsPage() {
     topByReplies,
     topByBoosts,
     topByFavorites,
+    activity,
     initialTimeframe,
     initialDateFrom,
     initialDateTo,
@@ -114,6 +128,7 @@ export default function TopPostsPage() {
   const topByRepliesData = fetcher.data?.topByReplies ?? topByReplies;
   const topByBoostsData = fetcher.data?.topByBoosts ?? topByBoosts;
   const topByFavoritesData = fetcher.data?.topByFavorites ?? topByFavorites;
+  const activityData = fetcher.data ? fetcher.data.activity : activity;
   const isLoadingData = fetcher.state === 'loading';
   const [currentDateRange, setCurrentDateRange] = React.useState<DateRange | null>(() =>
     initialDateFrom && initialDateTo ? { from: initialDateFrom, to: initialDateTo } : null,
@@ -176,6 +191,8 @@ export default function TopPostsPage() {
             </IconButton>
           </Box>
         </Grid>
+
+        <PostActivity activity={activityData} isLoading={isLoadingData} />
 
         <Grid size={{ xs: 12 }}>
           <DataTablePaper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
