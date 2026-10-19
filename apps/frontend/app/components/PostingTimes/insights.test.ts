@@ -133,8 +133,18 @@ describe('computeInsights', () => {
   });
 
   it('classifies mostly morning posters as early birds', () => {
-    const insights = computeInsights(buildGrid([slot(1, 7, 5), slot(1, 22, 2), slot(1, 14, 9)]));
+    const insights = computeInsights(buildGrid([slot(1, 7, 5), slot(1, 22, 2), slot(1, 14, 4)]));
     expect(insights.chronotype).toBe('earlyBird');
+  });
+
+  it('classifies mostly afternoon posters as daytime posters', () => {
+    const insights = computeInsights(buildGrid([slot(1, 7, 5), slot(1, 22, 2), slot(1, 14, 9)]));
+    expect(insights.chronotype).toBe('daytime');
+  });
+
+  it('counts night and evening together against morning and afternoon', () => {
+    const insights = computeInsights(buildGrid([slot(1, 2, 3), slot(1, 20, 3), slot(1, 9, 5), slot(1, 15, 5)]));
+    expect(insights.chronotype).toBe('nightOwl');
   });
 });
 

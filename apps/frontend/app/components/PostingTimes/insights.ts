@@ -37,7 +37,7 @@ export interface PostingTimesInsights {
   totalPosts: number;
   dayTotals: number[];
   dayPartShares: Record<DayPart, number>;
-  chronotype: 'nightOwl' | 'earlyBird';
+  chronotype: 'nightOwl' | 'earlyBird' | 'daytime';
   usualSlot: (SlotRef & { posts: number }) | null;
   busiestDay: { day: number; posts: number } | null;
   bestSlot: (SlotRef & { average: number }) | null;
@@ -94,6 +94,17 @@ export function cellIntensity(value: number | null, max: number): number {
   return 0.12 + 0.88 * Math.sqrt(Math.min(value, max) / max);
 }
 
+/** The day part with the most posts wins; ties prefer night owl, then early bird. */
+function chronotypeFor(
+  nightAndEvening: number,
+  morning: number,
+  afternoon: number,
+): PostingTimesInsights['chronotype'] {
+  if (nightAndEvening >= morning && nightAndEvening >= afternoon) return 'nightOwl';
+  if (morning >= afternoon) return 'earlyBird';
+  return 'daytime';
+}
+
 export function computeInsights(grid: PostingTimesGrid): PostingTimesInsights {
   const dayTotals = grid.posts.map((hours) => hours.reduce((sum, posts) => sum + posts, 0));
   const totalPosts = dayTotals.reduce((sum, posts) => sum + posts, 0);
@@ -133,7 +144,7 @@ export function computeInsights(grid: PostingTimesGrid): PostingTimesInsights {
       afternoon: share(afternoon),
       evening: share(evening),
     },
-    chronotype: evening + night > morning ? 'nightOwl' : 'earlyBird',
+    chronotype: chronotypeFor(night + evening, morning, afternoon),
     usualSlot,
     busiestDay,
     bestSlot,

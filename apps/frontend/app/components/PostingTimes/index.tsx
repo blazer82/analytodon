@@ -70,7 +70,9 @@ const PostingTimes: React.FunctionComponent<PostingTimesProps> = ({ data, loadin
   const cellDescription = (day: number, hour: number) => {
     const posts = grid.posts[day][hour];
     const parts = [slotLabel(day, hour), t('tooltip.posts', { count: posts })];
-    if (posts > 0) {
+    if (metric === 'engagement' && posts > 0 && posts < MIN_POSTS_FOR_AVERAGE) {
+      parts.push(t('tooltip.tooFew'));
+    } else if (posts > 0) {
       parts.push(t('tooltip.average', { value: formatAverage(grid.engagement[day][hour] / posts) }));
     }
     return parts.join(' · ');
@@ -90,6 +92,20 @@ const PostingTimes: React.FunctionComponent<PostingTimesProps> = ({ data, loadin
     tooltip.style.left = `${Math.max(0, Math.min(left, wrapperRect.width - tooltip.offsetWidth))}px`;
     tooltip.style.top = `${top}px`;
   }, [active, metric]);
+
+  // Touch devices don't fire mouseleave: dismiss the tooltip when tapping anywhere outside the heat map.
+  React.useEffect(() => {
+    if (!active) return;
+    const handleOutside = (event: Event) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) setActive(null);
+    };
+    document.addEventListener('touchstart', handleOutside, { passive: true });
+    document.addEventListener('pointerdown', handleOutside);
+    return () => {
+      document.removeEventListener('touchstart', handleOutside);
+      document.removeEventListener('pointerdown', handleOutside);
+    };
+  }, [active]);
 
   const handleMetricChange = (_event: React.MouseEvent<HTMLElement>, value: PostingTimesMetric | null) => {
     if (value) setMetric(value);
@@ -266,7 +282,7 @@ const PostingTimes: React.FunctionComponent<PostingTimesProps> = ({ data, loadin
       </Box>
 
       {!hasData ? (
-        <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>{t('empty')}</Typography>
+        <Typography sx={{ textAlign: 'center', py: 4, opacity: 0.8 }}>{data ? t('empty') : t('loadError')}</Typography>
       ) : (
         <>
           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 2 }}>
@@ -335,10 +351,10 @@ const PostingTimes: React.FunctionComponent<PostingTimesProps> = ({ data, loadin
                     {DAYS.map((day) => renderCell(day, hour))}
                   </Box>
                 ))}
-                <Box role="row">
+                {/* Per-day totals: decorative (also summarized by the "busiest day" insight), so hidden from the grid semantics. */}
+                <Box aria-hidden sx={{ display: 'contents' }}>
                   <Box
-                    role="rowheader"
-                    aria-label={t('totals.label')}
+                    title={t('totals.label')}
                     sx={{
                       fontSize: '0.7rem',
                       color: 'text.secondary',
@@ -354,8 +370,6 @@ const PostingTimes: React.FunctionComponent<PostingTimesProps> = ({ data, loadin
                     return (
                       <Box
                         key={day}
-                        role="gridcell"
-                        aria-label={label}
                         title={label}
                         sx={{ height: 28, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
                       >
@@ -384,27 +398,33 @@ const PostingTimes: React.FunctionComponent<PostingTimesProps> = ({ data, loadin
                   flexWrap: 'wrap',
                 }}
               >
-                <span>{metric === 'posts' ? '0' : t('legend.low')}</span>
-                <Box
-                  sx={{
-                    width: 120,
-                    height: 10,
-                    borderRadius: '3px',
-                    background: `linear-gradient(90deg, ${rampColor(theme, 0.12)}, ${rampColor(theme, 1)})`,
-                  }}
-                />
-                <span>
-                  {metric === 'posts'
-                    ? t('legend.maxPosts', { count: max })
-                    : t('legend.high', { value: formatAverage(max) })}
-                </span>
+                {max > 0 ? (
+                  <>
+                    <span>{metric === 'posts' ? '0' : t('legend.low')}</span>
+                    <Box
+                      sx={{
+                        width: 120,
+                        height: 10,
+                        borderRadius: '3px',
+                        background: `linear-gradient(90deg, ${rampColor(theme, 0.12)}, ${rampColor(theme, 1)})`,
+                      }}
+                    />
+                    <span>
+                      {metric === 'posts'
+                        ? t('legend.maxPosts', { count: max })
+                        : t('legend.high', { value: formatAverage(max) })}
+                    </span>
+                  </>
+                ) : (
+                  <span>{t('legend.notEnoughData')}</span>
+                )}
                 {metric === 'engagement' && (
                   <>
                     <Box
                       sx={{
                         width: 14,
                         height: 10,
-                        ml: 1.5,
+                        ml: max > 0 ? 1.5 : 0,
                         borderRadius: '2px',
                         backgroundColor: emptyCellColor(theme),
                         backgroundImage: hatchPattern(theme),

@@ -2,6 +2,7 @@
   "title": "Posting Times",
   "gridLabel": "Posting times by weekday and hour",
   "empty": "No posts in this timeframe.",
+  "loadError": "Posting times couldn't be loaded.",
   "metric": {
     "ariaLabel": "Metric",
     "posts": "Posts",
@@ -30,13 +31,15 @@
     "maxPosts_one": "{{count}} post",
     "maxPosts_other": "{{count}} posts",
     "tooFew_one": "fewer than {{count}} post",
-    "tooFew_other": "fewer than {{count}} posts"
+    "tooFew_other": "fewer than {{count}} posts",
+    "notEnoughData": "Not enough posts per time slot for averages yet"
   },
   "insights": {
     "chronotype": {
       "label": "You are mostly a",
       "nightOwl": "Night owl",
       "earlyBird": "Early bird",
+      "daytime": "Daytime poster",
       "night": "Night {{percent}}%",
       "morning": "Morning {{percent}}%",
       "afternoon": "Afternoon {{percent}}%",
