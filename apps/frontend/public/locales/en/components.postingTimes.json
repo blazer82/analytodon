@@ -1,0 +1,57 @@
+{
+  "title": "Posting Times",
+  "gridLabel": "Posting times by weekday and hour",
+  "empty": "No posts in this timeframe.",
+  "metric": {
+    "ariaLabel": "Metric",
+    "posts": "Posts",
+    "engagement": "Avg. engagement"
+  },
+  "subtitle": {
+    "posts_one": "When you publish, by weekday and hour ({{timezone}}). Based on {{count}} post, boosts excluded.",
+    "posts_other": "When you publish, by weekday and hour ({{timezone}}). Based on {{count}} posts, boosts excluded.",
+    "engagement_one": "Average replies + boosts + favorites per post, by the hour it was published ({{timezone}}). Based on {{count}} post.",
+    "engagement_other": "Average replies + boosts + favorites per post, by the hour it was published ({{timezone}}). Based on {{count}} posts."
+  },
+  "tooltip": {
+    "posts_one": "{{count}} post",
+    "posts_other": "{{count}} posts",
+    "average": "avg. {{value}} engagement",
+    "tooFew": "Too few posts for a reliable average"
+  },
+  "totals": {
+    "label": "Posts per day",
+    "day_one": "{{day}}: {{count}} post",
+    "day_other": "{{day}}: {{count}} posts"
+  },
+  "legend": {
+    "low": "low",
+    "high": "high ({{value}})",
+    "maxPosts_one": "{{count}} post",
+    "maxPosts_other": "{{count}} posts",
+    "tooFew_one": "fewer than {{count}} post",
+    "tooFew_other": "fewer than {{count}} posts"
+  },
+  "insights": {
+    "chronotype": {
+      "label": "You are mostly a",
+      "nightOwl": "Night owl",
+      "earlyBird": "Early bird",
+      "night": "Night {{percent}}%",
+      "morning": "Morning {{percent}}%",
+      "afternoon": "Afternoon {{percent}}%",
+      "evening": "Evening {{percent}}%"
+    },
+    "usualSlot": {
+      "label": "Your usual slot",
+      "busiestDay_one": "Busiest day: {{day}} ({{count}} post)",
+      "busiestDay_other": "Busiest day: {{day}} ({{count}} posts)"
+    },
+    "bestTime": {
+      "label": "Best time to post",
+      "average": "avg. {{value}} engagement per post",
+      "notEnoughData_one": "Not enough data yet: no time slot has at least {{count}} post",
+      "notEnoughData_other": "Not enough data yet: no time slot has at least {{count}} posts"
+    }
+  }
+}

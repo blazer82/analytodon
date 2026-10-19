@@ -1,0 +1,57 @@
+{
+  "title": "Veröffentlichungszeiten",
+  "gridLabel": "Veröffentlichungszeiten nach Wochentag und Uhrzeit",
+  "empty": "Keine Beiträge in diesem Zeitraum.",
+  "metric": {
+    "ariaLabel": "Kennzahl",
+    "posts": "Beiträge",
+    "engagement": "Ø Interaktionen"
+  },
+  "subtitle": {
+    "posts_one": "Wann du veröffentlichst, nach Wochentag und Uhrzeit ({{timezone}}). Basierend auf {{count}} Beitrag, ohne Boosts.",
+    "posts_other": "Wann du veröffentlichst, nach Wochentag und Uhrzeit ({{timezone}}). Basierend auf {{count}} Beiträgen, ohne Boosts.",
+    "engagement_one": "Durchschnittliche Antworten + Boosts + Favoriten pro Beitrag, nach Veröffentlichungszeit ({{timezone}}). Basierend auf {{count}} Beitrag.",
+    "engagement_other": "Durchschnittliche Antworten + Boosts + Favoriten pro Beitrag, nach Veröffentlichungszeit ({{timezone}}). Basierend auf {{count}} Beiträgen."
+  },
+  "tooltip": {
+    "posts_one": "{{count}} Beitrag",
+    "posts_other": "{{count}} Beiträge",
+    "average": "Ø {{value}} Interaktionen",
+    "tooFew": "Zu wenige Beiträge für einen aussagekräftigen Durchschnitt"
+  },
+  "totals": {
+    "label": "Beiträge pro Tag",
+    "day_one": "{{day}}: {{count}} Beitrag",
+    "day_other": "{{day}}: {{count}} Beiträge"
+  },
+  "legend": {
+    "low": "niedrig",
+    "high": "hoch ({{value}})",
+    "maxPosts_one": "{{count}} Beitrag",
+    "maxPosts_other": "{{count}} Beiträge",
+    "tooFew_one": "weniger als {{count}} Beitrag",
+    "tooFew_other": "weniger als {{count}} Beiträge"
+  },
+  "insights": {
+    "chronotype": {
+      "label": "Du bist eher ein",
+      "nightOwl": "Nachtmensch",
+      "earlyBird": "Frühaufsteher",
+      "night": "Nacht {{percent}} %",
+      "morning": "Morgen {{percent}} %",
+      "afternoon": "Nachmittag {{percent}} %",
+      "evening": "Abend {{percent}} %"
+    },
+    "usualSlot": {
+      "label": "Deine übliche Zeit",
+      "busiestDay_one": "Aktivster Tag: {{day}} ({{count}} Beitrag)",
+      "busiestDay_other": "Aktivster Tag: {{day}} ({{count}} Beiträge)"
+    },
+    "bestTime": {
+      "label": "Beste Zeit zum Posten",
+      "average": "Ø {{value}} Interaktionen pro Beitrag",
+      "notEnoughData_one": "Noch zu wenige Daten: kein Zeitfenster hat mindestens {{count}} Beitrag",
+      "notEnoughData_other": "Noch zu wenige Daten: kein Zeitfenster hat mindestens {{count}} Beiträge"
+    }
+  }
+}
