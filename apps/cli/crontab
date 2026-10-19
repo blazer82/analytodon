@@ -9,6 +9,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # analytodon fetch
 33 * * * * analytodon /app/apps/cli/bin/run.js fetch accountstats > /tmp/cron_job_pipe 2>&1
 33 * * * * analytodon /app/apps/cli/bin/run.js fetch tootstats -a > /tmp/cron_job_pipe 2>&1
+# Runs daily but only refreshes accounts whose follower server snapshot is about a week old
+25 4 * * * analytodon /app/apps/cli/bin/run.js fetch followerservers > /tmp/cron_job_pipe 2>&1
 
 # analytodon aggregate
 3 * * * * analytodon /app/apps/cli/bin/run.js aggregate dailyaccountstats > /tmp/cron_job_pipe 2>&1

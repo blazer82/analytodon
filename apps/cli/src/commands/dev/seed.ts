@@ -173,6 +173,7 @@ export default class Seed extends BaseCommand {
 
     if (accountIds.length > 0) {
       await db.collection('hashtagstats').deleteMany({ account: { $in: accountIds } });
+      await db.collection('followerserversnapshots').deleteMany({ account: { $in: accountIds } });
       await db.collection('dailytootstats').deleteMany({ account: { $in: accountIds } });
       await db.collection('dailyaccountstats').deleteMany({ account: { $in: accountIds } });
       await db.collection('toots').deleteMany({ account: { $in: accountIds } });
@@ -342,6 +343,11 @@ export default class Seed extends BaseCommand {
     await db.collection('hashtagstats').insertMany(hashtagStats);
     totalRecords += hashtagStats.length;
 
+    await db
+      .collection('followerserversnapshots')
+      .insertOne(this.generateFollowerServerSnapshot(accountId, accountStats[accountStats.length - 1].followersCount));
+    totalRecords += 1;
+
     // Create marketing/demo user
     const demoUserId = new ObjectId();
     await db.collection('users').insertOne({
@@ -414,6 +420,16 @@ export default class Seed extends BaseCommand {
     const demoHashtagStats = this.generateMarketingHashtagStats(demoAccountId, rand);
     await db.collection('hashtagstats').insertMany(demoHashtagStats);
     totalRecords += demoHashtagStats.length;
+
+    await db
+      .collection('followerserversnapshots')
+      .insertOne(
+        this.generateFollowerServerSnapshot(
+          demoAccountId,
+          demoAccountStats[demoAccountStats.length - 1].followersCount,
+        ),
+      );
+    totalRecords += 1;
 
     return totalRecords;
   }
@@ -552,6 +568,43 @@ export default class Seed extends BaseCommand {
     }
 
     return stats;
+  }
+
+  private generateFollowerServerSnapshot(accountId: ObjectId, totalFollowers: number) {
+    const shares: [string, number][] = [
+      ['mastodon.social', 0.31],
+      ['mastodon.seed.local', 0.18],
+      ['fosstodon.org', 0.085],
+      ['chaos.social', 0.059],
+      ['infosec.exchange', 0.049],
+      ['mstdn.social', 0.034],
+      ['mas.to', 0.031],
+      ['social.vivaldi.net', 0.021],
+      ['techhub.social', 0.019],
+      ['toot.community', 0.015],
+    ];
+    const servers = shares.map(([domain, share]) => ({ domain, count: Math.round(totalFollowers * share) }));
+    let remaining = totalFollowers - servers.reduce((sum, { count }) => sum + count, 0);
+    for (let i = 1; remaining > 0; i++) {
+      const count = Math.min(remaining, Math.max(1, 12 - Math.floor(i / 8)));
+      servers.push({ domain: `server${i}.example`, count });
+      remaining -= count;
+    }
+
+    const fetchedAt = new Date();
+    fetchedAt.setDate(fetchedAt.getDate() - 3);
+    const day = new Date(Date.UTC(fetchedAt.getUTCFullYear(), fetchedAt.getUTCMonth(), fetchedAt.getUTCDate()));
+
+    return {
+      _id: new ObjectId(),
+      account: accountId,
+      day,
+      totalFollowers,
+      sampledFollowers: totalFollowers,
+      homeServer: 'mastodon.seed.local',
+      servers: servers.sort((a, b) => b.count - a.count),
+      fetchedAt,
+    };
   }
 
   private seededRandom(seed: number): () => number {

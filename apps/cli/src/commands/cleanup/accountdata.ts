@@ -57,6 +57,7 @@ export default class Accountdata extends BaseCommand {
             'accountstats',
             'dailyaccountstats',
             'dailytootstats',
+            'followerserversnapshots',
             'toots',
             'tootstats',
           ];

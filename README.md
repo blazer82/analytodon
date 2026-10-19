@@ -298,7 +298,7 @@ nginx, Traefik, or any other reverse proxy works equally well -- just proxy all 
 3. Open `https://your-domain.com` and create an account
 4. Connect a Mastodon account -- the CLI will begin fetching initial stats within one minute
 
-Initial data population can take several hours depending on the account's history. Hourly cron jobs then keep data up to date.
+Initial data population can take several hours depending on the account's history. Hourly cron jobs then keep data up to date. The distribution of followers across servers (`fetch followerservers`) is refreshed once a week per account, so it appears on the Followers page within a day of connecting an account.
 
 ### ⚙️ Configuration
 
