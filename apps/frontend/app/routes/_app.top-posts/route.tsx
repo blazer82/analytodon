@@ -23,7 +23,7 @@ export const meta: MetaFunction = () => {
 
 // Declare i18n namespace for this route
 export const handle = {
-  i18n: ['routes.topPosts', 'components.postActivity', 'components.postingTimes'],
+  i18n: ['routes.topPosts', 'components.postActivity', 'components.postingTimes', 'components.topToots'],
 };
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {

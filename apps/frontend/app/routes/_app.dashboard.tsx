@@ -21,7 +21,7 @@ export const meta: MetaFunction = () => {
 
 // Declare i18n namespace for this route
 export const handle = {
-  i18n: 'routes.dashboard',
+  i18n: ['routes.dashboard', 'components.topToots'],
 };
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {

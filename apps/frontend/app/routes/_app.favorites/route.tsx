@@ -24,7 +24,7 @@ export const meta: MetaFunction = () => {
 
 // Declare i18n namespace for this route
 export const handle = {
-  i18n: 'routes.favorites',
+  i18n: ['routes.favorites', 'components.topToots'],
 };
 
 interface LoaderData {

@@ -24,7 +24,7 @@ export const meta: MetaFunction = () => {
 
 // Declare i18n namespace for this route
 export const handle = {
-  i18n: 'routes.replies',
+  i18n: ['routes.replies', 'components.topToots'],
 };
 
 interface LoaderData {
