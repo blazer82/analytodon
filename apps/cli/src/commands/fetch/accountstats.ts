@@ -88,6 +88,12 @@ export default class AccountStats extends BaseCommand {
               fetchedAt: new Date(),
             });
 
+            // The account receives fresh stats again, so a future outage triggers a new stale notice
+            if (account.staleNoticeSentAt) {
+              await db.collection('accounts').updateOne({ _id: account._id }, { $unset: { staleNoticeSentAt: '' } });
+              this.log(`Fetching account stats: Reset stale notice for ${account.name}`);
+            }
+
             processed++;
             this.log(`Fetching account stats: Done for ${account.name}`);
           } catch (error: any) {

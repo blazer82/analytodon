@@ -54,4 +54,9 @@ export class AccountEntity extends BaseEntity {
 
   @Property({ nullable: true })
   tootHistoryComplete?: boolean;
+
+  // Set when the owner was notified that stats for this account stopped updating.
+  // Reset once the account receives fresh stats again (see `fetch:accountstats`).
+  @Property({ nullable: true })
+  staleNoticeSentAt?: Date;
 }
