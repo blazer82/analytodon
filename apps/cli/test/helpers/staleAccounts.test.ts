@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { ObjectId } from 'mongodb';
 
 import {
+  countNewlyStale,
   exceedsStaleRatio,
   findStaleAccounts,
   getStaleCutoff,
@@ -141,6 +142,27 @@ describe('staleAccounts helper', () => {
     it('should exceed when the ratio is above the maximum', () => {
       expect(exceedsStaleRatio(3, 10, 0.2)).to.equal(true);
       expect(exceedsStaleRatio(1, 0, 0.2)).to.equal(true);
+    });
+  });
+
+  describe('countNewlyStale', () => {
+    it('should exclude already notified stale accounts from both counts', () => {
+      const owner = makeOwner();
+      const records = [
+        makeRecord(owner, { staleNoticeSentAt: new Date() }),
+        makeRecord(owner, { staleNoticeSentAt: new Date() }),
+        makeRecord(owner),
+      ];
+
+      expect(countNewlyStale(records, 20)).to.deep.equal({ newlyStale: 1, base: 18 });
+    });
+
+    it('should never return a negative base', () => {
+      const owner = makeOwner();
+      expect(countNewlyStale([makeRecord(owner, { staleNoticeSentAt: new Date() })], 0)).to.deep.equal({
+        newlyStale: 0,
+        base: 0,
+      });
     });
   });
 });

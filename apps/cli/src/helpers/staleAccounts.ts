@@ -1,4 +1,4 @@
-import { Db, Document } from 'mongodb';
+import { Db, Document, ObjectId } from 'mongodb';
 
 /** Number of days without new stats after which an account counts as stale. */
 export const STALE_ACCOUNT_DAYS = 3;
@@ -112,6 +112,34 @@ export const findStaleAccounts = async (db: Db, cutoff: Date): Promise<StaleAcco
 export const countActiveAccounts = async (db: Db): Promise<number> =>
   db.collection('accounts').countDocuments({ isActive: true, setupComplete: true });
 
+/**
+ * Finds accounts that have `staleNoticeSentAt` set but are no longer stale (they received fresh
+ * stats again), and clears the flag so a later outage triggers a new notice. Staleness is the
+ * single source of truth, so the flag is only reset when `findStaleAccounts` no longer reports the account.
+ *
+ * @returns IDs of the accounts whose flag was (or, in dry run mode, would be) reset.
+ */
+export const resetRecoveredStaleNotices = async (
+  db: Db,
+  staleRecords: StaleAccountRecord[],
+  options: { dryRun: boolean; userID?: string },
+): Promise<ObjectId[]> => {
+  const staleIDs = staleRecords.map(({ account }) => account._id as ObjectId);
+  const filter: Document = { staleNoticeSentAt: { $ne: null }, _id: { $nin: staleIDs } };
+  if (options.userID) {
+    filter.owner = new ObjectId(options.userID);
+  }
+
+  const recovered = await db.collection('accounts').find(filter).project({ _id: 1 }).toArray();
+  const recoveredIDs = recovered.map(({ _id }) => _id as ObjectId);
+
+  if (recoveredIDs.length > 0 && !options.dryRun) {
+    await db.collection('accounts').updateMany({ _id: { $in: recoveredIDs } }, { $unset: { staleNoticeSentAt: '' } });
+  }
+
+  return recoveredIDs;
+};
+
 export interface SelectStaleAccountsOptions {
   /** Only select accounts of this user. Skips the owner eligibility checks (for testing). */
   userID?: string;
@@ -150,7 +178,19 @@ export const selectStaleAccountsForNotice = (
 };
 
 /**
- * Whether the share of stale accounts exceeds `maxRatio`. A high share points to a problem
+ * Counts newly stale accounts and the base to compare them against. Accounts that are stale and were already notified
+ * (e.g. long-dead accounts) are excluded from both sides, so an old backlog can't block the job.
+ */
+export const countNewlyStale = (
+  staleRecords: StaleAccountRecord[],
+  activeCount: number,
+): { newlyStale: number; base: number } => {
+  const notified = staleRecords.filter(({ account }) => account.staleNoticeSentAt).length;
+  return { newlyStale: staleRecords.length - notified, base: Math.max(activeCount - notified, 0) };
+};
+
+/**
+ * Whether the share of newly stale accounts exceeds `maxRatio`. A high share points to a problem
  * on our side (e.g. fetch jobs down), in which case users must not be told to reconnect.
  */
 export const exceedsStaleRatio = (staleCount: number, activeCount: number, maxRatio: number): boolean => {

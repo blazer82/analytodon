@@ -440,7 +440,7 @@ FLAGS
   -u, --user=<value>              Only process specific user
   -x, --dryRun                    Dry run, no actual changes made
       --days=<value>              [default: 3] Days without new stats after which an account counts as stale
-      --maxStaleRatio=<value>     [default: 0.2] Send nothing if more than this share (0-1) of all active accounts is stale
+      --maxStaleRatio=<value>     [default: 0.2] Send nothing if more than this share (0-1) of active accounts is newly stale
 
 DESCRIPTION
   Notify users once when stats for one of their accounts stop updating

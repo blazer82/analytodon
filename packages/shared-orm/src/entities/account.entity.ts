@@ -56,7 +56,8 @@ export class AccountEntity extends BaseEntity {
   tootHistoryComplete?: boolean;
 
   // Set when the owner was notified that stats for this account stopped updating.
-  // Reset once the account receives fresh stats again (see `fetch:accountstats`).
+  // Reset by `mail:staleaccounts` once the account is no longer stale (i.e. has fresh dailyaccountstats again),
+  // so a later outage triggers a new notice.
   @Property({ nullable: true })
   staleNoticeSentAt?: Date;
 }

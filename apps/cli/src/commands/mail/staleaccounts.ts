@@ -49,7 +49,7 @@ export default class StaleAccounts extends BaseCommand {
       min: 1,
     }),
     maxStaleRatio: Flags.custom<number>({
-      description: 'Send nothing if more than this share (0-1) of all active accounts is stale',
+      description: 'Send nothing if more than this share (0-1) of active accounts is newly stale',
       default: 0.2,
       parse: async (input) => {
         const value = Number(input);
