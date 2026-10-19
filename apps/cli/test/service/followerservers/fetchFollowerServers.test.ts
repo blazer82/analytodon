@@ -25,6 +25,10 @@ describe('fetchFollowerServers', () => {
       expect(getDomainFromAcct('alice@Mastodon.Social', 'home.example')).to.equal('mastodon.social');
     });
 
+    it('normalizes case and trailing dots', () => {
+      expect(getDomainFromAcct('alice@Mastodon.Social.', 'home.example')).to.equal('mastodon.social');
+    });
+
     it('uses the home server for local accounts', () => {
       expect(getDomainFromAcct('bob', 'home.example')).to.equal('home.example');
     });
@@ -34,6 +38,7 @@ describe('fetchFollowerServers', () => {
     it('returns the hostname of the server URL', () => {
       expect(getHomeServer('https://Home.Example')).to.equal('home.example');
       expect(getHomeServer('home.example/')).to.equal('home.example');
+      expect(getHomeServer('https://home.example.')).to.equal('home.example');
     });
   });
 
@@ -58,12 +63,14 @@ describe('fetchFollowerServers', () => {
     let sleeps: number[];
     let warnings: string[];
     let mockDb: any;
+    let clientOptions: any;
 
     const account = { _id: new ObjectId(), name: 'Test', serverURL: 'https://home.example' };
     const now = new Date('2026-10-14T15:30:00.000Z');
 
-    const mockClient = () =>
-      ({
+    const mockClient = (_serverURL: string, _token: string, options: any) => {
+      clientOptions = options;
+      return {
         verifyAccountCredentials: async () => ({ data: { id: '1', followers_count: followersCount } }),
         getAccountFollowers: async (_id: string, options: any) => {
           followerCalls.push(options);
@@ -75,7 +82,8 @@ describe('fetchFollowerServers', () => {
           const page = pages[followerCalls.length - 1] ?? { data: [] };
           return { data: page.data, headers: { link: page.link }, status: 200, statusText: 'OK' };
         },
-      }) as any;
+      } as any;
+    };
 
     const run = (maxFollowers?: number) =>
       fetchFollowerServersForAccount(mockDb, account, {
@@ -200,6 +208,54 @@ describe('fetchFollowerServers', () => {
       expect(sleeps).to.deep.equal([30000]);
       expect(warnings[0]).to.contain('429');
       expect(inserted[0].sampledFollowers).to.equal(1);
+    });
+
+    it('creates the client with a request timeout', async () => {
+      pages = [{ data: [] }];
+
+      await run();
+
+      expect(clientOptions).to.deep.equal({ timeoutMs: 30000 });
+    });
+
+    it('does not store anything on 401 after the credentials were verified', async () => {
+      followersCount = 10;
+      followersError = httpError(401);
+
+      let caught: any;
+      try {
+        await run();
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(caught?.message).to.equal('HTTP 401');
+      expect(inserted).to.have.length(0);
+    });
+
+    it('stores an available snapshot when a small follower count is stale', async () => {
+      followersCount = 2;
+      pages = [{ data: [] }];
+
+      await run();
+
+      expect(inserted[0]).to.not.have.property('hidden');
+      expect(inserted[0]).to.include({ totalFollowers: 2, sampledFollowers: 0 });
+      expect(inserted[0].servers).to.deep.equal([]);
+    });
+
+    it('does not count the same page twice when the server repeats a cursor', async () => {
+      followersCount = 4;
+      pages = [
+        { data: [{ acct: 'a' }, { acct: 'b' }], link: linkTo('100') },
+        { data: [{ acct: 'c' }, { acct: 'd' }], link: linkTo('100') },
+        { data: [{ acct: 'c' }, { acct: 'd' }], link: linkTo('100') },
+      ];
+
+      await run();
+
+      expect(followerCalls).to.have.length(2);
+      expect(inserted[0].sampledFollowers).to.equal(4);
     });
 
     it('does not store anything on unexpected errors', async () => {

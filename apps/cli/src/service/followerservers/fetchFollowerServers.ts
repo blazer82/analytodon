@@ -13,8 +13,15 @@ const MAX_RETRIES = 5;
 // cron run refreshes each account once a week despite small differences in run time.
 export const REFRESH_INTERVAL_MS = 6.5 * 24 * 60 * 60 * 1000;
 
-// HTTP statuses that mean the server won't give us the follower list
-const HIDDEN_STATUSES = [401, 403, 404, 410];
+export const REQUEST_TIMEOUT_MS = 30000;
+
+// HTTP statuses on the first follower page that mean the server won't give us the follower list.
+// 401 is not included: credentials were just verified, so it is treated as a transient error and retried next run.
+const HIDDEN_STATUSES = [403, 404, 410];
+
+// An empty first page with fewer followers than this is likely a stale count (e.g. a suspended follower),
+// not a hidden follower list.
+export const MIN_FOLLOWERS_FOR_HIDDEN = 5;
 
 export interface FollowerServersLogger {
   log: (message: string) => void;
@@ -23,7 +30,7 @@ export interface FollowerServersLogger {
 
 export interface FetchFollowerServersOptions {
   logger: FollowerServersLogger;
-  createClient?: (serverURL: string, accessToken: string) => MegalodonInterface;
+  createClient?: (serverURL: string, accessToken: string, options: { timeoutMs?: number }) => MegalodonInterface;
   sleep?: (ms: number) => Promise<void>;
   now?: () => Date;
   maxFollowers?: number;
@@ -42,23 +49,23 @@ export interface FollowerServerSnapshot {
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+// Lowercase and strip trailing dots (fully qualified form) so the same server is counted once
+const normalizeDomain = (domain: string): string => domain.trim().toLowerCase().replace(/\.+$/, '');
+
 /**
  * Returns the server domain of a follower. Local followers have no domain part in their acct.
  */
 export const getDomainFromAcct = (acct: string, homeServer: string): string => {
   const at = acct.lastIndexOf('@');
   const domain = at >= 0 ? acct.slice(at + 1) : '';
-  return (domain || homeServer).toLowerCase();
+  return normalizeDomain(domain) || homeServer;
 };
 
 export const getHomeServer = (serverURL: string): string => {
   try {
-    return new URL(serverURL).hostname.toLowerCase();
+    return normalizeDomain(new URL(serverURL).hostname);
   } catch {
-    return serverURL
-      .replace(/^https?:\/\//, '')
-      .replace(/[/:].*$/, '')
-      .toLowerCase();
+    return normalizeDomain(serverURL.replace(/^https?:\/\//, '').replace(/[/:].*$/, ''));
   }
 };
 
@@ -114,7 +121,7 @@ export const fetchFollowerServersForAccount = async (
     return null;
   }
 
-  const mastodon = createClient(account.serverURL, accessToken);
+  const mastodon = createClient(account.serverURL, accessToken, { timeoutMs: REQUEST_TIMEOUT_MS });
   const homeServer = getHomeServer(account.serverURL);
 
   const userInfo = await mastodon.verifyAccountCredentials();
@@ -124,6 +131,7 @@ export const fetchFollowerServersForAccount = async (
   let sampledFollowers = 0;
   let hidden = false;
   let maxId: string | undefined = undefined;
+  const seenCursors = new Set<string>();
   let iteration = 0;
 
   while (sampledFollowers < maxFollowers) {
@@ -158,7 +166,7 @@ export const fetchFollowerServersForAccount = async (
     if (!response) break; // hidden
 
     const followers = response.data ?? [];
-    if (iteration === 1 && followers.length === 0 && totalFollowers > 0) {
+    if (iteration === 1 && followers.length === 0 && totalFollowers >= MIN_FOLLOWERS_FOR_HIDDEN) {
       // The server reports followers but won't list them
       hidden = true;
       break;
@@ -170,8 +178,11 @@ export const fetchFollowerServersForAccount = async (
       sampledFollowers++;
     }
 
-    maxId = getNextMaxId(response.headers?.link);
-    if (!maxId || followers.length === 0) break;
+    if (maxId) seenCursors.add(maxId);
+    const nextMaxId = getNextMaxId(response.headers?.link);
+    // Stop on a missing or repeated cursor so a misbehaving server can't make us count the same page twice
+    if (!nextMaxId || seenCursors.has(nextMaxId) || followers.length === 0) break;
+    maxId = nextMaxId;
   }
 
   const fetchedAt = now();
