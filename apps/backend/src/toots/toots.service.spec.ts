@@ -291,6 +291,122 @@ describe('TootsService', () => {
     });
   });
 
+  describe('getPostingTimes', () => {
+    type GroupStage = {
+      $group: {
+        _id: {
+          weekday: { $isoDayOfWeek: { timezone: string } };
+          hour: { $hour: { timezone: string } };
+        };
+      };
+    };
+    const getGroupStage = () => (mockEm.aggregate.mock.calls[0][1] as object[])[1] as GroupStage;
+
+    const mockAccount = {
+      id: mockAccountId,
+      timezone: 'Europe/Berlin',
+    } as Loaded<AccountEntity>;
+
+    it('groups toots by ISO weekday and hour in the account timezone', async () => {
+      mockEm.aggregate.mockResolvedValue([]);
+
+      await service.getPostingTimes(mockAccount, 'last30days');
+
+      expect(mockedResolveTimeframe).toHaveBeenCalledWith('Europe/Berlin', 'last30days', {
+        dateFrom: undefined,
+        dateTo: undefined,
+      });
+      expect(mockEm.aggregate).toHaveBeenCalledWith(TootEntity, [
+        {
+          $match: {
+            account: new ObjectId(mockAccountId),
+            createdAt: {
+              $gte: new Date('2023-01-01T00:00:00.000Z'),
+              $lt: new Date('2023-02-01T00:00:00.000Z'),
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              weekday: { $isoDayOfWeek: { date: '$createdAt', timezone: 'Europe/Berlin' } },
+              hour: { $hour: { date: '$createdAt', timezone: 'Europe/Berlin' } },
+            },
+            posts: { $sum: 1 },
+            engagement: {
+              $sum: {
+                $add: [
+                  { $ifNull: ['$repliesCount', 0] },
+                  { $ifNull: ['$reblogsCount', 0] },
+                  { $ifNull: ['$favouritesCount', 0] },
+                ],
+              },
+            },
+          },
+        },
+        { $sort: { '_id.weekday': 1, '_id.hour': 1 } },
+      ]);
+    });
+
+    it('maps aggregation results to slots and returns the timezone and timeframe used', async () => {
+      mockEm.aggregate.mockResolvedValue([
+        { _id: { weekday: 1, hour: 9 }, posts: 3, engagement: 42 },
+        { _id: { weekday: 7, hour: 23 }, posts: 1, engagement: 0 },
+      ]);
+
+      const result = await service.getPostingTimes(mockAccount, 'last30days');
+
+      expect(result).toEqual({
+        data: [
+          { weekday: 1, hour: 9, posts: 3, engagement: 42 },
+          { weekday: 7, hour: 23, posts: 1, engagement: 0 },
+        ],
+        timezone: 'Europe/Berlin',
+        timeframe: 'last30days',
+      });
+    });
+
+    it('passes custom date ranges on to resolveTimeframe', async () => {
+      mockEm.aggregate.mockResolvedValue([]);
+
+      await service.getPostingTimes(mockAccount, 'custom', '2023-01-01', '2023-01-31');
+
+      expect(mockedResolveTimeframe).toHaveBeenCalledWith('Europe/Berlin', 'custom', {
+        dateFrom: '2023-01-01',
+        dateTo: '2023-01-31',
+      });
+    });
+
+    it('normalizes timezones that contain spaces', async () => {
+      mockEm.aggregate.mockResolvedValue([]);
+
+      const result = await service.getPostingTimes(
+        { ...mockAccount, timezone: 'America/New York' } as Loaded<AccountEntity>,
+        'last30days',
+      );
+
+      expect(result.timezone).toBe('America/New_York');
+      expect(getGroupStage().$group._id.hour.$hour.timezone).toBe('America/New_York');
+    });
+
+    it.each([[''], [undefined], ['Not/AZone']])('falls back to UTC for timezone %p', async (timezone) => {
+      mockEm.aggregate.mockResolvedValue([]);
+
+      const result = await service.getPostingTimes({ ...mockAccount, timezone } as Loaded<AccountEntity>, 'last30days');
+
+      expect(result.timezone).toBe('UTC');
+      expect(mockedResolveTimeframe).toHaveBeenCalledWith('UTC', 'last30days', expect.anything());
+      expect(getGroupStage().$group._id.weekday.$isoDayOfWeek.timezone).toBe('UTC');
+      expect(getGroupStage().$group._id.hour.$hour.timezone).toBe('UTC');
+    });
+
+    it('propagates aggregation errors', async () => {
+      mockEm.aggregate.mockRejectedValue(new Error('DB error'));
+
+      await expect(service.getPostingTimes(mockAccount, 'last30days')).rejects.toThrow('DB error');
+    });
+  });
+
   describe('getTootsForCsv', () => {
     it('should query toots in range, newest first, capped at the default limit', async () => {
       mockTootRepository.find.mockResolvedValue(mockTootEntities);
@@ -685,23 +801,6 @@ describe('TootsService', () => {
           account: mockAccountId,
           createdAt: { $gte: new Date('2026-08-01T22:00:00.000Z'), $lt: septemberFrom },
         });
-      });
-    });
-
-    it('should normalize timezones stored with spaces', async () => {
-      mockEm.aggregate.mockResolvedValue([]);
-      mockTootRepository.count.mockResolvedValue(0);
-
-      await service.getPostActivity({
-        accountId: mockAccountId,
-        timezone: 'America/New York',
-        dateFrom: new Date('2026-09-01T04:00:00.000Z'),
-        dateTo: new Date('2026-09-08T04:00:00.000Z'),
-      });
-
-      const pipeline = mockEm.aggregate.mock.calls[0][1] as { $group?: { _id: unknown } }[];
-      expect(pipeline[1].$group?._id).toEqual({
-        $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'America/New_York' },
       });
     });
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { PostActivityDto, RankedTootDto } from '@analytodon/rest-client';
+import type { PostActivityDto, PostingTimesResponseDto, RankedTootDto } from '@analytodon/rest-client';
 import DownloadIcon from '@mui/icons-material/Download';
 import { Box, Container, Grid, IconButton, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
@@ -9,6 +9,7 @@ import { useFetcher, useLoaderData } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
 import PeriodSelector, { type DateRange, type Timeframe } from '~/components/PeriodSelector';
 import PostActivity from '~/components/PostActivity';
+import PostingTimes from '~/components/PostingTimes';
 import TopToots, { type Toot } from '~/components/TopToots';
 import { createTootsApiWithAuth } from '~/services/api.server';
 import logger from '~/services/logger.server';
@@ -22,7 +23,7 @@ export const meta: MetaFunction = () => {
 
 // Declare i18n namespace for this route
 export const handle = {
-  i18n: ['routes.topPosts', 'components.postActivity'],
+  i18n: ['routes.topPosts', 'components.postActivity', 'components.postingTimes'],
 };
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
@@ -41,6 +42,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       initialDateFrom: null as string | null,
       initialDateTo: null as string | null,
       accountId: null,
+      postingTimes: null as PostingTimesResponseDto | null,
     };
   }
 
@@ -51,7 +53,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 
   try {
     const tootsApi = await createTootsApiWithAuth(request);
-    const [topTootsResponse, activity] = await Promise.all([
+    const [topTootsResponse, activity, postingTimes] = await Promise.all([
       tootsApi.tootsControllerGetTopTootsSummary({
         accountId,
         timeframe: timeframeParam,
@@ -63,6 +65,13 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
         .tootsControllerGetPostActivity({ accountId, timeframe: timeframeParam, dateFrom, dateTo })
         .catch((error: unknown): PostActivityDto | null => {
           logger.error('Failed to load post activity:', error);
+          return null;
+        }),
+      // The posting times card is optional; don't let it take down the top posts.
+      tootsApi
+        .tootsControllerGetPostingTimes({ accountId, timeframe: timeframeParam, dateFrom, dateTo })
+        .catch((error: unknown) => {
+          logger.error('Failed to load posting times:', error);
           return null;
         }),
     ]);
@@ -90,6 +99,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       initialDateFrom: dateFrom || null,
       initialDateTo: dateTo || null,
       accountId,
+      postingTimes,
     };
   } catch (error) {
     logger.error('Failed to load top posts data:', error);
@@ -103,6 +113,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       initialDateFrom: dateFrom || null,
       initialDateTo: dateTo || null,
       accountId,
+      postingTimes: null,
     };
   }
 });
@@ -118,6 +129,7 @@ export default function TopPostsPage() {
     initialDateFrom,
     initialDateTo,
     accountId,
+    postingTimes,
   } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<typeof loader>();
   const [currentTimeframe, setCurrentTimeframe] = React.useState<Timeframe>(initialTimeframe);
@@ -129,6 +141,7 @@ export default function TopPostsPage() {
   const topByBoostsData = fetcher.data?.topByBoosts ?? topByBoosts;
   const topByFavoritesData = fetcher.data?.topByFavorites ?? topByFavorites;
   const activityData = fetcher.data ? fetcher.data.activity : activity;
+  const postingTimesData = fetcher.data ? fetcher.data.postingTimes : postingTimes;
   const isLoadingData = fetcher.state === 'loading';
   const [currentDateRange, setCurrentDateRange] = React.useState<DateRange | null>(() =>
     initialDateFrom && initialDateTo ? { from: initialDateFrom, to: initialDateTo } : null,
@@ -193,6 +206,10 @@ export default function TopPostsPage() {
         </Grid>
 
         <PostActivity activity={activityData} isLoading={isLoadingData} />
+
+        <Grid size={{ xs: 12 }}>
+          <PostingTimes data={postingTimesData} loading={isLoadingData} />
+        </Grid>
 
         <Grid size={{ xs: 12 }}>
           <DataTablePaper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>

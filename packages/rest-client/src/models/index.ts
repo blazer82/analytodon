@@ -40,6 +40,8 @@ export * from './ManageSubscriptionDto';
 export * from './OldAccountMailDto';
 export * from './PostActivityBucket';
 export * from './PostActivityDto';
+export * from './PostingTimeSlotDto';
+export * from './PostingTimesResponseDto';
 export * from './RankedTootDto';
 export * from './RecentFailureDto';
 export * from './RecipientCountResponseDto';

@@ -9,8 +9,10 @@ import { Response } from 'express';
 import { escapeCsvCell } from '../shared/utils/csv-cell';
 import { stripHtml } from '../shared/utils/strip-html';
 import { formatDateISO, resolveTimeframe } from '../shared/utils/timeframe.helper';
+import { resolveTimezone } from '../shared/utils/timezone';
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
 import { PostActivityBucketEnum, PostActivityDto } from './dto/post-activity.dto';
+import { PostingTimeSlotDto, PostingTimesResponseDto } from './dto/posting-times-response.dto';
 
 export type RankedTootEntity = TootEntity & { rank: number };
 
@@ -25,6 +27,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface GetPostActivityOptions {
   accountId: string;
+  /** IANA timezone, already resolved with resolveTimezone (as used for dateFrom/dateTo). */
   timezone: string;
   dateFrom: Date;
   dateTo: Date;
@@ -36,12 +39,6 @@ export const pickPostActivityBucket = (days: number): PostActivityBucketEnum => 
   if (days <= POST_ACTIVITY_WEEKLY_MAX_DAYS) return PostActivityBucketEnum.WEEK;
   return PostActivityBucketEnum.MONTH;
 };
-
-/**
- * Same normalization as resolveTimeframe (which has already rejected unknown timezones
- * by the time we get here), so the Mongo grouping and the timeframe bounds agree.
- */
-const normalizeTimezone = (timezone: string): string => timezone.replace(' ', '_');
 
 /** Calendar day (YYYY-MM-DD) of the given instant in the given timezone. */
 const toLocalDay = (date: Date, timezone: string): string =>
@@ -182,8 +179,7 @@ export class TootsService {
    * statuses including its replies, excluding boosts.
    */
   async getPostActivity(options: GetPostActivityOptions): Promise<PostActivityDto> {
-    const { accountId, dateFrom, dateTo } = options;
-    const timezone = normalizeTimezone(options.timezone);
+    const { accountId, timezone, dateFrom, dateTo } = options;
 
     const days: string[] = [];
     if (dateFrom < dateTo) {
@@ -257,6 +253,69 @@ export class TootsService {
       daysWithoutPosts,
       busiestDay,
     };
+  }
+
+  /**
+   * Aggregates the account's posts in the requested timeframe by the weekday and
+   * hour they were published (in the account's timezone), summing the number of
+   * posts and their engagement (replies + boosts + favorites). Only slots with at
+   * least one post are returned, so the result has at most 7 * 24 = 168 entries.
+   */
+  async getPostingTimes(
+    account: Loaded<AccountEntity>,
+    timeframe: string,
+    customDateFrom?: string,
+    customDateTo?: string,
+  ): Promise<PostingTimesResponseDto> {
+    const timezone = resolveTimezone(account.timezone);
+    const {
+      dateFrom,
+      dateTo,
+      timeframe: resolvedTimeframe,
+    } = resolveTimeframe(timezone, timeframe, {
+      dateFrom: customDateFrom,
+      dateTo: customDateTo,
+    });
+
+    const pipeline: object[] = [
+      {
+        $match: {
+          account: new ObjectId(account.id),
+          createdAt: { $gte: dateFrom, $lt: dateTo },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            weekday: { $isoDayOfWeek: { date: '$createdAt', timezone } },
+            hour: { $hour: { date: '$createdAt', timezone } },
+          },
+          posts: { $sum: 1 },
+          engagement: {
+            $sum: {
+              $add: [
+                { $ifNull: ['$repliesCount', 0] },
+                { $ifNull: ['$reblogsCount', 0] },
+                { $ifNull: ['$favouritesCount', 0] },
+              ],
+            },
+          },
+        },
+      },
+      { $sort: { '_id.weekday': 1, '_id.hour': 1 } },
+    ];
+
+    const results: { _id: { weekday: number; hour: number }; posts: number; engagement: number }[] =
+      await this.em.aggregate(TootEntity, pipeline);
+
+    const data: PostingTimeSlotDto[] = results.map((entry) => ({
+      weekday: entry._id.weekday,
+      hour: entry._id.hour,
+      posts: entry.posts,
+      engagement: entry.engagement,
+    }));
+
+    return { data, timezone, timeframe: resolvedTimeframe };
   }
 
   /**

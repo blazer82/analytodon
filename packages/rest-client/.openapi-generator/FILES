@@ -56,6 +56,8 @@ src/models/ManageSubscriptionDto.ts
 src/models/OldAccountMailDto.ts
 src/models/PostActivityBucket.ts
 src/models/PostActivityDto.ts
+src/models/PostingTimeSlotDto.ts
+src/models/PostingTimesResponseDto.ts
 src/models/RankedTootDto.ts
 src/models/RecentFailureDto.ts
 src/models/RecipientCountResponseDto.ts
