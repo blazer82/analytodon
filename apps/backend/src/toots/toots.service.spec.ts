@@ -804,23 +804,6 @@ describe('TootsService', () => {
       });
     });
 
-    it('should normalize timezones stored with spaces', async () => {
-      mockEm.aggregate.mockResolvedValue([]);
-      mockTootRepository.count.mockResolvedValue(0);
-
-      await service.getPostActivity({
-        accountId: mockAccountId,
-        timezone: 'America/New York',
-        dateFrom: new Date('2026-09-01T04:00:00.000Z'),
-        dateTo: new Date('2026-09-08T04:00:00.000Z'),
-      });
-
-      const pipeline = mockEm.aggregate.mock.calls[0][1] as { $group?: { _id: unknown } }[];
-      expect(pipeline[1].$group?._id).toEqual({
-        $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'America/New_York' },
-      });
-    });
-
     it('should return an empty chart for an empty period', async () => {
       mockEm.aggregate.mockResolvedValue([]);
       mockTootRepository.count.mockResolvedValue(0);

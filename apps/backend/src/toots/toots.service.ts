@@ -27,6 +27,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface GetPostActivityOptions {
   accountId: string;
+  /** IANA timezone, already resolved with resolveTimezone (as used for dateFrom/dateTo). */
   timezone: string;
   dateFrom: Date;
   dateTo: Date;
@@ -38,12 +39,6 @@ export const pickPostActivityBucket = (days: number): PostActivityBucketEnum => 
   if (days <= POST_ACTIVITY_WEEKLY_MAX_DAYS) return PostActivityBucketEnum.WEEK;
   return PostActivityBucketEnum.MONTH;
 };
-
-/**
- * Same normalization as resolveTimeframe (which has already rejected unknown timezones
- * by the time we get here), so the Mongo grouping and the timeframe bounds agree.
- */
-const normalizeTimezone = (timezone: string): string => timezone.replace(' ', '_');
 
 /** Calendar day (YYYY-MM-DD) of the given instant in the given timezone. */
 const toLocalDay = (date: Date, timezone: string): string =>
@@ -184,8 +179,7 @@ export class TootsService {
    * statuses including its replies, excluding boosts.
    */
   async getPostActivity(options: GetPostActivityOptions): Promise<PostActivityDto> {
-    const { accountId, dateFrom, dateTo } = options;
-    const timezone = normalizeTimezone(options.timezone);
+    const { accountId, timezone, dateFrom, dateTo } = options;
 
     const days: string[] = [];
     if (dateFrom < dateTo) {

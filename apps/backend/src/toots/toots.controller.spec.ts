@@ -105,6 +105,25 @@ describe('TootsController', () => {
       });
       expect(result).toBe(activity);
     });
+
+    it.each([
+      ['America/New York', 'America/New_York'],
+      ['europe/berlin', 'Europe/Berlin'],
+      ['Not/AZone', 'UTC'],
+    ])('resolves the account timezone before using it (%p -> %p)', async (timezone, expected) => {
+      await controller.getPostActivity(
+        account.id,
+        { ...account, timezone } as AccountEntity,
+        { timeframe: 'last30days' },
+        user,
+      );
+
+      expect(mockedResolveTimeframe).toHaveBeenCalledWith(expected, 'last30days', {
+        dateFrom: undefined,
+        dateTo: undefined,
+      });
+      expect(tootsService.getPostActivity).toHaveBeenCalledWith(expect.objectContaining({ timezone: expected }));
+    });
   });
 
   describe('getPostingTimes', () => {

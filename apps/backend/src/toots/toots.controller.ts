@@ -100,11 +100,12 @@ export class TootsController {
     @GetUser() user: UserEntity,
   ): Promise<PostActivityDto> {
     this.logger.log(`Getting post activity for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
-    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, query.timeframe, {
+    const timezone = resolveTimezone(account.timezone);
+    const { dateFrom, dateTo } = resolveTimeframe(timezone, query.timeframe, {
       dateFrom: query.dateFrom,
       dateTo: query.dateTo,
     });
-    return this.tootsService.getPostActivity({ accountId: account.id, timezone: account.timezone, dateFrom, dateTo });
+    return this.tootsService.getPostActivity({ accountId: account.id, timezone, dateFrom, dateTo });
   }
 
   @Get('posting-times')
