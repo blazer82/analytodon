@@ -8,5 +8,33 @@
   },
   "messages": {
     "selectAccount": "Please select an account to view follower analytics."
+  },
+  "servers": {
+    "title": "Where your followers are",
+    "snapshot": "Snapshot from {{date}} · updated weekly",
+    "insight": {
+      "topAndHome_one": "<b>{{topShare}}</b> of your followers are on <b>{{topServer}}</b>, while <b>{{homeShare}}</b> share your home server <b>{{homeServer}}</b>. Your audience is spread across {{count}} server.",
+      "topAndHome_other": "<b>{{topShare}}</b> of your followers are on <b>{{topServer}}</b>, while <b>{{homeShare}}</b> share your home server <b>{{homeServer}}</b>. Your audience is spread across {{count}} servers.",
+      "homeIsTop_one": "<b>{{homeShare}}</b> of your followers share your home server <b>{{homeServer}}</b>. Your audience is spread across {{count}} server.",
+      "homeIsTop_other": "<b>{{homeShare}}</b> of your followers share your home server <b>{{homeServer}}</b>. Your audience is spread across {{count}} servers.",
+      "topOnly_one": "<b>{{topShare}}</b> of your followers are on <b>{{topServer}}</b>. Your audience is spread across {{count}} server.",
+      "topOnly_other": "<b>{{topShare}}</b> of your followers are on <b>{{topServer}}</b>. Your audience is spread across {{count}} servers."
+    },
+    "stats": {
+      "servers_one": "server your followers are on",
+      "servers_other": "servers your followers are on",
+      "home": "on your server ({{homeServer}})",
+      "topThree": "on the top 3 servers"
+    },
+    "yourServer": "Your server",
+    "otherServers_one": "{{count}} other server",
+    "otherServers_other": "{{count}} other servers",
+    "basedOn": "Based on {{sampled}} of {{total}} followers.",
+    "sampleNote": "Counts can differ slightly from your follower total, and for large accounts only the 10,000 most recent followers are included.",
+    "empty": {
+      "pending": "We haven't collected your followers' servers yet. They will show up here after the next weekly update.",
+      "hidden": "Your server doesn't share your follower list with Analytodon, so we can't show which servers your followers are on.",
+      "noFollowers": "No followers yet. Once people follow you, you'll see which servers they're on."
+    }
   }
 }

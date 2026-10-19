@@ -8,5 +8,33 @@
   },
   "messages": {
     "selectAccount": "Bitte wählen Sie ein Konto aus, um Follower-Analytik anzuzeigen."
+  },
+  "servers": {
+    "title": "Wo Ihre Follower sind",
+    "snapshot": "Stand vom {{date}} · wöchentlich aktualisiert",
+    "insight": {
+      "topAndHome_one": "<b>{{topShare}}</b> Ihrer Follower sind auf <b>{{topServer}}</b>, <b>{{homeShare}}</b> teilen Ihren Heimserver <b>{{homeServer}}</b>. Ihr Publikum verteilt sich auf {{count}} Server.",
+      "topAndHome_other": "<b>{{topShare}}</b> Ihrer Follower sind auf <b>{{topServer}}</b>, <b>{{homeShare}}</b> teilen Ihren Heimserver <b>{{homeServer}}</b>. Ihr Publikum verteilt sich auf {{count}} Server.",
+      "homeIsTop_one": "<b>{{homeShare}}</b> Ihrer Follower teilen Ihren Heimserver <b>{{homeServer}}</b>. Ihr Publikum verteilt sich auf {{count}} Server.",
+      "homeIsTop_other": "<b>{{homeShare}}</b> Ihrer Follower teilen Ihren Heimserver <b>{{homeServer}}</b>. Ihr Publikum verteilt sich auf {{count}} Server.",
+      "topOnly_one": "<b>{{topShare}}</b> Ihrer Follower sind auf <b>{{topServer}}</b>. Ihr Publikum verteilt sich auf {{count}} Server.",
+      "topOnly_other": "<b>{{topShare}}</b> Ihrer Follower sind auf <b>{{topServer}}</b>. Ihr Publikum verteilt sich auf {{count}} Server."
+    },
+    "stats": {
+      "servers_one": "Server, auf dem Ihre Follower sind",
+      "servers_other": "Server, auf denen Ihre Follower sind",
+      "home": "auf Ihrem Server ({{homeServer}})",
+      "topThree": "auf den Top-3-Servern"
+    },
+    "yourServer": "Ihr Server",
+    "otherServers_one": "{{count}} weiterer Server",
+    "otherServers_other": "{{count}} weitere Server",
+    "basedOn": "Basierend auf {{sampled}} von {{total}} Followern.",
+    "sampleNote": "Die Zahlen können leicht von Ihrer Follower-Gesamtzahl abweichen. Bei großen Konten werden nur die 10.000 neuesten Follower berücksichtigt.",
+    "empty": {
+      "pending": "Die Server Ihrer Follower wurden noch nicht erfasst. Sie erscheinen hier nach der nächsten wöchentlichen Aktualisierung.",
+      "hidden": "Ihr Server gibt Ihre Follower-Liste nicht an Analytodon weiter, daher können wir nicht anzeigen, auf welchen Servern Ihre Follower sind.",
+      "noFollowers": "Noch keine Follower. Sobald Ihnen jemand folgt, sehen Sie hier, auf welchen Servern Ihre Follower sind."
+    }
   }
 }

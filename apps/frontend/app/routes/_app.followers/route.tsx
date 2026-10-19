@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { ChartDataPointDto, FollowersKpiDto, TotalSnapshotDto } from '@analytodon/rest-client';
+import type { ChartDataPointDto, FollowerServersDto, FollowersKpiDto, TotalSnapshotDto } from '@analytodon/rest-client';
 import DownloadIcon from '@mui/icons-material/Download';
 import { Box, Container, Fade, Grid, IconButton, Link, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
@@ -16,6 +16,8 @@ import logger from '~/services/logger.server';
 import { resolveEffectiveAccountId } from '~/utils/active-account.server';
 import { useAdminViewAs } from '~/utils/admin-view';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
+
+import FollowerServers from './FollowerServers';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Followers Analytics - Analytodon' }];
@@ -32,6 +34,7 @@ interface LoaderData {
   yearlyKPI: FollowersKpiDto | null;
   total: TotalSnapshotDto | null;
   chart: ChartDataPointDto[];
+  servers: FollowerServersDto | null;
   initialTimeframe: Timeframe;
   initialDateFrom: string | null;
   initialDateTo: string | null;
@@ -50,6 +53,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       yearlyKPI: null,
       total: null,
       chart: [],
+      servers: null,
       initialTimeframe: 'last30days' as Timeframe,
       initialDateFrom: null,
       initialDateTo: null,
@@ -65,7 +69,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   try {
     const followersApi = await createFollowersApiWithAuth(request);
 
-    const [weeklyKPI, monthlyKPI, yearlyKPI, total, chartData] = await Promise.all([
+    const [weeklyKPI, monthlyKPI, yearlyKPI, total, chartData, servers] = await Promise.all([
       followersApi.followersControllerGetWeeklyKpi({ accountId }).catch(() => null),
       followersApi.followersControllerGetMonthlyKpi({ accountId }).catch(() => null),
       followersApi.followersControllerGetYearlyKpi({ accountId }).catch(() => null),
@@ -73,6 +77,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       followersApi
         .followersControllerGetChartData({ accountId, timeframe: timeframeParam, dateFrom, dateTo })
         .catch(() => []),
+      followersApi.followersControllerGetFollowerServers({ accountId, limit: 10 }).catch(() => null),
     ]);
 
     return {
@@ -81,6 +86,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       yearlyKPI,
       total,
       chart: chartData,
+      servers,
       initialTimeframe: timeframeParam,
       initialDateFrom: dateFrom || null,
       initialDateTo: dateTo || null,
@@ -97,6 +103,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       yearlyKPI: null,
       total: null,
       chart: [],
+      servers: null,
       initialTimeframe: timeframeParam,
       initialDateFrom: dateFrom || null,
       initialDateTo: dateTo || null,
@@ -112,6 +119,7 @@ export default function FollowersPage() {
     yearlyKPI,
     total,
     chart: initialChart,
+    servers,
     initialTimeframe,
     initialDateFrom,
     initialDateTo,
@@ -330,6 +338,11 @@ export default function FollowersPage() {
               </Typography>
             )}
           </ChartPaper>
+        </Grid>
+
+        {/* Follower servers (weekly snapshot, independent of the selected timeframe) */}
+        <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
+          <FollowerServers data={servers} />
         </Grid>
       </Grid>
     </Container>
