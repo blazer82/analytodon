@@ -1,8 +1,8 @@
 import { Flags } from '@oclif/core';
-import generator from 'megalodon';
 import { MongoClient } from 'mongodb';
 
 import { BaseCommand } from '../../base';
+import { createMastodonClient } from '../../helpers/createMastodonClient';
 import { decryptText } from '../../helpers/encryption';
 import { getTimezones } from '../../helpers/getTimezones';
 import { trackJobRun } from '../../helpers/trackJobRun';
@@ -72,7 +72,7 @@ export default class AccountStats extends BaseCommand {
               this.logWarning(`Fetching account stats: Failed to decrypt access token for ${account.name}. Skipping.`);
               continue;
             }
-            const mastodon = generator('mastodon', account.serverURL, decryptedAccessToken);
+            const mastodon = createMastodonClient(account.serverURL, decryptedAccessToken);
 
             const userInfo = await mastodon.verifyAccountCredentials();
 

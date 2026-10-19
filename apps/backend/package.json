@@ -36,6 +36,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.27",
     "@nestjs/swagger": "^11.4.4",
+    "axios": "^1.18.0",
     "bcrypt": "^6.0.0",
     "bson": "^6.10.4",
     "class-transformer": "^0.5.1",

@@ -1,6 +1,6 @@
-import generator from 'megalodon';
 import { Db, Document } from 'mongodb';
 
+import { createMastodonClient } from './createMastodonClient';
 import { decryptText } from './encryption';
 import { getDateInTimezone } from './getDateInTimezone';
 import { logger } from './logger';
@@ -25,7 +25,7 @@ export const createInitialTootStats = async (db: Db, account: Document) => {
   }
 
   try {
-    const mastodon = generator('mastodon', account.serverURL, decryptedAccessToken);
+    const mastodon = createMastodonClient(account.serverURL, decryptedAccessToken);
 
     const userInfo = await mastodon.verifyAccountCredentials();
 
