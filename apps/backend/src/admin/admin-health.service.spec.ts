@@ -18,6 +18,7 @@ describe('AdminHealthService', () => {
         ownerEmail: 'owner@example.com',
         lastStatsDate: '2026-02-10T00:00:00.000Z',
         daysSinceLastUpdate: 8,
+        staleNoticeSentAt: '2026-02-14T18:00:00.000Z',
       },
     ],
     incompleteAccounts: [

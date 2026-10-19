@@ -75,6 +75,7 @@ describe('AdminController (e2e)', () => {
         ownerEmail: 'admin@example.com',
         lastStatsDate: '2026-02-10T00:00:00.000Z',
         daysSinceLastUpdate: 8,
+        staleNoticeSentAt: '2026-02-14T18:00:00.000Z',
       },
     ],
     incompleteAccounts: [
@@ -326,6 +327,7 @@ describe('AdminController (e2e)', () => {
       expect(response.body.staleAccounts).toHaveLength(1);
       expect(response.body.staleAccounts[0].accountId).toBe('507f1f77bcf86cd799439011');
       expect(response.body.staleAccounts[0].daysSinceLastUpdate).toBe(8);
+      expect(response.body.staleAccounts[0].staleNoticeSentAt).toBe('2026-02-14T18:00:00.000Z');
       expect(response.body.incompleteAccounts).toHaveLength(1);
       expect(response.body.incompleteAccounts[0].serverURL).toBe('mastodon.online');
       expect(response.body.abandonedAccounts).toHaveLength(0);
