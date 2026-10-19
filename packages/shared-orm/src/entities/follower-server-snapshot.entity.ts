@@ -13,7 +13,10 @@ export interface FollowerServerCount {
  * Only aggregated counts per server domain are stored, never follower identities.
  */
 @Entity({ collection: 'followerserversnapshots' })
-@Index({ properties: ['account', 'day'] })
+// Latest snapshot per account (backend) and recently fetched accounts (CLI). Indexes are created by the backend
+// on startup (ensureIndexes).
+@Index({ options: { account: 1, fetchedAt: -1 } })
+@Index({ properties: ['fetchedAt'] })
 export class FollowerServerSnapshotEntity {
   @PrimaryKey()
   _id!: ObjectId;
