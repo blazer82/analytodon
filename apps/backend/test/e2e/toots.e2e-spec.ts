@@ -364,6 +364,88 @@ describe('TootsController (e2e)', () => {
     });
   });
 
+  describe('GET /accounts/:accountId/toots/posting-times', () => {
+    // 2024-03-04 is a Monday. Europe/Berlin is on CET (UTC+1) during this week.
+    const makeToot = (
+      em: EntityManager,
+      id: string,
+      createdAt: string,
+      replies: number,
+      boosts: number,
+      favorites: number,
+    ) =>
+      em.create(TootEntity, {
+        account: testAccount,
+        uri: `tag:mastodon.test,2024:posting-times-${id}`,
+        url: `https://mastodon.test/users/testuser_toots/statuses/posting-times-${id}`,
+        content: `Posting times toot ${id}`,
+        repliesCount: replies,
+        reblogsCount: boosts,
+        favouritesCount: favorites,
+        createdAt: new Date(createdAt),
+        language: 'en',
+        visibility: 'public',
+        fetchedAt: new Date(),
+      });
+
+    beforeAll(async () => {
+      const emFork = orm.em.fork();
+      const toots = [
+        makeToot(emFork, 'mon-a', '2024-03-04T08:10:00.000Z', 1, 2, 3), // Mon 09:10 Berlin
+        makeToot(emFork, 'mon-b', '2024-03-04T08:50:00.000Z', 0, 1, 4), // Mon 09:50 Berlin
+        makeToot(emFork, 'sun', '2024-03-10T22:30:00.000Z', 2, 0, 0), // Sun 23:30 Berlin
+        makeToot(emFork, 'next-mon', '2024-03-10T23:30:00.000Z', 0, 0, 1), // Mon 00:30 Berlin (Sun 23:30 UTC)
+        makeToot(emFork, 'outside', '2024-03-20T12:00:00.000Z', 9, 9, 9), // outside the requested range
+      ];
+      await emFork.persistAndFlush(toots);
+    });
+
+    it('should aggregate posts and engagement by weekday and hour in the account timezone', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/posting-times?timeframe=custom&dateFrom=2024-03-04&dateTo=2024-03-11`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.timezone).toBe('Europe/Berlin');
+      expect(response.body.timeframe).toBe('custom');
+      expect(response.body.data).toEqual([
+        { weekday: 1, hour: 0, posts: 1, engagement: 1 },
+        { weekday: 1, hour: 9, posts: 2, engagement: 11 },
+        { weekday: 7, hour: 23, posts: 1, engagement: 2 },
+      ]);
+    });
+
+    it('should return an empty list when there are no posts in the timeframe', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/posting-times?timeframe=custom&dateFrom=2023-06-01&dateTo=2023-06-30`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.data).toEqual([]);
+      expect(response.body.timezone).toBe('Europe/Berlin');
+    });
+
+    it('should return 400 if timeframe is missing', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/posting-times`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 401 if not authenticated', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/posting-times?timeframe=last7days`)
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 404 if account not found', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${new ObjectId().toHexString()}/toots/posting-times?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+  });
+
   describe('GET /accounts/:accountId/toots/csv', () => {
     it('should download top posts as CSV with expected columns', async () => {
       const timeframe = 'last7days';
@@ -446,6 +528,13 @@ describe('TootsController (e2e)', () => {
     it('should return 404 for activity if account setup is not complete', async () => {
       await request(app.getHttpServer())
         .get(`/accounts/${incompleteAccount.id}/toots/activity?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 404 for posting-times if account setup is not complete', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${incompleteAccount.id}/toots/posting-times?timeframe=last7days`)
         .set('Authorization', `Bearer ${testUserAccessToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });

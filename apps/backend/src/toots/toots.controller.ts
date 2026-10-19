@@ -16,6 +16,7 @@ import { resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { AllTopTootsResponseDto } from './dto/all-top-toots-response.dto';
 import { TootRankingEnum } from './dto/get-top-toots-query.dto';
 import { PostActivityDto } from './dto/post-activity.dto';
+import { PostingTimesResponseDto } from './dto/posting-times-response.dto';
 import { RankedTootDto } from './dto/ranked-toot.dto';
 import { RankedTootEntity, TootsService } from './toots.service';
 
@@ -103,6 +104,27 @@ export class TootsController {
       dateTo: query.dateTo,
     });
     return this.tootsService.getPostActivity({ accountId: account.id, timezone: account.timezone, dateFrom, dateTo });
+  }
+
+  @Get('posting-times')
+  @Roles(UserRole.AccountOwner)
+  @CheckAccount({ requireSetupComplete: true })
+  @ApiOperation({ summary: 'Get the number of posts and their engagement by weekday and hour of publication' })
+  @ApiParam({ name: 'accountId', description: 'The ID of the account' })
+  @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Posts and engagement per weekday/hour slot.',
+    type: PostingTimesResponseDto,
+  })
+  async getPostingTimes(
+    @Param('accountId') accountIdParam: string,
+    @GetAccount() account: AccountEntity,
+    @Query() query: TimeframeQueryDto,
+    @GetUser() user: UserEntity,
+  ): Promise<PostingTimesResponseDto> {
+    this.logger.log(`Getting posting times for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
+    return this.tootsService.getPostingTimes(account, query.timeframe, query.dateFrom, query.dateTo);
   }
 
   @Get('csv')
