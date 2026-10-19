@@ -46,9 +46,6 @@ export const getDaysAgo = (days: number, timezone: string): Date => {
       tz,
     );
 
-    const offsetHours = Math.floor(offset / 60);
-    const offsetMinutes = offset % 60;
-
     // Create a new date object representing the start of the day in the target timezone, then convert to UTC
     const localDate = new Date(referenceDate.toLocaleString('en-US', { timeZone: validTimezone }));
     localDate.setHours(0, 0, 0, 0); // Start of day in local timezone
@@ -70,8 +67,9 @@ export const getDaysAgo = (days: number, timezone: string): Date => {
     // Then, applying the UTC offset effectively shifts it to be 00:00:00 in the target timezone.
 
     const finalDate = new Date(date.toISOString().slice(0, 10) + 'T00:00:00.000Z');
-    finalDate.setUTCHours(finalDate.getUTCHours() + offsetHours);
-    finalDate.setUTCMinutes(finalDate.getUTCMinutes() + offsetMinutes);
+    // `offset` is in minutes, positive west of UTC (e.g. -330 for Asia/Kolkata). Apply it as a
+    // single minute shift; splitting into floor(hours) + remainder breaks positive half-hour zones.
+    finalDate.setUTCMinutes(finalDate.getUTCMinutes() + offset);
 
     return finalDate;
   } catch (error) {
@@ -132,12 +130,10 @@ const parseDate = (dateStr: string, timezone: string): Date => {
     const tz = findTimeZone(validTimezone);
     const { offset } = getUTCOffset(date, tz);
 
-    const offsetHours = Math.floor(offset / 60);
-    const offsetMinutes = offset % 60;
-
     const finalDate = new Date(date.toISOString().slice(0, 10) + 'T00:00:00.000Z');
-    finalDate.setUTCHours(finalDate.getUTCHours() + offsetHours);
-    finalDate.setUTCMinutes(finalDate.getUTCMinutes() + offsetMinutes);
+    // `offset` is in minutes, positive west of UTC (e.g. -330 for Asia/Kolkata). Apply it as a
+    // single minute shift; splitting into floor(hours) + remainder breaks positive half-hour zones.
+    finalDate.setUTCMinutes(finalDate.getUTCMinutes() + offset);
 
     return finalDate;
   } catch (error) {

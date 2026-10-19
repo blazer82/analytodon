@@ -119,6 +119,20 @@ describe('TimeframeHelper', () => {
     });
   });
 
+  describe('getDaysAgo with non-whole-hour and other offsets', () => {
+    // Mocked "now" is 2023-05-15T12:00:00Z; result must be local midnight of May 15 in UTC
+    it.each([
+      ['Asia/Kolkata', '2023-05-14T18:30:00.000Z'], // UTC+5:30
+      ['Asia/Kathmandu', '2023-05-14T18:15:00.000Z'], // UTC+5:45
+      ['Australia/Adelaide', '2023-05-14T14:30:00.000Z'], // ACST, UTC+9:30
+      ['America/St_Johns', '2023-05-15T02:30:00.000Z'], // NDT, UTC-2:30
+      ['Europe/Berlin', '2023-05-14T22:00:00.000Z'], // CEST, UTC+2
+      ['UTC', '2023-05-15T00:00:00.000Z'],
+    ])('returns start of today in %s', (timezone, expected) => {
+      expect(getDaysAgo(0, timezone).toISOString()).toBe(expected);
+    });
+  });
+
   describe('getDaysToWeekBeginning', () => {
     it('should return 0 for Monday (when Monday is the first day of the week)', () => {
       // May 15, 2023 is a Monday
@@ -221,6 +235,24 @@ describe('TimeframeHelper', () => {
       const result = resolveTimeframe('Europe/Berlin', 'unknown');
       expect(result.timeframe).toBe('last30days');
       expect(result.dateFrom.toISOString()).toBe('2023-04-14T22:00:00.000Z');
+    });
+  });
+
+  describe('resolveTimeframe custom with non-whole-hour and other offsets', () => {
+    it.each([
+      ['Asia/Kolkata', '2023-01-10', '2023-01-09T18:30:00.000Z', '2023-01-10T18:30:00.000Z'],
+      ['Asia/Kathmandu', '2023-01-10', '2023-01-09T18:15:00.000Z', '2023-01-10T18:15:00.000Z'],
+      // Adelaide: ACDT (UTC+10:30) in January, ACST (UTC+9:30) in July
+      ['Australia/Adelaide', '2023-01-10', '2023-01-09T13:30:00.000Z', '2023-01-10T13:30:00.000Z'],
+      ['Australia/Adelaide', '2023-07-10', '2023-07-09T14:30:00.000Z', '2023-07-10T14:30:00.000Z'],
+      // St. John's: NST (UTC-3:30) in January
+      ['America/St_Johns', '2023-01-10', '2023-01-10T03:30:00.000Z', '2023-01-11T03:30:00.000Z'],
+      ['Europe/Berlin', '2023-01-10', '2023-01-09T23:00:00.000Z', '2023-01-10T23:00:00.000Z'],
+      ['UTC', '2023-01-10', '2023-01-10T00:00:00.000Z', '2023-01-11T00:00:00.000Z'],
+    ])('resolves a single-day range in %s (%s)', (timezone, day, expectedFrom, expectedTo) => {
+      const result = resolveTimeframe(timezone, 'custom', { dateFrom: day, dateTo: day });
+      expect(result.dateFrom.toISOString()).toBe(expectedFrom);
+      expect(result.dateTo.toISOString()).toBe(expectedTo);
     });
   });
 

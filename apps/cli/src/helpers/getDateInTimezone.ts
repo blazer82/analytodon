@@ -9,10 +9,8 @@ export const getDateInTimezone = (referenceDate: Date, timezone: string) => {
 
   const { offset } = getUTCOffset(date, findTimeZone(timezone.replace(' ', '_')));
 
-  const offsetHours = Math.floor(offset / 60);
-  const offsetMinutes = offset % 60;
-
-  date.setUTCHours(offsetHours);
-  date.setUTCMinutes(offsetMinutes);
+  // `offset` is in minutes, positive west of UTC (e.g. -330 for Asia/Kolkata). Apply it as a
+  // single minute shift; splitting into floor(hours) + remainder breaks positive half-hour zones.
+  date.setUTCMinutes(offset);
   return date;
 };
