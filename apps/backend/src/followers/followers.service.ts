@@ -186,12 +186,15 @@ export class FollowersService {
     };
   }
 
+  // Keep in sync with getHomeServer in apps/cli/src/service/followerservers/fetchFollowerServers.ts
   private getHostname(serverURL: string): string {
+    let hostname: string;
     try {
-      return new URL(serverURL).hostname;
+      hostname = new URL(serverURL).hostname;
     } catch {
-      return serverURL;
+      hostname = serverURL.replace(/^https?:\/\//, '').replace(/[/:].*$/, '');
     }
+    return hostname.trim().toLowerCase().replace(/\.+$/, '');
   }
 
   /**

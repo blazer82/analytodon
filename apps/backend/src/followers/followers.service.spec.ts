@@ -346,7 +346,10 @@ describe('FollowersService', () => {
         makeSnapshot({ homeServer: undefined, servers: [], totalFollowers: 0, sampledFollowers: 0 }),
       ]);
 
-      const result = await service.getFollowerServers(mockAccount);
+      const result = await service.getFollowerServers({
+        ...mockAccount,
+        serverURL: 'https://Home.Example.',
+      } as Loaded<AccountEntity>);
 
       expect(result).toMatchObject({
         status: 'available',
