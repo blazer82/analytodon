@@ -16,6 +16,5 @@
     },
     "dataLabel": "Beiträge",
     "weekOf": "Woche ab {{date}}"
-  },
-  "footnote": "Gezählt werden Ihre eigenen öffentlichen und nicht gelisteten Beiträge (inklusive Ihrer Antworten, ohne Boosts), die Analytodon gespeichert hat, nach Tagen in der Zeitzone Ihres Kontos. Später gelöschte Beiträge werden weiterhin mitgezählt. Der Trend vergleicht mit dem vorherigen Zeitraum gleicher Länge; solange der gewählte Zeitraum noch läuft, nur bis zum gleichen Zeitpunkt. Das Diagramm zeigt Beiträge pro Tag für Zeiträume bis 93 Tage, pro Woche bis 186 Tage und pro Monat für längere Zeiträume."
+  }
 }
