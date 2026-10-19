@@ -241,6 +241,60 @@ describe('TootsController (e2e)', () => {
     });
   });
 
+  describe('GET /accounts/:accountId/toots/activity', () => {
+    it('should count posts per day for the timeframe', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/activity?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.total).toBe(4);
+      expect(response.body.bucket).toBe('day');
+      expect(response.body.days).toBe(7);
+      expect(response.body.chart).toHaveLength(7);
+      expect(response.body.chart.reduce((sum: number, point: { value: number }) => sum + point.value, 0)).toBe(4);
+      expect(response.body.daysWithoutPosts).toBe(3);
+      expect(response.body.busiestDay).toEqual({ date: expect.any(String), count: 1 });
+      expect(response.body.previousPeriodTotal).toBe(0);
+      expect(response.body.trend).toBeNull();
+    });
+
+    it('should bucket a year-long custom range per month', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/activity?timeframe=custom&dateFrom=2025-01-01&dateTo=2025-12-31`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.bucket).toBe('month');
+      expect(response.body.dateFrom).toBe('2025-01-01');
+      expect(response.body.dateTo).toBe('2025-12-31');
+      expect(response.body.chart).toHaveLength(12);
+      expect(response.body.chart[0]).toEqual({ time: '2025-01-01', value: 0 });
+      expect(response.body.total).toBe(0);
+      expect(response.body.busiestDay).toBeNull();
+    });
+
+    it('should return 400 if timeframe is missing', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/activity`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 401 if not authenticated', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${testAccount.id}/toots/activity?timeframe=last7days`)
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should return 404 if account not found', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${new ObjectId().toHexString()}/toots/activity?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+  });
+
   describe('GET /accounts/:accountId/toots/csv', () => {
     it('should download top posts as CSV with expected columns', async () => {
       const timeframe = 'last7days';
@@ -316,6 +370,13 @@ describe('TootsController (e2e)', () => {
     it('should return 404 for top-summary if account setup is not complete', async () => {
       await request(app.getHttpServer())
         .get(`/accounts/${incompleteAccount.id}/toots/top-summary?timeframe=last7days`)
+        .set('Authorization', `Bearer ${testUserAccessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 404 for activity if account setup is not complete', async () => {
+      await request(app.getHttpServer())
+        .get(`/accounts/${incompleteAccount.id}/toots/activity?timeframe=last7days`)
         .set('Authorization', `Bearer ${testUserAccessToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });

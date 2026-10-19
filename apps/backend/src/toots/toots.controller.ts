@@ -15,6 +15,7 @@ import { TimeframeQueryDto } from '../shared/dto/timeframe-query.dto';
 import { resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { AllTopTootsResponseDto } from './dto/all-top-toots-response.dto';
 import { TootRankingEnum } from './dto/get-top-toots-query.dto';
+import { PostActivityDto } from './dto/post-activity.dto';
 import { RankedTootDto } from './dto/ranked-toot.dto';
 import { RankedTootEntity, TootsService } from './toots.service';
 
@@ -81,6 +82,27 @@ export class TootsController {
       topByBoosts: { data: mapToRankedTootDto(topByBoostsEntities), timeframe: resolvedTimeframe },
       topByFavorites: { data: mapToRankedTootDto(topByFavoritesEntities), timeframe: resolvedTimeframe },
     };
+  }
+
+  @Get('activity')
+  @Roles(UserRole.AccountOwner)
+  @CheckAccount({ requireSetupComplete: true })
+  @ApiOperation({ summary: 'Get the number of posts in a timeframe, bucketed per day, week or month' })
+  @ApiParam({ name: 'accountId', description: 'The ID of the account' })
+  @ApiQuery({ name: 'timeframe', required: true, type: String, description: 'e.g., last30days, thismonth' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Post activity for the timeframe.', type: PostActivityDto })
+  async getPostActivity(
+    @Param('accountId') accountIdParam: string, // accountId is in path, used by guard
+    @GetAccount() account: AccountEntity,
+    @Query() query: TimeframeQueryDto,
+    @GetUser() user: UserEntity,
+  ): Promise<PostActivityDto> {
+    this.logger.log(`Getting post activity for account ${account.id}, timeframe ${query.timeframe}, user ${user.id}`);
+    const { dateFrom, dateTo } = resolveTimeframe(account.timezone, query.timeframe, {
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+    });
+    return this.tootsService.getPostActivity({ accountId: account.id, timezone: account.timezone, dateFrom, dateTo });
   }
 
   @Get('csv')

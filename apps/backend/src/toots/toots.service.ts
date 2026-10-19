@@ -10,10 +10,68 @@ import { escapeCsvCell } from '../shared/utils/csv-cell';
 import { stripHtml } from '../shared/utils/strip-html';
 import { formatDateISO, resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { GetTopTootsOptions, TootRankingEnum } from './dto/get-top-toots-query.dto';
+import { PostActivityBucketEnum, PostActivityDto } from './dto/post-activity.dto';
 
 export type RankedTootEntity = TootEntity & { rank: number };
 
 export const TOP_POSTS_CSV_MAX_ROWS = 5000;
+
+/** Periods of up to this many days are charted per day (covers every preset up to a quarter). */
+export const POST_ACTIVITY_DAILY_MAX_DAYS = 93;
+/** Periods of up to this many days (about half a year) are charted per week; longer ones per month. */
+export const POST_ACTIVITY_WEEKLY_MAX_DAYS = 186;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export interface GetPostActivityOptions {
+  accountId: string;
+  timezone?: string | null;
+  dateFrom: Date;
+  dateTo: Date;
+}
+
+/** Chooses the chart bucket size for a period of the given length in days. */
+export const pickPostActivityBucket = (days: number): PostActivityBucketEnum => {
+  if (days <= POST_ACTIVITY_DAILY_MAX_DAYS) return PostActivityBucketEnum.DAY;
+  if (days <= POST_ACTIVITY_WEEKLY_MAX_DAYS) return PostActivityBucketEnum.WEEK;
+  return PostActivityBucketEnum.MONTH;
+};
+
+/** Returns a timezone identifier usable by both Intl and MongoDB, falling back to UTC. */
+const normalizeTimezone = (timezone?: string | null): string => {
+  const candidate = timezone?.trim().replace(/ /g, '_');
+  if (!candidate) return 'UTC';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: candidate });
+    return candidate;
+  } catch {
+    return 'UTC';
+  }
+};
+
+/** Calendar day (YYYY-MM-DD) of the given instant in the given timezone. */
+const toLocalDay = (date: Date, timezone: string): string =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(
+    date,
+  );
+
+/** Pure calendar arithmetic on YYYY-MM-DD strings (no timezone involved). */
+const addDays = (day: string, amount: number): string =>
+  new Date(Date.parse(`${day}T00:00:00.000Z`) + amount * DAY_MS).toISOString().slice(0, 10);
+
+/** First day of the bucket (Monday-based weeks, calendar months) that contains the given day. */
+const bucketStart = (day: string, bucket: PostActivityBucketEnum): string => {
+  switch (bucket) {
+    case PostActivityBucketEnum.MONTH:
+      return `${day.slice(0, 7)}-01`;
+    case PostActivityBucketEnum.WEEK: {
+      const daysSinceMonday = (new Date(`${day}T00:00:00.000Z`).getUTCDay() + 6) % 7;
+      return addDays(day, -daysSinceMonday);
+    }
+    default:
+      return day;
+  }
+};
 
 @Injectable()
 export class TootsService {
@@ -79,6 +137,73 @@ export class TootsService {
       this.logger.error(`Error fetching top toots for account ${accountId}: ${error.message}`, error.stack);
       throw error; // Or handle more gracefully
     }
+  }
+
+  /**
+   * Counts the account's posts in the [dateFrom, dateTo) window and buckets them by
+   * calendar day in the account's timezone (falling back to UTC). The chart is
+   * zero-filled and bucketed per day, week or month depending on the period length
+   * (see POST_ACTIVITY_DAILY_MAX_DAYS / POST_ACTIVITY_WEEKLY_MAX_DAYS); a partial first
+   * week/month bucket is labelled with the period's first day. The trend compares
+   * against the immediately preceding period of equal length.
+   *
+   * "Posts" are the toots Analytodon stores: the account's own public and unlisted
+   * statuses including its replies, excluding boosts.
+   */
+  async getPostActivity(options: GetPostActivityOptions): Promise<PostActivityDto> {
+    const { accountId, dateFrom, dateTo } = options;
+    const timezone = normalizeTimezone(options.timezone);
+    const previousDateFrom = new Date(dateFrom.getTime() - (dateTo.getTime() - dateFrom.getTime()));
+
+    const [dailyCounts, previousPeriodTotal] = await Promise.all([
+      this.em.aggregate(TootEntity, [
+        { $match: { account: new ObjectId(accountId), createdAt: { $gte: dateFrom, $lt: dateTo } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone } },
+            count: { $sum: 1 },
+          },
+        },
+      ]) as Promise<{ _id: string; count: number }[]>,
+      this.tootRepository.count({ account: accountId, createdAt: { $gte: previousDateFrom, $lt: dateFrom } }),
+    ]);
+
+    const days: string[] = [];
+    if (dateFrom < dateTo) {
+      const lastDay = toLocalDay(new Date(dateTo.getTime() - 1), timezone);
+      for (let day = toLocalDay(dateFrom, timezone); day <= lastDay; day = addDays(day, 1)) {
+        days.push(day);
+      }
+    }
+
+    const countsByDay = new Map(dailyCounts.map(({ _id, count }) => [_id, count]));
+    const bucket = pickPostActivityBucket(days.length);
+    const buckets = new Map<string, number>();
+    let total = 0;
+    let daysWithoutPosts = 0;
+    let busiestDay: PostActivityDto['busiestDay'] = null;
+
+    for (const day of days) {
+      const count = countsByDay.get(day) ?? 0;
+      const key = bucketStart(day, bucket) < days[0] ? days[0] : bucketStart(day, bucket);
+      buckets.set(key, (buckets.get(key) ?? 0) + count);
+      total += count;
+      if (count === 0) daysWithoutPosts++;
+      if (count > 0 && (!busiestDay || count > busiestDay.count)) busiestDay = { date: day, count };
+    }
+
+    return {
+      total,
+      previousPeriodTotal,
+      trend: previousPeriodTotal > 0 ? (total - previousPeriodTotal) / previousPeriodTotal : null,
+      bucket,
+      chart: Array.from(buckets, ([time, value]) => ({ time, value })),
+      dateFrom: days[0] ?? toLocalDay(dateFrom, timezone),
+      dateTo: days[days.length - 1] ?? toLocalDay(dateFrom, timezone),
+      days: days.length,
+      daysWithoutPosts,
+      busiestDay,
+    };
   }
 
   /**
