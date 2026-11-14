@@ -17,11 +17,13 @@ import { createUsersApi } from '~/services/api.server';
 import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
 import { pageTitleMeta } from '~/utils/page-title';
+import { withSessionHandling } from '~/utils/session.server';
 
 export const meta: MetaFunction<typeof loader> = ({ data }) =>
   pageTitleMeta(data, `Subscribe to ${data?.typeLabel || 'notifications'} - Analytodon`);
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+// Wrapped so that a token refresh triggered by resolving the title's locale is committed to the session
+export const loader = withSessionHandling(async ({ request, params }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const userId = url.searchParams.get('u');
   const email = url.searchParams.get('e');
@@ -40,7 +42,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const pageTitle = await getPageTitle(request, 'routes.subscription', undefined, `meta.subscribe.${titleKey}`);
 
   return { userId, email, type, typeLabel, pageTitle };
-}
+});
 
 type ActionDataSuccess = {
   success: string;

@@ -17,6 +17,7 @@
     "accountHealth": "Kontostatus",
     "systemHealth": "Systemstatus",
     "userManagement": "Benutzer",
+    "accountBrowser": "Kontenübersicht",
     "emailBroadcast": "E-Mail-Rundschreiben"
   }
 }
