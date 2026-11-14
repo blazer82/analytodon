@@ -28,12 +28,12 @@ import { Form, useActionData, useFetcher, useNavigation, useSubmit } from '@remi
 import { EnhancedPaper } from '~/components/Layout/styles';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createUsersApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytodon - Email Broadcast' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Analytodon - Email Broadcast');
 
 export const handle = {
   i18n: 'routes.admin.email',
@@ -41,12 +41,13 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.admin.email', user);
 
   if (user.role !== 'admin') {
     throw redirect('/dashboard');
   }
 
-  return {};
+  return { pageTitle };
 });
 
 export const action = withSessionHandling(async ({ request }: ActionFunctionArgs) => {

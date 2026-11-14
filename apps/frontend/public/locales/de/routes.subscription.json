@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "subscribe": {
+      "weekly": "Wöchentliche Statistik-E-Mails abonnieren - Analytodon",
+      "news": "Neuigkeiten und Updates abonnieren - Analytodon",
+      "default": "Benachrichtigungen abonnieren - Analytodon"
+    },
+    "unsubscribe": {
+      "weekly": "Wöchentliche Statistik-E-Mails abbestellen - Analytodon",
+      "news": "Neuigkeiten und Updates abbestellen - Analytodon",
+      "default": "Benachrichtigungen abbestellen - Analytodon"
+    }
+  }
+}

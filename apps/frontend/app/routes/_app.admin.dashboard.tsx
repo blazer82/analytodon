@@ -11,13 +11,13 @@ import type { ChartData } from '~/components/Chart';
 import { ChartPaper, DataTablePaper, EnhancedPaper } from '~/components/Layout/styles';
 import Title from '~/components/Title';
 import { createAdminApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
 import { formatNumber } from '~/utils/formatters';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytodon - Platform Overview' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Analytodon - Platform Overview');
 
 export const handle = {
   i18n: 'routes.admin.dashboard',
@@ -25,6 +25,7 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.admin.dashboard', user);
 
   if (user.role !== 'admin') {
     throw redirect('/dashboard');
@@ -33,13 +34,13 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   try {
     const adminApi = await createAdminApiWithAuth(request);
     const stats = await adminApi.adminControllerGetStats();
-    return { stats };
+    return { pageTitle, stats };
   } catch (error) {
     if (error instanceof Response) {
       throw error;
     }
     logger.error('Failed to load admin stats:', error);
-    return { stats: null };
+    return { pageTitle, stats: null };
   }
 });
 

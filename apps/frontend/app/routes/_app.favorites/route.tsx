@@ -14,14 +14,14 @@ import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
 import { createFavoritesApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
 import { resolveEffectiveAccountId } from '~/utils/active-account.server';
 import { useAdminViewAs } from '~/utils/admin-view';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Favorites Analytics - Analytodon' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Favorites Analytics - Analytodon');
 
 // Declare i18n namespace for this route
 export const handle = {
@@ -43,11 +43,13 @@ interface LoaderData {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.favorites', user);
   const session = request.__apiClientSession!;
   const accountId = resolveEffectiveAccountId(request, user, session);
 
   if (!accountId) {
     return {
+      pageTitle,
       weeklyKPI: null,
       monthlyKPI: null,
       yearlyKPI: null,
@@ -93,6 +95,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     }));
 
     return {
+      pageTitle,
       weeklyKPI,
       monthlyKPI,
       yearlyKPI,
@@ -110,6 +113,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     }
     logger.error('Failed to load favorites data:', error);
     return {
+      pageTitle,
       weeklyKPI: null,
       monthlyKPI: null,
       yearlyKPI: null,

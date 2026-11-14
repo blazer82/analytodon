@@ -19,11 +19,11 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Reset your Analytodon password' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Reset your Analytodon password');
 
 // Declare i18n namespace for this route
 export const handle = {
@@ -33,7 +33,9 @@ export const handle = {
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const token = url.searchParams.get('t');
-  return { token };
+  const pageTitle = await getPageTitle(request, 'routes.resetPassword');
+
+  return { token, pageTitle };
 }
 
 // Define the types for our action data

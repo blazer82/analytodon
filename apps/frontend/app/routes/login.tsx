@@ -2,12 +2,12 @@ import { type ActionFunctionArgs, type LoaderFunctionArgs, type MetaFunction } f
 import { useActionData, useLoaderData } from '@remix-run/react';
 import LoginPage from '~/components/LoginPage';
 import { createAuthApi } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { createUserSession, getUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Sign in to Analytodon' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Sign in to Analytodon');
 
 // Declare i18n namespace for this route
 export const handle = {
@@ -33,7 +33,10 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   const url = new URL(request.url);
   const message = url.searchParams.get('message');
 
-  return { isRegistrationDisabled, message };
+  // Nobody is logged in at this point, so the title follows Accept-Language like the rest of the page
+  const pageTitle = await getPageTitle(request, 'routes.login', null);
+
+  return { isRegistrationDisabled, message, pageTitle };
 });
 
 export async function action({ request }: ActionFunctionArgs) {

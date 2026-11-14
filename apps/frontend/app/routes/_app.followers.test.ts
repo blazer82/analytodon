@@ -33,7 +33,7 @@ vi.mock('~/services/logger.server', () => ({
   default: mocks.mockLogger,
 }));
 
-const { loader } = await import('./_app.followers/route');
+const { loader, meta } = await import('./_app.followers/route');
 
 function callLoader(request: Request) {
   return (loader as Function)({ request, params: {}, context: {} });
@@ -72,6 +72,7 @@ describe('followers loader', () => {
       limit: 10,
     });
     expect(result).toEqual({
+      pageTitle: 'Followers Analytics - Analytodon',
       weeklyKPI,
       monthlyKPI,
       yearlyKPI,
@@ -131,6 +132,7 @@ describe('followers loader', () => {
     const result = await callLoader(request);
 
     expect(result).toEqual({
+      pageTitle: 'Followers Analytics - Analytodon',
       weeklyKPI: null,
       monthlyKPI: null,
       yearlyKPI: null,
@@ -190,6 +192,7 @@ describe('followers loader', () => {
     const result = await callLoader(request);
 
     expect(result).toEqual({
+      pageTitle: 'Followers Analytics - Analytodon',
       weeklyKPI: null,
       monthlyKPI: null,
       yearlyKPI: null,
@@ -202,5 +205,44 @@ describe('followers loader', () => {
       accountId: 'acc-1',
     });
     expect(mocks.mockLogger.error).toHaveBeenCalled();
+  });
+});
+
+describe('followers page title', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const callMeta = (data: unknown) => (meta as Function)({ data });
+
+  it.each([
+    ['en', 'Followers Analytics - Analytodon'],
+    ['de', 'Follower-Analytik - Analytodon'],
+    ['ja', 'フォロワーのアナリティクス - Analytodon'],
+  ])('uses the stored locale "%s" of the user, not Accept-Language', async (locale, title) => {
+    mocks.mockRequireUser.mockResolvedValue(makeSessionUser({ locale }));
+    mocks.mockResolveEffectiveAccountId.mockReturnValue(null);
+
+    const request = makeRequestWithSession('http://localhost/followers');
+    request.headers.set('Accept-Language', 'fr-FR,fr;q=0.9,en;q=0.8');
+    const result = await callLoader(request);
+
+    expect(result.pageTitle).toBe(title);
+    expect(callMeta(result)).toEqual([{ title }]);
+  });
+
+  it('falls back to Accept-Language when the stored locale is not supported', async () => {
+    mocks.mockRequireUser.mockResolvedValue(makeSessionUser({ locale: 'fr' }));
+    mocks.mockResolveEffectiveAccountId.mockReturnValue(null);
+
+    const request = makeRequestWithSession('http://localhost/followers');
+    request.headers.set('Accept-Language', 'ja-JP,ja;q=0.9');
+    const result = await callLoader(request);
+
+    expect(result.pageTitle).toBe('フォロワーのアナリティクス - Analytodon');
+  });
+
+  it('falls back to the English title when there is no loader data', () => {
+    expect(callMeta(undefined)).toEqual([{ title: 'Followers Analytics - Analytodon' }]);
   });
 });

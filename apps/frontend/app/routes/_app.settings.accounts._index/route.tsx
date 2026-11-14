@@ -33,14 +33,14 @@ import { DataTablePaper } from '~/components/Layout/styles';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import Title from '~/components/Title';
 import { createAccountsApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
 import { formatDate } from '~/utils/formatters';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 import { stripSchema } from '~/utils/url';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Accounts - Analytodon' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Accounts - Analytodon');
 
 // Declare i18n namespaces for this route
 export const handle = {
@@ -49,6 +49,7 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.accounts', user);
   const url = new URL(request.url);
   const setupComplete = url.searchParams.get('setup_complete') === 'true';
 
@@ -57,6 +58,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     const accounts = await accountsApi.accountsControllerFindAll();
 
     return {
+      pageTitle,
       accounts,
       user,
       canAddAccount: (user.maxAccounts ?? 0) - (accounts?.length ?? 0) > 0,
@@ -64,11 +66,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     };
   } catch (error) {
     logger.error('Failed to load accounts:', error);
-    return {
-      accounts: [],
-      user,
-      canAddAccount: (user.maxAccounts ?? 0) > 0,
-    };
+    return { pageTitle, accounts: [], user, canAddAccount: (user.maxAccounts ?? 0) > 0 };
   }
 });
 

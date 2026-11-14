@@ -25,12 +25,12 @@ import { Link, useLoaderData } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
 import { StyledTextField } from '~/components/StyledFormElements';
 import { createUsersApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytodon - User Management' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Analytodon - User Management');
 
 export const handle = {
   i18n: 'routes.admin.users',
@@ -38,6 +38,7 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.admin.users', user);
 
   if (user.role !== 'admin') {
     throw redirect('/dashboard');
@@ -46,13 +47,13 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   try {
     const usersApi = await createUsersApiWithAuth(request);
     const users = await usersApi.usersControllerFindAllUsers();
-    return { users };
+    return { pageTitle, users };
   } catch (error) {
     if (error instanceof Response) {
       throw error;
     }
     logger.error('Failed to load users:', error);
-    return { users: null };
+    return { pageTitle, users: null };
   }
 });
 

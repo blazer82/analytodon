@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "Analytodon - Account Browser"
+  },
+  "search": {
+    "placeholder": "Konten, Server oder Inhaber suchen..."
+  },
+  "filters": {
+    "statusAll": "Alle Status",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "setupAll": "Alle Einrichtungsstatus",
+    "setupComplete": "Einrichtung abgeschlossen",
+    "setupIncomplete": "Einrichtung unvollständig"
+  },
+  "columns": {
+    "accountName": "Kontoname",
+    "serverURL": "Server-URL",
+    "ownerEmail": "E-Mail des Inhabers",
+    "active": "Aktiv",
+    "setupComplete": "Einrichtung abgeschlossen",
+    "created": "Erstellt",
+    "actions": "Aktionen"
+  },
+  "labels": {
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "actions": {
+    "viewDashboard": "Dashboard anzeigen"
+  },
+  "messages": {
+    "noAccounts": "Keine Konten gefunden, die Ihren Kriterien entsprechen.",
+    "loadError": "Konten konnten nicht geladen werden."
+  }
+}

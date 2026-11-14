@@ -1,4 +1,4 @@
-export const TRANSLATIONS_VERSION = '1.11.0';
+export const TRANSLATIONS_VERSION = '1.12.0';
 
 export default {
   // Supported languages

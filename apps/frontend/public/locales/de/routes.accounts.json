@@ -1,6 +1,8 @@
 {
   "meta": {
-    "title": "Konten - Analytodon"
+    "title": "Konten - Analytodon",
+    "connectTitle": "Verbinden Sie Ihr Mastodon-Konto",
+    "setupCompleteTitle": "Kontoeinrichtung abgeschlossen - Analytodon"
   },
   "title": "Verwalten Sie Ihre Konten",
   "table": {

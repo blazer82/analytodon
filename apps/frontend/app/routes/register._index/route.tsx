@@ -28,13 +28,13 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { createUserSession, getUser, withSessionHandling } from '~/utils/session.server';
 import timezones from '~/utils/timezones.json';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Sign up for Analytodon' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Sign up for Analytodon');
 
 // Declare i18n namespace for this route
 export const handle = {
@@ -65,7 +65,10 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     }
   }
 
-  return { serverURL };
+  // Nobody is logged in at this point, so the title follows Accept-Language like the rest of the page
+  const pageTitle = await getPageTitle(request, 'routes.register', null);
+
+  return { serverURL, pageTitle };
 });
 
 export async function action({ request }: ActionFunctionArgs) {

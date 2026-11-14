@@ -12,14 +12,14 @@ import PostActivity from '~/components/PostActivity';
 import PostingTimes from '~/components/PostingTimes';
 import TopToots, { type Toot } from '~/components/TopToots';
 import { createTootsApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
 import { resolveEffectiveAccountId } from '~/utils/active-account.server';
 import { useAdminViewAs } from '~/utils/admin-view';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Top Posts - Analytodon' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Top Posts - Analytodon');
 
 // Declare i18n namespace for this route
 export const handle = {
@@ -28,11 +28,13 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.topPosts', user);
   const session = request.__apiClientSession!;
   const accountId = resolveEffectiveAccountId(request, user, session);
 
   if (!accountId) {
     return {
+      pageTitle,
       top: [],
       topByReplies: [],
       topByBoosts: [],
@@ -90,6 +92,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     };
 
     return {
+      pageTitle,
       top: mapToToots(topTootsResponse.top.data),
       topByReplies: mapToToots(topTootsResponse.topByReplies.data),
       topByBoosts: mapToToots(topTootsResponse.topByBoosts.data),
@@ -104,6 +107,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   } catch (error) {
     logger.error('Failed to load top posts data:', error);
     return {
+      pageTitle,
       top: [],
       topByReplies: [],
       topByBoosts: [],

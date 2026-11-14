@@ -22,12 +22,12 @@ import { redirect } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
 import { createAdminApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytodon - Account Health' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Analytodon - Account Health');
 
 export const handle = {
   i18n: 'routes.admin.accounts-health',
@@ -35,6 +35,7 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.admin.accounts-health', user);
 
   if (user.role !== 'admin') {
     throw redirect('/dashboard');
@@ -43,13 +44,13 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   try {
     const adminApi = await createAdminApiWithAuth(request);
     const health = await adminApi.adminControllerGetAccountHealth();
-    return { health };
+    return { pageTitle, health };
   } catch (error) {
     if (error instanceof Response) {
       throw error;
     }
     logger.error('Failed to load account health:', error);
-    return { health: null };
+    return { pageTitle, health: null };
   }
 });
 

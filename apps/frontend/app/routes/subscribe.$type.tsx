@@ -14,12 +14,12 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton } from '~/components/StyledFormElements';
 import { createUsersApi } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const typeLabel = data?.typeLabel || 'notifications';
-  return [{ title: `Subscribe to ${typeLabel} - Analytodon` }];
-};
+export const meta: MetaFunction<typeof loader> = ({ data }) =>
+  pageTitleMeta(data, `Subscribe to ${data?.typeLabel || 'notifications'} - Analytodon`);
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -35,7 +35,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const typeLabel = typeLabels[type || ''] || 'notifications';
 
-  return { userId, email, type, typeLabel };
+  // Only the document title is translated so far; the page itself is still English-only
+  const titleKey = type && Object.hasOwn(typeLabels, type) ? type : 'default';
+  const pageTitle = await getPageTitle(request, 'routes.subscription', undefined, `meta.subscribe.${titleKey}`);
+
+  return { userId, email, type, typeLabel, pageTitle };
 }
 
 type ActionDataSuccess = {

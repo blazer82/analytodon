@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "システムの状態"
+    "title": "Analytodon - システムの状態"
   },
   "status": {
     "healthy": "すべてのシステムが正常に稼働しています。",

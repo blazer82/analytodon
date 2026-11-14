@@ -23,14 +23,14 @@ import MultiSeriesChart from '~/components/MultiSeriesChart';
 import PeriodSelector, { type DateRange, type Timeframe } from '~/components/PeriodSelector';
 import Title from '~/components/Title';
 import { createHashtagsApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
 import { resolveEffectiveAccountId } from '~/utils/active-account.server';
 import { useAdminViewAs } from '~/utils/admin-view';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Hashtags Analytics - Analytodon' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Hashtags Analytics - Analytodon');
 
 export const handle = {
   i18n: 'routes.hashtags',
@@ -50,11 +50,13 @@ interface LoaderData {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.hashtags', user);
   const session = request.__apiClientSession!;
   const accountId = resolveEffectiveAccountId(request, user, session);
 
   if (!accountId) {
     return {
+      pageTitle,
       topHashtags: [],
       overTime: null,
       engagement: [],
@@ -95,6 +97,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     ]);
 
     return {
+      pageTitle,
       topHashtags,
       overTime,
       engagement,
@@ -111,6 +114,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
     }
     logger.error('Failed to load hashtags data:', error);
     return {
+      pageTitle,
       topHashtags: [],
       overTime: null,
       engagement: [],

@@ -80,16 +80,27 @@ function findBestMatchingLanguage(acceptLanguageHeader: string, supportedLanguag
 // Custom locale resolver that prioritizes user's stored locale
 class CustomI18Next extends RemixI18Next {
   async getLocale(request: Request): Promise<string> {
-    // First, try to get the user's stored locale preference
+    let user: { locale?: string } | null = null;
     try {
-      const user = await getUser(request);
-      if (user?.locale && i18nextConfig.supportedLngs.includes(user.locale)) {
-        logger.info('[i18n] Using user stored locale', { locale: user.locale });
-        return user.locale;
-      }
+      user = await getUser(request);
     } catch (_error) {
       // If we can't get the user (not logged in, error, etc.), continue to browser detection
       logger.debug('[i18n] No user found, falling back to browser detection');
+    }
+
+    return this.getLocaleForUser(request, user);
+  }
+
+  /**
+   * Resolve the locale for a request whose user is already known (`null` when
+   * nobody is logged in). Loaders that have just called `getUser`/`requireUser`
+   * use this instead of `getLocale` so that no second profile request is made.
+   */
+  getLocaleForUser(request: Request, user: { locale?: string } | null): string {
+    // First, try the user's stored locale preference
+    if (user?.locale && i18nextConfig.supportedLngs.includes(user.locale)) {
+      logger.info('[i18n] Using user stored locale', { locale: user.locale });
+      return user.locale;
     }
 
     // Fall back to browser's Accept-Language header for non-authenticated users

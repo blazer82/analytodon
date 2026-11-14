@@ -10,15 +10,17 @@ import {
   LoginContainer,
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
+import { getPageTitle } from '~/services/i18n/page-title.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Account Setup Complete - Analytodon' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Account Setup Complete - Analytodon');
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUser(request);
-  return null; // No data needed for this page
+  const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.accounts', user, 'meta.setupCompleteTitle');
+
+  return { pageTitle };
 }
 
 export default function AccountsSetupCompletePage() {
