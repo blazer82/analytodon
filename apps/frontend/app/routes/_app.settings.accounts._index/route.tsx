@@ -151,7 +151,8 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
 export default function AccountsPage() {
   const { accounts, user, canAddAccount, showSetupCompleteDialog } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
-  const { t } = useTranslation('routes.accounts');
+  const { t, i18n } = useTranslation('routes.accounts');
+  const locale = i18n.language || 'en';
   const theme = useTheme();
   const navigate = useNavigate();
   const submit = useSubmit();
@@ -287,7 +288,7 @@ export default function AccountsPage() {
                   <TableCell>{account.username}</TableCell>
                   <TableCell>{stripSchema(account.serverURL)}</TableCell>
                   <TableCell>{account.timezone}</TableCell>
-                  <TableCell>{formatDate(account.createdAt, user.timezone)}</TableCell>
+                  <TableCell>{formatDate(account.createdAt, user.timezone, locale)}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       title={t('table.actions.reconnect')}

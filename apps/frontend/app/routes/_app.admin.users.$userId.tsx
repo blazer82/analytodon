@@ -135,7 +135,8 @@ export const action = withSessionHandling(async ({ request, params }: ActionFunc
 });
 
 export default function AdminUserDetail() {
-  const { t } = useTranslation('routes.admin.user-detail');
+  const { t, i18n } = useTranslation('routes.admin.user-detail');
+  const locale = i18n.language || 'en';
   const { userDetail } = useLoaderData<typeof loader>() as { userDetail: UserResponseDto };
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -246,13 +247,13 @@ export default function AdminUserDetail() {
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {t('form.lastLogin')}:{' '}
-              {userDetail.lastLoginAt ? new Date(userDetail.lastLoginAt).toLocaleString() : t('form.never')}
+              {userDetail.lastLoginAt ? new Date(userDetail.lastLoginAt).toLocaleString(locale) : t('form.never')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t('form.created')}: {new Date(userDetail.createdAt).toLocaleString()}
+              {t('form.created')}: {new Date(userDetail.createdAt).toLocaleString(locale)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t('form.updated')}: {new Date(userDetail.updatedAt).toLocaleString()}
+              {t('form.updated')}: {new Date(userDetail.updatedAt).toLocaleString(locale)}
             </Typography>
           </Box>
 
@@ -308,7 +309,7 @@ export default function AdminUserDetail() {
                         color={account.isActive ? 'success' : 'error'}
                       />
                     </TableCell>
-                    <TableCell>{new Date(account.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(account.createdAt).toLocaleDateString(locale)}</TableCell>
                     <TableCell>
                       {account.setupComplete && (
                         <Button

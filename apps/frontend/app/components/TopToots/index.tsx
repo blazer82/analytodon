@@ -27,7 +27,8 @@ const TopToots: React.FunctionComponent<{
   showBoosts?: boolean;
   showFavorites?: boolean;
 }> = ({ data, title, linkText, link, showReplies = true, showBoosts = true, showFavorites = true }) => {
-  const { t } = useTranslation('components.topToots');
+  const { t, i18n } = useTranslation('components.topToots');
+  const locale = i18n.language || 'en';
   const appData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto };
   const userTimezone = appData?.user?.timezone;
 
@@ -104,7 +105,7 @@ const TopToots: React.FunctionComponent<{
           <TableBody>
             {data.map((toot) => (
               <TableRow key={toot.uri} sx={{ transition: 'background-color 0.2s ease' }}>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(toot.createdAt, userTimezone)}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(toot.createdAt, userTimezone, locale)}</TableCell>
                 <TableCell>
                   <Link
                     href={toot.url}

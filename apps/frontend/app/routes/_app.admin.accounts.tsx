@@ -72,7 +72,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 });
 
 export default function AdminAccountBrowser() {
-  const { t } = useTranslation('routes.admin.accounts');
+  const { t, i18n } = useTranslation('routes.admin.accounts');
+  const locale = i18n.language || 'en';
   const { accounts } = useLoaderData<typeof loader>() as {
     accounts: { items: AdminAccountItemDto[]; total: number; page: number; limit: number; totalPages: number } | null;
   };
@@ -198,7 +199,7 @@ export default function AdminAccountBrowser() {
                           color={account.setupComplete ? 'success' : 'warning'}
                         />
                       </TableCell>
-                      <TableCell>{new Date(account.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(account.createdAt).toLocaleDateString(locale)}</TableCell>
                       <TableCell>
                         {account.setupComplete && (
                           <Button

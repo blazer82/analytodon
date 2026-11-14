@@ -90,7 +90,8 @@ function formatNumber(n: number | null | undefined): string {
 }
 
 function TimingMarginRow({ pair }: { pair: TimingMarginPairDto }) {
-  const { t } = useTranslation('routes.admin.system-health');
+  const { t, i18n } = useTranslation('routes.admin.system-health');
+  const locale = i18n.language || 'en';
   const [open, setOpen] = React.useState(false);
   const summary = pair.last7Days;
 
@@ -135,10 +136,10 @@ function TimingMarginRow({ pair }: { pair: TimingMarginPairDto }) {
                   {summary?.details?.map((detail: TimingMarginDetailDto, idx: number) => (
                     <TableRow key={idx}>
                       <TableCell>
-                        {detail.aggregateStartedAt ? new Date(detail.aggregateStartedAt).toLocaleString() : '-'}
+                        {detail.aggregateStartedAt ? new Date(detail.aggregateStartedAt).toLocaleString(locale) : '-'}
                       </TableCell>
                       <TableCell>
-                        {detail.fetchCompletedAt ? new Date(detail.fetchCompletedAt).toLocaleString() : '-'}
+                        {detail.fetchCompletedAt ? new Date(detail.fetchCompletedAt).toLocaleString(locale) : '-'}
                       </TableCell>
                       <TableCell>{formatDuration(detail.marginMs)}</TableCell>
                       <TableCell>
@@ -161,7 +162,8 @@ function TimingMarginRow({ pair }: { pair: TimingMarginPairDto }) {
 }
 
 export default function AdminSystemHealth() {
-  const { t } = useTranslation('routes.admin.system-health');
+  const { t, i18n } = useTranslation('routes.admin.system-health');
+  const locale = i18n.language || 'en';
   const { health } = useLoaderData<typeof loader>() as {
     health: SystemHealthResponseDto | null;
   };
@@ -185,7 +187,7 @@ export default function AdminSystemHealth() {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {health.generatedAt && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {t('labels.lastUpdated', { date: new Date(health.generatedAt).toLocaleString() })}
+          {t('labels.lastUpdated', { date: new Date(health.generatedAt).toLocaleString(locale) })}
         </Typography>
       )}
 
@@ -222,7 +224,7 @@ export default function AdminSystemHealth() {
               {health.jobStatuses?.map((job: JobStatusDto) => (
                 <TableRow key={job.jobName}>
                   <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{job.jobName}</TableCell>
-                  <TableCell>{job.lastStartedAt ? new Date(job.lastStartedAt).toLocaleString() : '-'}</TableCell>
+                  <TableCell>{job.lastStartedAt ? new Date(job.lastStartedAt).toLocaleString(locale) : '-'}</TableCell>
                   <TableCell>
                     <Chip
                       label={job.lastStatus}
@@ -293,7 +295,7 @@ export default function AdminSystemHealth() {
                     <TableCell>{t('labels.dailyAccountStats')}</TableCell>
                     <TableCell>
                       {health.dataFreshness.dailyAccountStats?.latestDate
-                        ? new Date(health.dataFreshness.dailyAccountStats.latestDate).toLocaleDateString()
+                        ? new Date(health.dataFreshness.dailyAccountStats.latestDate).toLocaleDateString(locale)
                         : '-'}
                     </TableCell>
                     <TableCell>
@@ -308,7 +310,7 @@ export default function AdminSystemHealth() {
                     <TableCell>{t('labels.dailyTootStats')}</TableCell>
                     <TableCell>
                       {health.dataFreshness.dailyTootStats?.latestDate
-                        ? new Date(health.dataFreshness.dailyTootStats.latestDate).toLocaleDateString()
+                        ? new Date(health.dataFreshness.dailyTootStats.latestDate).toLocaleDateString(locale)
                         : '-'}
                     </TableCell>
                     <TableCell>
@@ -323,7 +325,7 @@ export default function AdminSystemHealth() {
                     <TableCell>{t('labels.toots')}</TableCell>
                     <TableCell>
                       {health.dataFreshness.toots?.latestFetchedAt
-                        ? new Date(health.dataFreshness.toots.latestFetchedAt).toLocaleString()
+                        ? new Date(health.dataFreshness.toots.latestFetchedAt).toLocaleString(locale)
                         : '-'}
                     </TableCell>
                     <TableCell>
@@ -381,7 +383,7 @@ export default function AdminSystemHealth() {
                 {health.recentFailures.map((failure: RecentFailureDto, idx: number) => (
                   <TableRow key={idx}>
                     <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{failure.jobName}</TableCell>
-                    <TableCell>{new Date(failure.startedAt).toLocaleString()}</TableCell>
+                    <TableCell>{new Date(failure.startedAt).toLocaleString(locale)}</TableCell>
                     <TableCell sx={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {failure.errorMessage || '-'}
                     </TableCell>

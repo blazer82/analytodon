@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeEntities, formatDate, formatNumber, shortenToot } from './formatters';
+import { decodeEntities, formatChartDate, formatChartTick, formatDate, formatNumber, shortenToot } from './formatters';
 
 describe('formatDate', () => {
   it('should format a Date object', () => {
@@ -29,7 +29,35 @@ describe('formatDate', () => {
 
   it('should replace spaces with underscores in timezone names', () => {
     // "America/New York" (with space) should be handled as "America/New_York"
-    expect(formatDate('2025-07-04T12:00:00Z', 'America/New York')).toBe('Jul 04, 2025');
+    expect(formatDate('2025-07-04T12:00:00Z', 'America/New York')).toBe('Jul 4, 2025');
+  });
+
+  it('should format in the given UI language', () => {
+    expect(formatDate('2026-09-01T12:00:00Z', undefined, 'en')).toBe('Sep 1, 2026');
+    expect(formatDate('2026-09-01T12:00:00Z', undefined, 'de')).toBe('1. Sept. 2026');
+    expect(formatDate('2026-09-01T12:00:00Z', undefined, 'ja')).toBe('2026年9月1日');
+  });
+
+  it('should apply the timezone in every UI language', () => {
+    expect(formatDate('2025-01-15T23:00:00Z', 'Asia/Tokyo', 'de')).toBe('16. Jan. 2025');
+    expect(formatDate('2025-01-15T23:00:00Z', 'Asia/Tokyo', 'ja')).toBe('2025年1月16日');
+  });
+});
+
+// Chart values are formatted in the runtime's timezone, so use midday to stay on the same day everywhere
+describe('formatChartDate', () => {
+  it('should format a date with year in the given UI language', () => {
+    expect(formatChartDate('2026-09-01T12:00:00', 'en')).toBe('Sep 1, 2026');
+    expect(formatChartDate('2026-09-01T12:00:00', 'de')).toBe('1. Sept. 2026');
+    expect(formatChartDate('2026-09-01T12:00:00', 'ja')).toBe('2026年9月1日');
+  });
+});
+
+describe('formatChartTick', () => {
+  it('should format a short date without year in the given UI language', () => {
+    expect(formatChartTick('2026-09-01T12:00:00', 'en')).toBe('Sep 1');
+    expect(formatChartTick('2026-09-01T12:00:00', 'de')).toBe('1. Sept.');
+    expect(formatChartTick('2026-09-01T12:00:00', 'ja')).toBe('9月1日');
   });
 });
 

@@ -1,22 +1,30 @@
 import dayjs from 'dayjs';
-import tz from 'dayjs/plugin/timezone';
-import utc from 'dayjs/plugin/utc';
 
 /**
- * Formats a date string or Date object into "MMM DD, YYYY" format.
- * e.g., "Apr 24, 2025"
+ * Formats a date string or Date object as a medium date in the given UI language,
+ * e.g. "Apr 24, 2025" (en), "24. Apr. 2025" (de), "2025年4月24日" (ja).
  * @param date The date to format.
- * @param timezone Optional timezone string (e.g., "America/New_York").
+ * @param timezone Optional timezone string (e.g., "America/New_York"); defaults to UTC.
+ * @param locale The UI language (i18n.language); defaults to English.
  * @returns The formatted date string.
  */
-export function formatDate(date: string | Date, timezone?: string): string {
-  dayjs.extend(utc);
-  dayjs.extend(tz);
-  if (timezone) {
-    return dayjs(date).tz(timezone.replace(' ', '_')).format('MMM DD, YYYY');
-  }
-  return dayjs(date).utc().format('MMM DD, YYYY');
+export function formatDate(date: string | Date, timezone?: string, locale = 'en'): string {
+  return new Intl.DateTimeFormat(locale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: timezone ? timezone.replace(' ', '_') : 'UTC',
+  }).format(dayjs(date).toDate());
 }
+
+// Chart x-values are formatted in the runtime's timezone (as before); only the locale varies.
+/** Chart date with year, e.g. "Sep 1, 2026" (en), "1. Sept. 2026" (de), "2026年9月1日" (ja). */
+export const formatChartDate = (value: string, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
+
+/** Short chart axis tick without year, e.g. "Sep 1" (en), "1. Sept." (de), "9月1日" (ja). */
+export const formatChartTick = (value: string, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(value));
 
 /**
  * Formats a number using the en-US locale's number formatting.
