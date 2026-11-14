@@ -33,6 +33,7 @@ describe('MailService', () => {
   let tootsService: jest.Mocked<TootsService>;
   let hashtagsService: jest.Mocked<HashtagsService>;
   let mailerService: jest.Mocked<MailerService>;
+  let i18nService: jest.Mocked<I18nService>;
   let accountEntityManager: { persistAndFlush: jest.Mock };
   let loggerLogSpy: jest.SpyInstance;
   let loggerErrorSpy: jest.SpyInstance;
@@ -157,6 +158,9 @@ describe('MailService', () => {
                 'email.weeklyStats.bestDay': 'Best Day',
                 'email.weeklyStats.bestDayLabel': 'for engagement',
                 'email.weeklyStats.topPosts': 'Top Performing Posts',
+                'email.weeklyStats.topPostsBoosts': 'boosts',
+                'email.weeklyStats.topPostsReplies': 'replies',
+                'email.weeklyStats.topPostsFavorites': 'favorites',
                 'email.weeklyStats.viewPost': 'View Post',
                 'email.weeklyStats.topHashtags': 'Top Hashtags',
                 'email.weeklyStats.topHashtagsPosts': 'posts',
@@ -169,7 +173,8 @@ describe('MailService', () => {
                 'email.weeklyStats.summaryPostsOnly': 'You published {posts} posts this week. Keep going!',
                 'email.weeklyStats.summaryNeutral': "Here's your weekly performance summary.",
                 'email.weeklyStats.dashboardButton': 'Go to Dashboard',
-                'email.weeklyStats.unsubscribe': "If you don't want to receive any more messages like this you can",
+                'email.weeklyStats.unsubscribe':
+                  "If you don't want to receive any more messages like this you can {link}.",
                 'email.weeklyStats.unsubscribeLink': 'unsubscribe here',
                 'email.staleAccountNotice.subject': "We can't update your Analytodon stats for {accountName}",
                 'email.staleAccountNotice.subjectMultiple':
@@ -253,6 +258,7 @@ describe('MailService', () => {
 
     service = module.get<MailService>(MailService);
     mailerService = module.get(MailerService);
+    i18nService = module.get(I18nService);
     usersService = module.get(UsersService);
     followersService = module.get(FollowersService);
     repliesService = module.get(RepliesService);
@@ -699,6 +705,93 @@ describe('MailService', () => {
       expect(loggerLogSpy).toHaveBeenCalledWith(
         `Weekly stats mail sent to ${mockUser.email} (User: ${mockUser.email})`,
       );
+    });
+
+    it('should split the unsubscribe sentence around the link and translate the top post labels', async () => {
+      mailerService.sendMail.mockResolvedValueOnce(undefined);
+      await service.sendWeeklyStatsMail(mockUser, mockStats);
+
+      expect(mailerService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({
+            t: expect.objectContaining({
+              unsubscribePrefix: "If you don't want to receive any more messages like this you can ",
+              unsubscribeLink: 'unsubscribe here',
+              unsubscribeSuffix: '.',
+              topPostsBoosts: 'boosts',
+              topPostsReplies: 'replies',
+              topPostsFavorites: 'favorites',
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should keep the whole unsubscribe sentence if a translation has no link placeholder', async () => {
+      mailerService.sendMail.mockResolvedValueOnce(undefined);
+      const translate = i18nService.translate as jest.Mock;
+      const defaultTranslate = translate.getMockImplementation()!;
+      translate.mockImplementation((key: string, options?: object) =>
+        key === 'email.weeklyStats.unsubscribe' ? Promise.resolve('No placeholder') : defaultTranslate(key, options),
+      );
+
+      await service.sendWeeklyStatsMail(mockUser, mockStats);
+
+      const { context } = mailerService.sendMail.mock.calls[0][0] as { context: { t: Record<string, string> } };
+      expect(context.t.unsubscribePrefix).toBe('No placeholder');
+      expect(context.t.unsubscribeSuffix).toBe('');
+    });
+
+    it.each([
+      [
+        'en',
+        '<p class="post-stats">7 boosts &middot; 3 replies &middot; 12 favorites</p>',
+        'If you don&#x27;t want to receive any more messages like this you can <a href="URL">unsubscribe here</a>.',
+      ],
+      [
+        'de',
+        '<p class="post-stats">7 Boosts &middot; 3 Antworten &middot; 12 Favoriten</p>',
+        'Falls Sie keine weiteren Nachrichten dieser Art erhalten möchten, können Sie <a href="URL">hier abbestellen</a>.',
+      ],
+      [
+        'ja',
+        '<p class="post-stats">7 ブースト &middot; 3 返信 &middot; 12 お気に入り</p>',
+        'このようなメールの受信を希望されない場合は、<a href="URL">こちらから配信を停止できます</a>。',
+      ],
+    ])('should render the real template with the %s translations', async (locale, postStats, unsubscribe) => {
+      readFileSyncSpy.mockRestore();
+      mailerService.sendMail.mockResolvedValueOnce(undefined);
+      const messages = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '..', 'i18n', locale, 'email.json'), 'utf-8'),
+      ) as Record<string, Record<string, string>>;
+      (i18nService.translate as jest.Mock).mockImplementation(
+        (key: string, options?: { args?: Record<string, string | number> }) => {
+          const [, section, name] = key.split('.');
+          return Promise.resolve(
+            messages[section][name].replace(/\{(\w+)\}/g, (match, arg) =>
+              options?.args && arg in options.args ? String(options.args[arg]) : match,
+            ),
+          );
+        },
+      );
+
+      const stats = [
+        {
+          ...mockStats[0],
+          topPosts: [
+            { snippet: 'Hello <b>world</b>', url: 'https://example.social/1', boosts: 7, replies: 3, favorites: 12 },
+          ],
+        },
+      ];
+      await service.sendWeeklyStatsMail({ ...mockUser, locale } as UserEntity, stats);
+
+      // The HTML template is rendered by the mailer in strict mode, so make sure it compiles with the context
+      const { context } = mailerService.sendMail.mock.calls[0][0] as { context: { unsubscribeURL: string } };
+      const htmlSource = fs.readFileSync(path.join(__dirname, 'templates', 'weekly-stats.hbs'), 'utf-8');
+      const html = handlebars.compile(htmlSource, { strict: true })({ ...context, unsubscribeURL: 'URL' });
+      expect(html).toContain(postStats);
+      expect(html).toContain(unsubscribe);
+      expect(html).toContain('Hello &lt;b&gt;world&lt;/b&gt;');
     });
 
     it('should log an error and re-throw if sending fails', async () => {

@@ -91,6 +91,9 @@
     "bestDay": "エンゲージメントが最も多かった日",
     "bestDayLabel": "件",
     "topPosts": "人気の投稿",
+    "topPostsBoosts": "ブースト",
+    "topPostsReplies": "返信",
+    "topPostsFavorites": "お気に入り",
     "viewPost": "投稿を見る",
     "topHashtags": "人気のハッシュタグ",
     "topHashtagsPosts": "件の投稿",
@@ -102,7 +105,7 @@
     "summaryPostsOnly": "今週は{posts}件投稿しました。この調子で続けましょう！",
     "summaryNeutral": "今週のパフォーマンスのまとめです。",
     "dashboardButton": "ダッシュボードへ",
-    "unsubscribe": "このようなメールの受信を希望されない場合は、",
+    "unsubscribe": "このようなメールの受信を希望されない場合は、{link}。",
     "unsubscribeLink": "こちらから配信を停止できます"
   },
   "signupNotification": {

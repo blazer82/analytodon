@@ -144,6 +144,20 @@ export class MailService {
     return this.i18n.translate(key, { lang: locale, args });
   }
 
+  /**
+   * Splits a translated sentence at a placeholder so a template can render markup in its place.
+   * @param text - The translated sentence
+   * @param placeholder - The placeholder to split at
+   * @returns The text before and after the placeholder; the whole text and '' if it is missing
+   */
+  private splitAtPlaceholder(text: string, placeholder: string): [string, string] {
+    const index = text.indexOf(placeholder);
+    if (index === -1) {
+      return [text, ''];
+    }
+    return [text.slice(0, index), text.slice(index + placeholder.length)];
+  }
+
   private stripHtmlAndTruncate(html: string, maxLength: number): string {
     const text = stripHtml(html).replace(/\s+/g, ' ');
     // Iterate by code point so emoji and other astral characters aren't split in half
@@ -610,6 +624,13 @@ export class MailService {
     const subject = await this.translate('email.weeklyStats.subject', locale);
     const unsubscribeURL = `${this.frontendURL}/unsubscribe/weekly?u=${encodeURIComponent(user.id)}&e=${encodeURIComponent(user.email)}`;
     const recipientEmail = rerouteToEmail || user.email;
+    // The unsubscribe sentence is a single translation with a {link} placeholder, so each locale owns its
+    // word order and punctuation. It is split here and the template puts the <a> in between, which keeps
+    // every part HTML-escaped.
+    const [unsubscribePrefix, unsubscribeSuffix] = this.splitAtPlaceholder(
+      await this.translate('email.weeklyStats.unsubscribe', locale, { link: '{link}' }),
+      '{link}',
+    );
 
     try {
       await this.mailerService.sendMail({
@@ -648,12 +669,16 @@ export class MailService {
             bestDay: await this.translate('email.weeklyStats.bestDay', locale),
             bestDayLabel: await this.translate('email.weeklyStats.bestDayLabel', locale),
             topPosts: await this.translate('email.weeklyStats.topPosts', locale),
+            topPostsBoosts: await this.translate('email.weeklyStats.topPostsBoosts', locale),
+            topPostsReplies: await this.translate('email.weeklyStats.topPostsReplies', locale),
+            topPostsFavorites: await this.translate('email.weeklyStats.topPostsFavorites', locale),
             viewPost: await this.translate('email.weeklyStats.viewPost', locale),
             topHashtags: await this.translate('email.weeklyStats.topHashtags', locale),
             topHashtagsPosts: await this.translate('email.weeklyStats.topHashtagsPosts', locale),
             topHashtagsEngagement: await this.translate('email.weeklyStats.topHashtagsEngagement', locale),
             dashboardButton: await this.translate('email.weeklyStats.dashboardButton', locale),
-            unsubscribe: await this.translate('email.weeklyStats.unsubscribe', locale),
+            unsubscribePrefix,
+            unsubscribeSuffix,
             unsubscribeLink: await this.translate('email.weeklyStats.unsubscribeLink', locale),
           },
         },

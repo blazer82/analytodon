@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 
 import type { BoostedTootDto, BoostsKpiDto, ChartDataPointDto, TotalSnapshotDto } from '@analytodon/rest-client';
 import DownloadIcon from '@mui/icons-material/Download';
-import { Box, Container, Fade, Grid, IconButton, Link, Typography } from '@mui/material';
+import { Box, Container, Fade, Grid, IconButton, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { useFetcher, useLoaderData, useRouteLoaderData } from '@remix-run/react';
 import Chart from '~/components/Chart';
 import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/styles';
 import PeriodSelector, { type DateRange, type Timeframe } from '~/components/PeriodSelector';
+import SupportContactNote from '~/components/SupportContactNote';
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import TrendBox from '~/components/TrendBox';
@@ -310,39 +311,7 @@ export default function BoostsPage() {
                 {t('common:messages.emailNotification')}
                 <br />
                 <br />
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
-                >
-                  {t('common:messages.persistentIssue')}{' '}
-                  <Link
-                    href={`mailto:${supportEmail}?subject=Support`}
-                    sx={{
-                      textDecoration: 'none',
-                      position: 'relative',
-                      mx: 0.5,
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        bottom: -2,
-                        left: 0,
-                        width: '100%',
-                        height: '2px',
-                        backgroundColor: 'primary.main',
-                        borderRadius: '2px',
-                        opacity: 0.7,
-                      },
-                      '&:hover': {
-                        '&::after': {
-                          opacity: 1,
-                        },
-                      },
-                    }}
-                  >
-                    {t('common:messages.contactSupport')}
-                  </Link>
-                  .
-                </Box>
+                <SupportContactNote supportEmail={supportEmail} />
               </Typography>
             )}
           </ChartPaper>

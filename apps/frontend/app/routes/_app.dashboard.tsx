@@ -2,11 +2,12 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ChartDataPointDto, RankedTootDto, TotalSnapshotDto } from '@analytodon/rest-client';
-import { Box, Container, Grid, Link, Typography } from '@mui/material';
+import { Container, Grid, Typography } from '@mui/material';
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { useLoaderData, useRouteLoaderData } from '@remix-run/react';
 import Chart from '~/components/Chart';
 import { ChartPaper, DataTablePaper, TotalBoxPaper } from '~/components/Layout/styles';
+import SupportContactNote from '~/components/SupportContactNote';
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
@@ -129,39 +130,7 @@ export default function Dashboard() {
                 {t('common:messages.emailNotification')}
                 <br />
                 <br />
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
-                >
-                  {t('common:messages.persistentIssue')}{' '}
-                  <Link
-                    href={`mailto:${supportEmail}?subject=Support`}
-                    sx={{
-                      textDecoration: 'none',
-                      position: 'relative',
-                      mx: 0.5,
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        bottom: -2,
-                        left: 0,
-                        width: '100%',
-                        height: '2px',
-                        backgroundColor: 'primary.main',
-                        borderRadius: '2px',
-                        opacity: 0.7,
-                      },
-                      '&:hover': {
-                        '&::after': {
-                          opacity: 1,
-                        },
-                      },
-                    }}
-                  >
-                    {t('common:messages.contactSupport')}
-                  </Link>
-                  .
-                </Box>
+                <SupportContactNote supportEmail={supportEmail} />
               </Typography>
             )}
           </ChartPaper>
