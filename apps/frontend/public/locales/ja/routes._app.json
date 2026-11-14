@@ -9,6 +9,8 @@
     "boosts": "ブースト",
     "favorites": "お気に入り",
     "topPosts": "人気の投稿",
-    "settings": "設定"
+    "hashtags": "ハッシュタグ",
+    "settings": "設定",
+    "admin": "管理"
   }
 }

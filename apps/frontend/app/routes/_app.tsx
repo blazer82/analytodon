@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { redirect } from '@remix-run/node';
@@ -98,22 +99,23 @@ export const action = withSessionHandling(async ({ request }: ActionFunctionArgs
 export default function AppLayout() {
   const { user, currentAccount } = useLoaderData<typeof loader>();
   const location = useLocation();
+  const { t } = useTranslation('routes._app');
 
   // Get page title based on current route
   const getPageTitle = () => {
     const path = location.pathname;
 
-    if (path === '/dashboard') return 'Dashboard';
-    if (path === '/followers') return 'Followers';
-    if (path === '/replies') return 'Replies';
-    if (path === '/boosts') return 'Boosts';
-    if (path === '/favorites') return 'Favorites';
-    if (path === '/top-posts') return 'Top Posts';
-    if (path === '/hashtags') return 'Hashtags';
-    if (path.includes('/settings')) return 'Settings';
-    if (path.includes('/admin')) return 'Admin';
+    if (path === '/dashboard') return t('pageTitles.dashboard');
+    if (path === '/followers') return t('pageTitles.followers');
+    if (path === '/replies') return t('pageTitles.replies');
+    if (path === '/boosts') return t('pageTitles.boosts');
+    if (path === '/favorites') return t('pageTitles.favorites');
+    if (path === '/top-posts') return t('pageTitles.topPosts');
+    if (path === '/hashtags') return t('pageTitles.hashtags');
+    if (path.includes('/settings')) return t('pageTitles.settings');
+    if (path.includes('/admin')) return t('pageTitles.admin');
 
-    return 'Dashboard';
+    return t('pageTitles.dashboard');
   };
 
   // Scroll to top on route change
