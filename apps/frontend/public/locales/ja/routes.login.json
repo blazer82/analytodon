@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "title": "Analytodonにログイン"
+  },
+  "hero": {
+    "title": "おかえりなさい！",
+    "subtitle": "Mastodonのアナリティクスを確認して、フォロワーの傾向や投稿のパフォーマンスについて役立つインサイトを得ましょう。"
+  },
+  "form": {
+    "title": "アカウントにログイン",
+    "emailLabel": "メールアドレス",
+    "passwordLabel": "パスワード",
+    "showPassword": "パスワードを表示",
+    "hidePassword": "パスワードを非表示",
+    "submit": "ログイン",
+    "submitting": "ログイン中..."
+  },
+  "links": {
+    "register": "Analytodonは初めてですか？アカウントを作成",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "registrationsClosed": "現在、新規登録は受け付けていません"
+  },
+  "errors": {
+    "required": "メールアドレスとパスワードは必須です",
+    "invalidCredentials": "メールアドレスまたはパスワードが正しくありません",
+    "tooManyAttempts": "ログインの試行回数が多すぎます。しばらくしてからもう一度お試しください。",
+    "generic": "ログイン中にエラーが発生しました。もう一度お試しください。"
+  }
+}

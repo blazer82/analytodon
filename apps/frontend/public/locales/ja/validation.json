@@ -1,0 +1,11 @@
+{
+  "required": "この項目は必須です",
+  "email": "有効なメールアドレスを入力してください",
+  "minLength": "{{min}}文字以上で入力してください",
+  "maxLength": "{{max}}文字以内で入力してください",
+  "passwordMatch": "パスワードが一致しません",
+  "passwordStrength": "パスワードは8文字以上で、大文字・小文字・数字を含める必要があります",
+  "invalidFormat": "形式が正しくありません",
+  "mustBeNumber": "数値を入力してください",
+  "mustBePositive": "正の数を入力してください"
+}

@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "ブーストのアナリティクス - Analytodon"
+  },
+  "kpi": {
+    "boostedPosts": "ブースト数",
+    "totalBoosts": "ブースト総数"
+  },
+  "topPosts": {
+    "title": "ブーストの多い投稿"
+  },
+  "messages": {
+    "selectAccount": "ブーストのアナリティクスを表示するには、アカウントを選択してください。"
+  }
+}

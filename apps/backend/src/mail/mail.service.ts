@@ -17,6 +17,7 @@ import { HashtagsService } from '../hashtags/hashtags.service';
 import { RepliesService } from '../replies/replies.service';
 import { stripHtml } from '../shared/utils/strip-html';
 import { KpiDto, resolveTimeframe } from '../shared/utils/timeframe.helper';
+import { SUPPORTED_LOCALES } from '../shared/validators/is-valid-locale.validator';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { TootsService } from '../toots/toots.service';
 import { UsersService } from '../users/users.service';
@@ -103,7 +104,7 @@ export class MailService {
    * @returns The user's locale string (guaranteed to be a supported locale)
    */
   private getUserLocale(user: UserEntity): string {
-    const supportedLocales = ['en', 'de']; // Should match i18n config and auth service
+    const supportedLocales: readonly string[] = SUPPORTED_LOCALES;
     const locale = user.locale;
 
     // Validate that the locale is supported, fallback to 'en' if not

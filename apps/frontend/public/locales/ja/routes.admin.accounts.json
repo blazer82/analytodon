@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "アカウント一覧"
+  },
+  "search": {
+    "placeholder": "アカウント、サーバー、所有者を検索..."
+  },
+  "filters": {
+    "statusAll": "すべてのステータス",
+    "active": "有効",
+    "inactive": "無効",
+    "setupAll": "すべての設定状況",
+    "setupComplete": "設定完了",
+    "setupIncomplete": "設定未完了"
+  },
+  "columns": {
+    "accountName": "アカウント名",
+    "serverURL": "サーバーURL",
+    "ownerEmail": "所有者のメールアドレス",
+    "active": "有効",
+    "setupComplete": "設定完了",
+    "created": "作成日",
+    "actions": "操作"
+  },
+  "labels": {
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "actions": {
+    "viewDashboard": "ダッシュボードを表示"
+  },
+  "messages": {
+    "noAccounts": "条件に一致するアカウントが見つかりません。",
+    "loadError": "アカウントを読み込めませんでした。"
+  }
+}

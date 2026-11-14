@@ -1,0 +1,80 @@
+{
+  "actions": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "create": "作成",
+    "search": "検索",
+    "filter": "絞り込み",
+    "export": "エクスポート",
+    "download": "ダウンロード",
+    "downloadCsv": "CSVをダウンロード",
+    "viewMore": "もっと見る",
+    "backToDashboard": "ダッシュボードに戻る",
+    "retry": "再試行",
+    "close": "閉じる"
+  },
+  "labels": {
+    "name": "名前",
+    "description": "説明",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "confirmPassword": "パスワード（確認）",
+    "status": "ステータス",
+    "period": "期間",
+    "timeframe": "対象期間",
+    "language": "言語"
+  },
+  "status": {
+    "active": "有効",
+    "inactive": "無効",
+    "pending": "保留中",
+    "completed": "完了",
+    "setupComplete": "設定完了"
+  },
+  "timeframes": {
+    "last7days": "過去7日間",
+    "last30days": "過去30日間",
+    "last90days": "過去90日間",
+    "allTime": "全期間",
+    "custom": "カスタム"
+  },
+  "periods": {
+    "lastWeek": "先週",
+    "thisWeek": "今週",
+    "lastMonth": "先月",
+    "thisMonth": "今月",
+    "lastYear": "昨年",
+    "thisYear": "今年"
+  },
+  "messages": {
+    "loading": "読み込み中...",
+    "loadingChart": "グラフのデータを読み込み中...",
+    "noData": "データがありません",
+    "noDataDescription": "アカウントを設定したばかりの場合は、このメッセージが表示されても問題ありません。データの準備ができ次第、メールでお知らせします。",
+    "noDataForTimeframe": "選択した期間のデータがありません。",
+    "noWeeklyData": "週間データがありません。",
+    "noMonthlyData": "月間データがありません。",
+    "noYearlyData": "年間データがありません。",
+    "noTotalData": "累計データがありません。",
+    "setupExpected": "アカウントを設定したばかりの場合は、このメッセージが表示されても問題ありません。",
+    "emailNotification": "データの準備ができ次第、メールでお知らせします。",
+    "persistentIssue": "このメッセージが引き続き表示される場合は、",
+    "contactSupport": "サポートまでお問い合わせください",
+    "selectAnother": "別の期間を選択してください。",
+    "selectAccount": "続行するにはアカウントを選択してください。",
+    "success": "操作が完了しました",
+    "error": "エラーが発生しました",
+    "saved": "変更を保存しました",
+    "deleted": "削除しました"
+  },
+  "analytics": {
+    "followers": "フォロワー",
+    "boosts": "ブースト",
+    "replies": "返信",
+    "favorites": "お気に入り",
+    "posts": "投稿",
+    "engagement": "エンゲージメント"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "title": "アカウントの状態"
+  },
+  "tabs": {
+    "stale": "更新停止",
+    "incomplete": "設定未完了",
+    "abandoned": "放置"
+  },
+  "columns": {
+    "account": "アカウント",
+    "server": "サーバー",
+    "owner": "所有者",
+    "lastStats": "最新の統計",
+    "daysSinceUpdate": "更新停止日数",
+    "createdDate": "作成日",
+    "daysSinceCreation": "作成からの日数",
+    "lastLogin": "最終ログイン",
+    "deletionNotice": "削除予告",
+    "staleNotice": "通知送信"
+  },
+  "labels": {
+    "lastUpdated": "最終更新: {{date}}",
+    "never": "なし",
+    "unknown": "不明",
+    "sent": "送信済み",
+    "sentOn": "{{date}}に送信",
+    "notSent": "未送信",
+    "noStats": "統計なし"
+  },
+  "messages": {
+    "loadError": "アカウントの状態データを読み込めませんでした。",
+    "noStaleAccounts": "更新が停止しているアカウントはありません。",
+    "noIncompleteAccounts": "設定が未完了のアカウントはありません。",
+    "noAbandonedAccounts": "放置されているアカウントはありません。"
+  }
+}

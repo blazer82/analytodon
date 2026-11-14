@@ -4,11 +4,18 @@ import { useTranslation } from 'react-i18next';
 import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { deDE as datePickersDeDE } from '@mui/x-date-pickers/locales';
+import { deDE as datePickersDeDE, jaJP as datePickersJaJP } from '@mui/x-date-pickers/locales';
 import dayjs, { type Dayjs } from 'dayjs';
 
 import 'dayjs/locale/de';
 import 'dayjs/locale/en-gb';
+import 'dayjs/locale/ja';
+
+// dayjs locale and MUI date picker texts per UI language (anything else falls back to English)
+const PICKER_LOCALES: Record<string, { adapterLocale: string; localeText?: typeof datePickersDeDE }> = {
+  de: { adapterLocale: 'de', localeText: datePickersDeDE },
+  ja: { adapterLocale: 'ja', localeText: datePickersJaJP },
+};
 
 export type Timeframe =
   | 'last30days'
@@ -54,9 +61,9 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
 }) => {
   const { t, i18n } = useTranslation('components.periodSelector');
 
-  const adapterLocale = i18n.language === 'de' ? 'de' : 'en-gb';
-  const pickerLocaleText =
-    i18n.language === 'de' ? datePickersDeDE.components.MuiLocalizationProvider.defaultProps.localeText : undefined;
+  const pickerLocale = PICKER_LOCALES[i18n.language];
+  const adapterLocale = pickerLocale?.adapterLocale ?? 'en-gb';
+  const pickerLocaleText = pickerLocale?.localeText?.components.MuiLocalizationProvider.defaultProps.localeText;
 
   const [fromDate, setFromDate] = React.useState<Dayjs | null>(dateFrom ? dayjs(dateFrom) : null);
   const [toDate, setToDate] = React.useState<Dayjs | null>(dateTo ? dayjs(dateTo) : null);

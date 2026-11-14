@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "title": "アカウントの編集 - Analytodon"
+  },
+  "title": "アカウントの編集",
+  "form": {
+    "name": "名前",
+    "username": "ユーザー名",
+    "serverUrl": "サーバーURL",
+    "accountUrl": "アカウントURL",
+    "avatarUrl": "アイコン画像URL",
+    "timezone": "タイムゾーン"
+  },
+  "connection": {
+    "connected": "{{accountName}}と連携済み",
+    "notConnected": "アカウントと連携されていません"
+  },
+  "actions": {
+    "back": "戻る",
+    "save": "保存",
+    "saving": "保存中..."
+  },
+  "success": {
+    "accountSaved": "アカウントを保存しました。"
+  },
+  "errors": {
+    "failedToUpdate": "アカウントを更新できませんでした。もう一度お試しください。"
+  }
+}

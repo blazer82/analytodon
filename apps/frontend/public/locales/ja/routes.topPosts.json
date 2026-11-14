@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "人気の投稿 - Analytodon"
+  },
+  "sections": {
+    "topPosts": "人気の投稿",
+    "byReplies": "返信の多い投稿",
+    "byBoosts": "ブーストの多い投稿",
+    "byFavorites": "お気に入りの多い投稿"
+  },
+  "messages": {
+    "noData": "データがありません。",
+    "selectAccount": "人気の投稿を表示するには、アカウントを選択してください。"
+  }
+}

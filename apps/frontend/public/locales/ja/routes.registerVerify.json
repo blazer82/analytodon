@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "title": "メールアドレスの確認"
+  },
+  "dialog": {
+    "verified": "メールアドレスを確認しました",
+    "failed": "確認に失敗しました",
+    "required": "メールアドレスの確認が必要です"
+  },
+  "alert": {
+    "successMessage": "メールアドレスの確認が完了しました！",
+    "errorMessage": "メールアドレスを確認できませんでした。確認コードが無効か、有効期限が切れている可能性があります。"
+  },
+  "messages": {
+    "success": "引き続きAnalytodonアカウントの設定を進められます。",
+    "checkInbox": "{{email}}宛てに送信されたメールをご確認のうえ、確認用リンクをクリックして登録を完了してください。"
+  },
+  "actions": {
+    "contactSupport": "サポートに問い合わせる",
+    "goToAnalytodon": "Analytodonへ"
+  }
+}

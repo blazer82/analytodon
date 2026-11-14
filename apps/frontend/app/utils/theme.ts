@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { deDE, enUS } from '@mui/material/locale';
+import { deDE, enUS, jaJP } from '@mui/material/locale';
 import { createTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 const MUI_LOCALES = {
   en: enUS,
   de: deDE,
+  ja: jaJP,
 };
 
 /**

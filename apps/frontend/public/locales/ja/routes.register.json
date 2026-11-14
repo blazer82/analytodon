@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "title": "Analytodonに登録"
+  },
+  "hero": {
+    "title": "Analytodonをはじめよう",
+    "subtitle": "今日からMastodonのアナリティクスを確認して、フォロワーの傾向や投稿のパフォーマンスについて役立つインサイトを得ましょう。"
+  },
+  "form": {
+    "title": "アカウントを作成",
+    "emailLabel": "メールアドレス",
+    "passwordLabel": "パスワードを設定",
+    "serverUrlLabel": "MastodonサーバーのURL",
+    "serverUrlPlaceholder": "mastodon.social",
+    "serverUrlHelper": "アカウントがあるMastodonサーバーのURL",
+    "timezoneLabel": "タイムゾーン",
+    "timezoneHelper": "アナリティクスレポートの表示に使用するタイムゾーン",
+    "submit": "アカウントを作成",
+    "submitting": "アカウントを作成中..."
+  },
+  "links": {
+    "login": "すでにアカウントをお持ちですか？ログイン"
+  },
+  "messages": {
+    "registrationDisabled": "現在、新規登録は受け付けていません"
+  },
+  "errors": {
+    "allFieldsRequired": "すべての項目が必須です",
+    "passwordTooShort": "パスワードは8文字以上で入力してください",
+    "emailAlreadyRegistered": "このメールアドレスはすでに登録されています。ログインをお試しください。",
+    "invalidData": "入力内容が正しくありません: {{errorMessage}}",
+    "generic": "登録中にエラーが発生しました。もう一度お試しください。",
+    "unexpected": "予期しないエラーが発生しました。もう一度お試しください。"
+  }
+}

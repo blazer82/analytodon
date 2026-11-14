@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "title": "システムの状態"
+  },
+  "status": {
+    "healthy": "すべてのシステムが正常に稼働しています。",
+    "warning": "遅延または失敗しているジョブがあるか、データが古くなっています。",
+    "critical": "1つ以上のジョブが途中で止まっているようです。至急対応が必要です。"
+  },
+  "sections": {
+    "jobStatuses": "ジョブの状態",
+    "timingMargins": "ジョブ間のマージン",
+    "dataFreshness": "データの鮮度",
+    "collectionSizes": "コレクションのサイズ",
+    "recentFailures": "最近の失敗",
+    "marginDetails": "実行の詳細"
+  },
+  "columns": {
+    "jobName": "ジョブ",
+    "lastRun": "最終実行",
+    "status": "ステータス",
+    "duration": "所要時間",
+    "records": "レコード数",
+    "overdue": "遅延",
+    "fetchJob": "取得ジョブ",
+    "aggregateJob": "集計ジョブ",
+    "avgMargin": "平均マージン",
+    "minMargin": "最小マージン",
+    "overlaps": "重複回数",
+    "samples": "サンプル数",
+    "aggregateStart": "集計開始",
+    "fetchEnd": "取得終了",
+    "margin": "マージン",
+    "overlap": "重複",
+    "time": "日時",
+    "error": "エラー"
+  },
+  "labels": {
+    "lastUpdated": "最終更新: {{date}}",
+    "overdue": "遅延",
+    "stale": "古い",
+    "fresh": "最新",
+    "yes": "はい",
+    "no": "いいえ",
+    "dailyAccountStats": "日次アカウント統計",
+    "dailyTootStats": "日次投稿統計",
+    "toots": "投稿"
+  },
+  "collections": {
+    "users": "ユーザー",
+    "accounts": "アカウント",
+    "toots": "投稿",
+    "dailyAccountStats": "日次アカウント統計",
+    "dailyTootStats": "日次投稿統計",
+    "refreshTokens": "リフレッシュトークン",
+    "mastodonApps": "Mastodonアプリ",
+    "cliJobRuns": "CLIジョブ実行履歴"
+  },
+  "messages": {
+    "loadError": "システムの状態データを読み込めませんでした。",
+    "noJobData": "ジョブのデータはまだありません。"
+  }
+}

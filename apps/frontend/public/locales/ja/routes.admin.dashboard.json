@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "title": "プラットフォーム概要"
+  },
+  "sections": {
+    "overview": "概要",
+    "users": "ユーザー",
+    "accounts": "アカウント",
+    "dataVolume": "データ量",
+    "registrations": "登録数の推移（30日間）",
+    "loginActivity": "ログイン状況",
+    "serverDistribution": "サーバー分布"
+  },
+  "kpi": {
+    "totalUsers": "総ユーザー数",
+    "activeUsers": "有効なユーザー数",
+    "connectedAccounts": "連携済みアカウント数",
+    "trackedToots": "追跡中の投稿数"
+  },
+  "labels": {
+    "active": "有効",
+    "inactive": "無効",
+    "emailVerified": "メール確認済み",
+    "admins": "管理者",
+    "accountOwners": "アカウント所有者",
+    "setupComplete": "設定完了",
+    "setupIncomplete": "設定未完了",
+    "last7Days": "過去7日間",
+    "last30Days": "過去30日間",
+    "last90Days": "過去90日間",
+    "dailyAccountStats": "日次アカウント統計",
+    "dailyTootStats": "日次投稿統計",
+    "toots": "投稿",
+    "registrations": "登録数",
+    "server": "サーバー",
+    "count": "アカウント数",
+    "lastUpdated": "最終更新: {{date}}"
+  },
+  "messages": {
+    "noData": "データがありません。",
+    "loadError": "プラットフォームの統計を読み込めませんでした。"
+  }
+}

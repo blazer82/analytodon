@@ -1,0 +1,53 @@
+{
+  "meta": {
+    "title": "アカウント - Analytodon"
+  },
+  "title": "アカウントの管理",
+  "table": {
+    "headers": {
+      "name": "名前",
+      "username": "ユーザー名",
+      "server": "サーバー",
+      "timezone": "タイムゾーン",
+      "added": "追加日"
+    },
+    "actions": {
+      "reconnect": "再連携",
+      "edit": "編集",
+      "delete": "削除"
+    }
+  },
+  "actions": {
+    "addAccount": "アカウントを追加"
+  },
+  "usage": "{{used}} / {{max}} アカウントを使用中",
+  "dialogs": {
+    "reconnect": {
+      "title": "アカウントの再連携",
+      "description": "アカウント「{{name}}」を再連携します。Mastodonサーバーに移動しますので、Analytodonをもう一度承認してください。",
+      "helper": "承認の有効期限が切れた場合や、Mastodonサーバー側でアクセス権を取り消した場合に利用できます。",
+      "cancel": "キャンセル",
+      "confirm": "再連携",
+      "confirming": "再連携中..."
+    },
+    "delete": {
+      "title": "アカウントの削除",
+      "description": "アカウント「{{name}}」と、関連するすべてのアナリティクスデータを削除します。この操作は取り消せません。",
+      "instruction": "続行するには、下の入力欄に「delete」と入力してください。",
+      "cancel": "キャンセル",
+      "confirm": "アカウントを削除",
+      "confirming": "削除中..."
+    }
+  },
+  "errors": {
+    "serverUrlAndTimezoneRequired": "サーバーURLとタイムゾーンは必須です。",
+    "failedToConnect": "Mastodonサーバーに接続できませんでした。サーバーURLを確認して、もう一度お試しください。",
+    "accountIdRequired": "この操作にはアカウントIDが必要です",
+    "failedToGetReconnectionUrl": "再連携用のURLを取得できませんでした",
+    "invalidAction": "無効な操作が指定されました。",
+    "failedToAction": "アカウントの操作（{{action}}）に失敗しました。もう一度お試しください。"
+  },
+  "success": {
+    "accountDeleted": "アカウントを削除しました"
+  }
+}

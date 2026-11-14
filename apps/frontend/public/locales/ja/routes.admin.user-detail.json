@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "title": "ユーザー詳細"
+  },
+  "form": {
+    "email": "メールアドレス",
+    "role": "ロール",
+    "roleAdmin": "管理者",
+    "roleAccountOwner": "アカウント所有者",
+    "active": "有効",
+    "activeYes": "有効",
+    "activeNo": "無効",
+    "emailVerified": "メール確認",
+    "emailVerifiedYes": "確認済み",
+    "emailVerifiedNo": "未確認",
+    "maxAccounts": "アカウント数の上限",
+    "timezone": "タイムゾーン",
+    "newPassword": "新しいパスワード",
+    "newPasswordHelp": "現在のパスワードを変更しない場合は空欄のままにしてください",
+    "locale": "言語",
+    "lastLogin": "最終ログイン",
+    "created": "作成日",
+    "updated": "更新日",
+    "never": "なし"
+  },
+  "sections": {
+    "userInfo": "ユーザー情報",
+    "accounts": "Mastodonアカウント"
+  },
+  "columns": {
+    "accountName": "アカウント名",
+    "serverURL": "サーバーURL",
+    "username": "ユーザー名",
+    "setupComplete": "設定完了",
+    "active": "有効",
+    "created": "作成日",
+    "actions": "操作"
+  },
+  "labels": {
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "actions": {
+    "save": "保存",
+    "saving": "保存中...",
+    "back": "戻る",
+    "viewDashboard": "ダッシュボードを表示",
+    "sendWeeklyStats": "週間統計を自分に送信"
+  },
+  "success": {
+    "userSaved": "ユーザーを保存しました。",
+    "weeklyStatsSent": "週間統計メールをあなたのメールアドレスに送信しました。"
+  },
+  "errors": {
+    "failedToUpdate": "ユーザーを更新できませんでした。",
+    "loadError": "ユーザーを読み込めませんでした。",
+    "failedToSendWeeklyStats": "週間統計メールを送信できませんでした。"
+  },
+  "messages": {
+    "noAccounts": "このユーザーにはMastodonアカウントがありません。"
+  }
+}
