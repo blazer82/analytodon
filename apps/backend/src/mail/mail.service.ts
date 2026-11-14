@@ -15,6 +15,7 @@ import { FavoritesService } from '../favorites/favorites.service';
 import { FollowersService } from '../followers/followers.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
 import { RepliesService } from '../replies/replies.service';
+import { formatDateRange } from '../shared/utils/format-date-range';
 import { stripHtml } from '../shared/utils/strip-html';
 import { KpiDto, resolveTimeframe } from '../shared/utils/timeframe.helper';
 import { SUPPORTED_LOCALES } from '../shared/validators/is-valid-locale.validator';
@@ -863,14 +864,7 @@ export class MailService {
     const { dateFrom: weekStart, dateTo: weekEndExclusive } = resolveTimeframe(userAccounts[0].timezone, 'lastweek');
     const weekEnd = new Date(weekEndExclusive);
     weekEnd.setUTCDate(weekEnd.getUTCDate() - 1);
-    const dateFormatFrom: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', timeZone: accountTimezone };
-    const dateFormatTo: Intl.DateTimeFormatOptions = {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      timeZone: accountTimezone,
-    };
-    const dateRange = `${new Intl.DateTimeFormat(locale, dateFormatFrom).format(weekStart)} – ${new Intl.DateTimeFormat(locale, dateFormatTo).format(weekEnd)}`;
+    const dateRange = formatDateRange(weekStart, weekEnd, locale, accountTimezone);
 
     for (const account of userAccounts) {
       try {
