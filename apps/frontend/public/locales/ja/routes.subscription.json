@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "subscribe": {
+      "weekly": "週間統計メールを購読 - Analytodon",
+      "news": "ニュースと最新情報を購読 - Analytodon",
+      "default": "通知を購読 - Analytodon"
+    },
+    "unsubscribe": {
+      "weekly": "週間統計メールの配信停止 - Analytodon",
+      "news": "ニュースと最新情報の配信停止 - Analytodon",
+      "default": "通知の配信停止 - Analytodon"
+    }
+  }
+}

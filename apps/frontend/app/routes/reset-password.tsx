@@ -19,22 +19,26 @@ import {
 import Logo from '~/components/Logo';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
+import { withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Reset your Analytodon password' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Reset your Analytodon password');
 
 // Declare i18n namespace for this route
 export const handle = {
   i18n: 'routes.resetPassword',
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
+// Wrapped so that a token refresh triggered by resolving the title's locale is committed to the session
+export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const token = url.searchParams.get('t');
-  return { token };
-}
+  const pageTitle = await getPageTitle(request, 'routes.resetPassword');
+
+  return { token, pageTitle };
+});
 
 // Define the types for our action data
 type ActionDataSuccess = {

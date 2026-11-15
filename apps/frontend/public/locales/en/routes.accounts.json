@@ -1,6 +1,8 @@
 {
   "meta": {
-    "title": "Accounts - Analytodon"
+    "title": "Accounts - Analytodon",
+    "connectTitle": "Connect Your Mastodon Account",
+    "setupCompleteTitle": "Account Setup Complete - Analytodon"
   },
   "title": "Manage Your Accounts",
   "table": {

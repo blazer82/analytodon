@@ -6,13 +6,13 @@ import { redirect } from '@remix-run/node';
 import { Outlet, useLoaderData, useLocation } from '@remix-run/react';
 import Layout from '~/components/Layout';
 import { createAdminApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
 import type { AdminViewAsData } from '~/utils/admin-view';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytodon Dashboard' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Analytodon Dashboard');
 
 // Declare i18n namespaces for this route
 export const handle = {
@@ -21,6 +21,7 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request); // Ensures user is logged in and handles basic redirects
+  const pageTitle = await getPageTitle(request, 'routes._app', user);
 
   const session = request.__apiClientSession!;
   let activeAccountId = session.get('activeAccountId') as string | undefined;
@@ -76,7 +77,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   }
 
   // The HOF will handle creating the Response and committing the session
-  return { user, currentAccount, adminViewAs };
+  return { pageTitle, user, currentAccount, adminViewAs };
 });
 
 export const action = withSessionHandling(async ({ request }: ActionFunctionArgs) => {

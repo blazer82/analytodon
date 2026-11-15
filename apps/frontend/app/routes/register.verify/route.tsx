@@ -18,11 +18,10 @@ import { StyledButton } from '~/components/StyledFormElements';
 import { createAuthApi } from '~/services/api.server';
 import i18next from '~/services/i18n/i18next.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { refreshAccessToken, requireUser, withSessionHandling } from '~/utils/session.server'; // Import withSessionHandling
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Verify Your Email' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Verify Your Email');
 
 // Declare i18n namespace for this route
 export const handle = {
@@ -35,7 +34,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   let user = await requireUser(request); // Use let as user object might be updated after token refresh
 
   // Get translation function for this route's namespace
-  const t = await i18next.getFixedT(request, 'routes.registerVerify');
+  const t = await i18next.getFixedT(i18next.getLocaleForUser(request, user), 'routes.registerVerify');
 
   const url = new URL(request.url);
   const verificationCode = url.searchParams.get('c');
@@ -95,6 +94,7 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 
   // HOF will wrap this data in a Response and commit session
   return {
+    pageTitle: t('meta.title'),
     email: user.email, // user.email should be up-to-date if refresh occurred
     verificationCode,
     verificationStatus,

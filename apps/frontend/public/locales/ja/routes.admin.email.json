@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "メール一斉配信"
+    "title": "Analytodon - メール一斉配信"
   },
   "form": {
     "recipientGroup": "配信先グループ",

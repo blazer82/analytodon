@@ -28,12 +28,12 @@ import { Form, Link as RemixLink, useActionData, useLoaderData, useNavigation } 
 import { DataTablePaper, EnhancedPaper } from '~/components/Layout/styles';
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import { createAdminApiWithAuth, createUsersApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytodon - User Detail' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Analytodon - User Detail');
 
 export const handle = {
   i18n: 'routes.admin.user-detail',
@@ -41,6 +41,7 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request, params }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.admin.user-detail', user);
 
   if (user.role !== 'admin') {
     throw redirect('/dashboard');
@@ -54,7 +55,7 @@ export const loader = withSessionHandling(async ({ request, params }: LoaderFunc
   try {
     const usersApi = await createUsersApiWithAuth(request);
     const userDetail = await usersApi.usersControllerFindUserById({ id: userId });
-    return { userDetail };
+    return { pageTitle, userDetail };
   } catch (error) {
     if (error instanceof Response) {
       throw error;

@@ -70,6 +70,7 @@ describe('dashboard loader', () => {
     const result = await callLoader(request);
 
     expect(result).toEqual({
+      pageTitle: 'Analytodon Dashboard',
       total: totalSnapshot,
       chart: chartData,
       top: [
@@ -93,7 +94,7 @@ describe('dashboard loader', () => {
     const request = makeRequestWithSession('http://localhost/dashboard');
     const result = await callLoader(request);
 
-    expect(result).toEqual({ total: null, chart: [], top: [] });
+    expect(result).toEqual({ pageTitle: 'Analytodon Dashboard', total: null, chart: [], top: [] });
   });
 
   it('handles partial API failures via Promise.allSettled', async () => {
@@ -108,11 +109,7 @@ describe('dashboard loader', () => {
     const request = makeRequestWithSession('http://localhost/dashboard');
     const result = await callLoader(request);
 
-    expect(result).toEqual({
-      total: totalSnapshot,
-      chart: [],
-      top: [],
-    });
+    expect(result).toEqual({ pageTitle: 'Analytodon Dashboard', total: totalSnapshot, chart: [], top: [] });
   });
 
   it('returns all-null fallback when every API call rejects', async () => {
@@ -126,11 +123,7 @@ describe('dashboard loader', () => {
     const request = makeRequestWithSession('http://localhost/dashboard');
     const result = await callLoader(request);
 
-    expect(result).toEqual({
-      total: null,
-      chart: [],
-      top: [],
-    });
+    expect(result).toEqual({ pageTitle: 'Analytodon Dashboard', total: null, chart: [], top: [] });
   });
 
   it('re-throws Response errors from API client creation', async () => {
@@ -155,7 +148,7 @@ describe('dashboard loader', () => {
     const request = makeRequestWithSession('http://localhost/dashboard');
     const result = await callLoader(request);
 
-    expect(result).toEqual({ total: null, chart: [], top: null });
+    expect(result).toEqual({ pageTitle: 'Analytodon Dashboard', total: null, chart: [], top: null });
     expect(mocks.mockLogger.error).toHaveBeenCalled();
   });
 });

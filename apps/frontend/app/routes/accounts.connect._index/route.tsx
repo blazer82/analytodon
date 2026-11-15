@@ -13,12 +13,12 @@ import {
 } from '~/components/LoginPage/styles';
 import Logo from '~/components/Logo';
 import { createAccountsApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Connect Your Mastodon Account' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Connect Your Mastodon Account');
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireUser(request);
@@ -33,7 +33,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const error = url.searchParams.get('error');
 
+  const pageTitle = await getPageTitle(request, 'routes.accounts', user, 'meta.connectTitle');
+
   return {
+    pageTitle,
     user,
     currentStep: 0,
     authUrl: null,

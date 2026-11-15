@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "subscribe": {
+      "weekly": "Subscribe to weekly statistics emails - Analytodon",
+      "news": "Subscribe to news and updates - Analytodon",
+      "default": "Subscribe to notifications - Analytodon"
+    },
+    "unsubscribe": {
+      "weekly": "Unsubscribe from weekly statistics emails - Analytodon",
+      "news": "Unsubscribe from news and updates - Analytodon",
+      "default": "Unsubscribe from notifications - Analytodon"
+    }
+  }
+}

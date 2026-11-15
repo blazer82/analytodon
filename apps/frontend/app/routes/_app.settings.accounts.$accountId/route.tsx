@@ -7,13 +7,13 @@ import { Form, Link as RemixLink, useActionData, useLoaderData, useNavigation } 
 import { StyledButton, StyledTextField } from '~/components/StyledFormElements';
 import Title from '~/components/Title';
 import { createAccountsApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 import { stripSchema } from '~/utils/url';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Edit Account - Analytodon' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Edit Account - Analytodon');
 
 // Declare i18n namespace for this route
 export const handle = {
@@ -21,7 +21,8 @@ export const handle = {
 };
 
 export const loader = withSessionHandling(async ({ request, params }: LoaderFunctionArgs) => {
-  await requireUser(request);
+  const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.editAccount', user);
   const { accountId } = params;
 
   if (!accountId) {
@@ -31,7 +32,7 @@ export const loader = withSessionHandling(async ({ request, params }: LoaderFunc
   try {
     const accountsApi = await createAccountsApiWithAuth(request);
     const account = await accountsApi.accountsControllerFindOne({ accountId });
-    return { account };
+    return { pageTitle, account };
   } catch (error) {
     logger.error('Failed to load account:', error, { accountId });
     throw redirect('/settings/accounts');

@@ -27,12 +27,12 @@ import { Link, useLoaderData, useSearchParams } from '@remix-run/react';
 import { DataTablePaper } from '~/components/Layout/styles';
 import { StyledTextField } from '~/components/StyledFormElements';
 import { createAdminApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytodon - Account Browser' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Analytodon - Account Browser');
 
 export const handle = {
   i18n: 'routes.admin.accounts',
@@ -40,6 +40,7 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.admin.accounts', user);
 
   if (user.role !== 'admin') {
     throw redirect('/dashboard');
@@ -61,13 +62,13 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       page,
       limit,
     });
-    return { accounts: result };
+    return { pageTitle, accounts: result };
   } catch (error) {
     if (error instanceof Response) {
       throw error;
     }
     logger.error('Failed to load admin accounts:', error);
-    return { accounts: null };
+    return { pageTitle, accounts: null };
   }
 });
 

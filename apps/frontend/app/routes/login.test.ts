@@ -25,7 +25,7 @@ vi.mock('~/services/logger.server', () => ({
   default: mocks.mockLogger,
 }));
 
-const { loader, action } = await import('./login');
+const { loader, action, meta } = await import('./login');
 
 function callLoader(request: Request) {
   return (loader as Function)({ request, params: {}, context: {} });
@@ -65,10 +65,7 @@ describe('login loader', () => {
     const request = new Request('http://localhost/login');
     const result = await callLoader(request);
 
-    expect(result).toEqual({
-      isRegistrationDisabled: false,
-      message: null,
-    });
+    expect(result).toEqual({ pageTitle: 'Sign in to Analytodon', isRegistrationDisabled: false, message: null });
   });
 
   it('reads DISABLE_NEW_REGISTRATIONS env var', async () => {
@@ -188,5 +185,32 @@ describe('login action', () => {
       loginDto: { email: 'user@example.com', password: 'secret' },
       acceptLanguage: 'de-DE',
     });
+  });
+});
+
+describe('login page title', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const callMeta = (data: unknown) => (meta as Function)({ data });
+
+  it.each([
+    ['en-US,en;q=0.9', 'Sign in to Analytodon'],
+    ['de-DE,de;q=0.9,en;q=0.8', 'Bei Analytodon anmelden'],
+    ['ja', 'Analytodonにログイン'],
+    ['fr-FR,fr;q=0.9', 'Sign in to Analytodon'],
+  ])('follows Accept-Language "%s"', async (acceptLanguage, title) => {
+    mocks.mockGetUser.mockResolvedValue(null);
+
+    const request = new Request('http://localhost/login', { headers: { 'Accept-Language': acceptLanguage } });
+    const result = await callLoader(request);
+
+    expect(result.pageTitle).toBe(title);
+    expect(callMeta(result)).toEqual([{ title }]);
+  });
+
+  it('falls back to the English title when there is no loader data', () => {
+    expect(callMeta(undefined)).toEqual([{ title: 'Sign in to Analytodon' }]);
   });
 });

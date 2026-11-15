@@ -89,7 +89,7 @@ describe('admin user detail loader', () => {
     const request = makeRequestWithSession('http://localhost/admin/users/user-1');
     const result = await callLoader(request, { userId: 'user-1' });
 
-    expect(result).toEqual({ userDetail });
+    expect(result).toEqual({ pageTitle: 'Analytodon - User Detail', userDetail });
     expect(mocks.mockUsersApi.usersControllerFindUserById).toHaveBeenCalledWith({ id: 'user-1' });
   });
 

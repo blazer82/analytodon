@@ -167,6 +167,7 @@ describe('top-posts loader', () => {
     const result = await callLoader(request);
 
     expect(result).toEqual({
+      pageTitle: 'Top Posts - Analytodon',
       top: [],
       topByReplies: [],
       topByBoosts: [],
@@ -192,6 +193,7 @@ describe('top-posts loader', () => {
     const result = await callLoader(request);
 
     expect(result).toEqual({
+      pageTitle: 'Top Posts - Analytodon',
       top: [],
       topByReplies: [],
       topByBoosts: [],

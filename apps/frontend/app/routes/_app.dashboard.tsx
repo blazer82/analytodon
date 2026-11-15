@@ -11,14 +11,14 @@ import SupportContactNote from '~/components/SupportContactNote';
 import TopToots, { type Toot } from '~/components/TopToots';
 import TotalBox from '~/components/TotalBox';
 import { createFollowersApiWithAuth, createTootsApiWithAuth } from '~/services/api.server';
+import { getPageTitle } from '~/services/i18n/page-title.server';
 import logger from '~/services/logger.server';
 import { resolveEffectiveAccountId } from '~/utils/active-account.server';
 import { useAdminViewAs } from '~/utils/admin-view';
+import { pageTitleMeta } from '~/utils/page-title';
 import { requireUser, withSessionHandling } from '~/utils/session.server';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytodon Dashboard' }];
-};
+export const meta: MetaFunction = ({ data }) => pageTitleMeta(data, 'Analytodon Dashboard');
 
 // Declare i18n namespace for this route
 export const handle = {
@@ -27,15 +27,12 @@ export const handle = {
 
 export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request);
+  const pageTitle = await getPageTitle(request, 'routes.dashboard', user);
   const session = request.__apiClientSession!;
   const accountId = resolveEffectiveAccountId(request, user, session);
 
   if (!accountId) {
-    return {
-      total: null,
-      chart: [],
-      top: [],
-    };
+    return { pageTitle, total: null, chart: [], top: [] };
   }
 
   try {
@@ -67,22 +64,14 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
       favouritesCount: toot.favouritesCount,
     }));
 
-    return {
-      total,
-      chart,
-      top,
-    };
+    return { pageTitle, total, chart, top };
   } catch (error) {
     // If error is a Response (e.g. redirect from API client), HOF will handle it.
     if (error instanceof Response) {
       throw error;
     }
     logger.error('Failed to load dashboard data:', error);
-    return {
-      total: null,
-      chart: [],
-      top: null,
-    };
+    return { pageTitle, total: null, chart: [], top: null };
   }
 });
 

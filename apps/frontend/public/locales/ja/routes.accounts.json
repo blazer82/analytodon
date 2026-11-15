@@ -1,6 +1,8 @@
 {
   "meta": {
-    "title": "アカウント - Analytodon"
+    "title": "アカウント - Analytodon",
+    "connectTitle": "Mastodonアカウントを連携",
+    "setupCompleteTitle": "アカウントの設定完了 - Analytodon"
   },
   "title": "アカウントの管理",
   "table": {
