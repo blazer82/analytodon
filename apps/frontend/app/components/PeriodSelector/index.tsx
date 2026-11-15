@@ -31,14 +31,7 @@ const PICKER_LOCALES: Record<
 const DEFAULT_FIELD_FORMAT = 'YYYY-MM-DD';
 
 export type Timeframe =
-  | 'last30days'
-  | 'thisweek'
-  | 'thismonth'
-  | 'thisyear'
-  | 'lastweek'
-  | 'lastmonth'
-  | 'lastyear'
-  | 'custom';
+  'last30days' | 'thisweek' | 'thismonth' | 'thisyear' | 'lastweek' | 'lastmonth' | 'lastyear' | 'custom';
 
 export interface DateRange {
   from: string;

@@ -26,8 +26,7 @@ const AccountOwnerNavigation: React.FunctionComponent = () => {
   const { t } = useTranslation('components.navigation');
   const location = useLocation();
   const routeLoaderData = useRouteLoaderData('routes/_app') as
-    | { user?: SessionUserDto; adminViewAs?: AdminViewAsData | null }
-    | undefined;
+    { user?: SessionUserDto; adminViewAs?: AdminViewAsData | null } | undefined;
   const user = routeLoaderData?.user;
   const adminViewAs = routeLoaderData?.adminViewAs;
 

@@ -6,15 +6,7 @@ import { intlFormat } from 'date-fns/intlFormat';
 import { findTimeZone, getUTCOffset } from 'timezone-support';
 
 export type Timeframe =
-  | 'thisweek'
-  | 'thismonth'
-  | 'thisyear'
-  | 'lastweek'
-  | 'lastmonth'
-  | 'lastyear'
-  | 'last7days'
-  | 'last30days'
-  | 'custom';
+  'thisweek' | 'thismonth' | 'thisyear' | 'lastweek' | 'lastmonth' | 'lastyear' | 'last7days' | 'last30days' | 'custom';
 
 // Define KPI DTO based on legacy usage
 export interface KpiDto {
