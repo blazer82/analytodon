@@ -1,0 +1,21 @@
+{
+  "drawer": {
+    "openAriaLabel": "メニューを開く"
+  },
+  "accountFor": "– {{accountName}}",
+  "accountForDefault": "– あなたのアカウント",
+  "username": "ユーザー名",
+  "accountMenu": {
+    "ariaLabel": "現在のユーザーのアカウント",
+    "switching": "切り替え中..."
+  },
+  "logout": {
+    "button": "ログアウト",
+    "loggingOut": "ログアウト中..."
+  },
+  "branding": "Analytodon",
+  "adminView": {
+    "banner": "管理者ビュー — {{accountName}}（{{ownerEmail}}）を表示中。閲覧専用です。",
+    "exit": "閲覧モードを終了"
+  }
+}

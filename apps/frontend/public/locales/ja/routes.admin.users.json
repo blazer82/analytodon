@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "title": "ユーザー管理"
+  },
+  "search": {
+    "placeholder": "メールアドレスで検索..."
+  },
+  "filters": {
+    "role": "ロール",
+    "roleAll": "すべてのロール",
+    "roleAdmin": "管理者",
+    "roleAccountOwner": "アカウント所有者",
+    "status": "ステータス",
+    "statusAll": "すべて",
+    "statusActive": "有効",
+    "statusInactive": "無効"
+  },
+  "columns": {
+    "email": "メールアドレス",
+    "role": "ロール",
+    "active": "有効",
+    "emailVerified": "メール確認済み",
+    "accounts": "アカウント",
+    "lastLogin": "最終ログイン",
+    "created": "作成日"
+  },
+  "labels": {
+    "admin": "管理者",
+    "accountOwner": "アカウント所有者",
+    "yes": "はい",
+    "no": "いいえ",
+    "never": "なし"
+  },
+  "messages": {
+    "loadError": "ユーザーを読み込めませんでした。",
+    "noUsers": "ユーザーが見つかりません。"
+  }
+}

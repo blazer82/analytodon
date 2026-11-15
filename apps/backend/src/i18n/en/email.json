@@ -91,6 +91,9 @@
     "bestDay": "Best Day",
     "bestDayLabel": "for engagement",
     "topPosts": "Top Performing Posts",
+    "topPostsBoosts": "boosts",
+    "topPostsReplies": "replies",
+    "topPostsFavorites": "favorites",
     "viewPost": "View Post",
     "topHashtags": "Top Hashtags",
     "topHashtagsPosts": "posts",
@@ -102,7 +105,7 @@
     "summaryPostsOnly": "You published {posts} posts this week. Keep going!",
     "summaryNeutral": "Here's your weekly performance summary.",
     "dashboardButton": "Go to Dashboard",
-    "unsubscribe": "If you don't want to receive any more messages like this you can",
+    "unsubscribe": "If you don't want to receive any more messages like this you can {link}.",
     "unsubscribeLink": "unsubscribe here"
   },
   "signupNotification": {

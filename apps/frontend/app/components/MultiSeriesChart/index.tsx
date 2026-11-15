@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Box, useTheme } from '@mui/material';
 import Title from '~/components/Title';
+import { formatChartDate, formatChartTick } from '~/utils/formatters';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const SERIES_COLORS = [
@@ -23,6 +25,8 @@ const MultiSeriesChart: React.FunctionComponent<{
   seriesKeys: string[];
 }> = ({ title, data, seriesKeys }) => {
   const theme = useTheme();
+  const { i18n } = useTranslation();
+  const locale = i18n.language || 'en';
 
   return (
     <React.Fragment>
@@ -52,9 +56,7 @@ const MultiSeriesChart: React.FunctionComponent<{
               stroke={theme.palette.text.secondary}
               style={theme.typography.body2}
               tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              tickFormatter={(tick: string) =>
-                new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(tick))
-              }
+              tickFormatter={(tick: string) => formatChartTick(tick, locale)}
             />
             <YAxis
               stroke={theme.palette.text.secondary}
@@ -69,11 +71,7 @@ const MultiSeriesChart: React.FunctionComponent<{
                 boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
                 border: 'none',
               }}
-              labelFormatter={(label: string) =>
-                new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(
-                  new Date(label),
-                )
-              }
+              labelFormatter={(label: string) => formatChartDate(label, locale)}
             />
             {seriesKeys.map((key, index) => (
               <Area

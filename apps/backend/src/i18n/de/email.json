@@ -91,6 +91,9 @@
     "bestDay": "Bester Tag",
     "bestDayLabel": "für Interaktionen",
     "topPosts": "Top-Beiträge",
+    "topPostsBoosts": "Boosts",
+    "topPostsReplies": "Antworten",
+    "topPostsFavorites": "Favoriten",
     "viewPost": "Beitrag ansehen",
     "topHashtags": "Top-Hashtags",
     "topHashtagsPosts": "Beiträge",
@@ -102,7 +105,7 @@
     "summaryPostsOnly": "Sie haben diese Woche {posts} Beiträge veröffentlicht. Weiter so!",
     "summaryNeutral": "Hier ist Ihre wöchentliche Zusammenfassung.",
     "dashboardButton": "Zum Dashboard",
-    "unsubscribe": "Falls Sie keine weiteren Nachrichten dieser Art erhalten möchten, können Sie",
+    "unsubscribe": "Falls Sie keine weiteren Nachrichten dieser Art erhalten möchten, können Sie {link}.",
     "unsubscribeLink": "hier abbestellen"
   },
   "signupNotification": {

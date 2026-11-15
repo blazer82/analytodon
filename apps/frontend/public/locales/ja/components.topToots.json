@@ -1,0 +1,9 @@
+{
+  "headers": {
+    "date": "日付",
+    "toot": "投稿",
+    "replies": "返信",
+    "boosts": "ブースト",
+    "favorites": "お気に入り"
+  }
+}

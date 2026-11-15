@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { decodeEntities, formatDate, formatNumber, shortenToot } from './formatters';
+import {
+  decodeEntities,
+  displayWidth,
+  formatChartDate,
+  formatChartTick,
+  formatDate,
+  formatNumber,
+  shortenToot,
+  tootToPlainText,
+} from './formatters';
 
 describe('formatDate', () => {
   it('should format a Date object', () => {
@@ -29,7 +38,35 @@ describe('formatDate', () => {
 
   it('should replace spaces with underscores in timezone names', () => {
     // "America/New York" (with space) should be handled as "America/New_York"
-    expect(formatDate('2025-07-04T12:00:00Z', 'America/New York')).toBe('Jul 04, 2025');
+    expect(formatDate('2025-07-04T12:00:00Z', 'America/New York')).toBe('Jul 4, 2025');
+  });
+
+  it('should format in the given UI language', () => {
+    expect(formatDate('2026-09-01T12:00:00Z', undefined, 'en')).toBe('Sep 1, 2026');
+    expect(formatDate('2026-09-01T12:00:00Z', undefined, 'de')).toBe('1. Sept. 2026');
+    expect(formatDate('2026-09-01T12:00:00Z', undefined, 'ja')).toBe('2026年9月1日');
+  });
+
+  it('should apply the timezone in every UI language', () => {
+    expect(formatDate('2025-01-15T23:00:00Z', 'Asia/Tokyo', 'de')).toBe('16. Jan. 2025');
+    expect(formatDate('2025-01-15T23:00:00Z', 'Asia/Tokyo', 'ja')).toBe('2025年1月16日');
+  });
+});
+
+// Chart values are formatted in the runtime's timezone, so use midday to stay on the same day everywhere
+describe('formatChartDate', () => {
+  it('should format a date with year in the given UI language', () => {
+    expect(formatChartDate('2026-09-01T12:00:00', 'en')).toBe('Sep 1, 2026');
+    expect(formatChartDate('2026-09-01T12:00:00', 'de')).toBe('1. Sept. 2026');
+    expect(formatChartDate('2026-09-01T12:00:00', 'ja')).toBe('2026年9月1日');
+  });
+});
+
+describe('formatChartTick', () => {
+  it('should format a short date without year in the given UI language', () => {
+    expect(formatChartTick('2026-09-01T12:00:00', 'en')).toBe('Sep 1');
+    expect(formatChartTick('2026-09-01T12:00:00', 'de')).toBe('1. Sept.');
+    expect(formatChartTick('2026-09-01T12:00:00', 'ja')).toBe('9月1日');
   });
 });
 
@@ -128,8 +165,101 @@ describe('shortenToot', () => {
   });
 
   it('should not split emoji when truncating', () => {
-    const result = shortenToot('A'.repeat(18) + '😀😀😀', 20);
-    expect(result).toBe('A'.repeat(18) + '😀…');
+    // An emoji is as wide as two Latin characters: 18 + 2 columns fit exactly
+    expect(shortenToot('A'.repeat(18) + '😀', 20)).toBe('A'.repeat(18) + '😀');
+    expect(shortenToot('A'.repeat(17) + '😀😀😀', 20)).toBe('A'.repeat(17) + '😀…');
+    expect(shortenToot('A'.repeat(18) + '😀😀😀', 20)).toBe('A'.repeat(18) + '…');
+  });
+
+  it('should keep emoji sequences (families, skin tones, flags) whole', () => {
+    expect(shortenToot('👨‍👩‍👧‍👦'.repeat(10), 9)).toBe('👨‍👩‍👧‍👦'.repeat(4) + '…');
+    expect(shortenToot('🙏🏽'.repeat(10), 9)).toBe('🙏🏽'.repeat(4) + '…');
+    expect(shortenToot('🇯🇵'.repeat(10), 8)).toBe('🇯🇵'.repeat(3) + '…');
+    const result = shortenToot('Hi ' + '👩🏾‍💻'.repeat(100));
+    expect(result).toBe('Hi ' + '👩🏾‍💻'.repeat(45) + '…');
+    expect(result).not.toMatch(/[\u200D\uD800-\uDBFF]…$/);
+  });
+
+  it('should cut Latin text exactly as before: at 95 characters including the ellipsis', () => {
+    const english =
+      'This is a deliberately long English post that goes well past the ninety-five character limit of the table so that we can see where it is cut.';
+    expect(shortenToot(english)).toBe(english.slice(0, 94) + '…');
+    const german =
+      'Längere deutsche Beiträge mit Umlauten wie ä, ö, ü und ß sollten genau wie bisher nach fünfundneunzig Zeichen abgeschnitten werden.';
+    expect(shortenToot(german)).toBe(german.slice(0, 94) + '…');
+    expect(shortenToot(german.slice(0, 95))).toBe(german.slice(0, 95));
+  });
+
+  it('should count Japanese (full-width) characters double', () => {
+    // 47 full-width characters are 94 columns and fit; 48 are cut to 47 + ellipsis (95 columns)
+    expect(shortenToot('あ'.repeat(47))).toBe('あ'.repeat(47));
+    expect(shortenToot('あ'.repeat(48))).toBe('あ'.repeat(47) + '…');
+    const japanese =
+      'フェディバースでコミュニティを育てて一年が経ちました。この一年間に学んだこと、うまくいかなかったこと、そしてこれから試してみたいことを振り返ります。';
+    const result = shortenToot(japanese);
+    expect(result).toBe(
+      'フェディバースでコミュニティを育てて一年が経ちました。この一年間に学んだこと、うまくいかなかっ…',
+    );
+    expect(displayWidth(result)).toBeLessThanOrEqual(95);
+  });
+
+  it('should leave Japanese posts that fit unchanged', () => {
+    const post = 'マストドンで一番読まれる投稿時間、実は思っていたのと違いました。 #マストドン';
+    expect(shortenToot(`<p>${post}</p>`)).toBe(post);
+  });
+
+  it('should measure mixed Latin and Japanese text by its display width', () => {
+    const mixed =
+      'Mastodon と Misskey の両方で3か月間 A/B テストをしてみた結果、朝8時台の投稿が一番 engagement rate が高いことが分かりました。詳しくは blog で。';
+    const result = shortenToot(mixed);
+    expect(result).toBe(
+      'Mastodon と Misskey の両方で3か月間 A/B テストをしてみた結果、朝8時台の投稿が一番 engagement r…',
+    );
+    expect(displayWidth(result)).toBe(95);
+    expect(shortenToot('ab漢字cd', 6)).toBe('ab漢…');
+    expect(shortenToot('ab漢字c', 7)).toBe('ab漢字c');
+  });
+
+  it('should count halfwidth katakana and combining marks as narrow', () => {
+    expect(shortenToot('ｱ'.repeat(30), 20)).toBe('ｱ'.repeat(19) + '…');
+    // "e" + combining acute accent is one character
+    expect(shortenToot('e\u0301'.repeat(30), 20)).toBe('e\u0301'.repeat(19) + '…');
+  });
+});
+
+describe('shortenToot without Intl.Segmenter', () => {
+  it('should still cut by display width, counting code points', () => {
+    const segmenter = Object.getOwnPropertyDescriptor(Intl, 'Segmenter') as PropertyDescriptor;
+    Object.defineProperty(Intl, 'Segmenter', { value: undefined, configurable: true });
+    try {
+      expect(shortenToot('あ'.repeat(48))).toBe('あ'.repeat(47) + '…');
+      expect(shortenToot('a'.repeat(96))).toBe('a'.repeat(94) + '…');
+      expect(shortenToot('A'.repeat(17) + '😀😀😀', 20)).toBe('A'.repeat(17) + '😀…');
+    } finally {
+      Object.defineProperty(Intl, 'Segmenter', segmenter);
+    }
+  });
+});
+
+describe('displayWidth', () => {
+  it('should count narrow characters once and wide characters twice', () => {
+    expect(displayWidth('')).toBe(0);
+    expect(displayWidth('Grüße')).toBe(5);
+    expect(displayWidth('日本語')).toBe(6);
+    expect(displayWidth('ｶﾀｶﾅ')).toBe(4);
+    expect(displayWidth('ＡＢＣ')).toBe(6);
+    expect(displayWidth('한국어')).toBe(6);
+    expect(displayWidth('abc、日本')).toBe(9);
+    expect(displayWidth('😀')).toBe(2);
+    expect(displayWidth('👨‍👩‍👧‍👦🇯🇵🙏🏽')).toBe(6);
+    expect(displayWidth('☺️')).toBe(2);
+  });
+});
+
+describe('tootToPlainText', () => {
+  it('should return the complete text without tags', () => {
+    const long = 'あ'.repeat(300);
+    expect(tootToPlainText(`<p>${long}</p><p>Second &amp; last</p>`)).toBe(`${long} Second & last`);
   });
 });
 

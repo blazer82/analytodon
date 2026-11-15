@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "title": "Analytodonダッシュボード"
+  },
+  "pageTitles": {
+    "dashboard": "ダッシュボード",
+    "followers": "フォロワー",
+    "replies": "返信",
+    "boosts": "ブースト",
+    "favorites": "お気に入り",
+    "topPosts": "人気の投稿",
+    "hashtags": "ハッシュタグ",
+    "settings": "設定",
+    "admin": "管理"
+  }
+}

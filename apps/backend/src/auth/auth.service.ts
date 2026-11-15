@@ -20,6 +20,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { MailService } from '../mail/mail.service';
 import { authConstants } from '../shared/constants/auth.constants';
+import { SUPPORTED_LOCALES } from '../shared/validators/is-valid-locale.validator';
 import { UsersService } from '../users/users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
@@ -36,7 +37,7 @@ export interface AuthOperationResult {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly supportedLocales = ['en', 'de']; // Should match i18n config
+  private readonly supportedLocales: readonly string[] = SUPPORTED_LOCALES;
 
   constructor(
     private readonly usersService: UsersService,

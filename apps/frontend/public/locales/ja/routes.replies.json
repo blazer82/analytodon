@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "返信のアナリティクス - Analytodon"
+  },
+  "kpi": {
+    "replies": "返信数",
+    "totalReplies": "返信総数"
+  },
+  "topPosts": {
+    "title": "返信の多い投稿"
+  },
+  "messages": {
+    "selectAccount": "返信のアナリティクスを表示するには、アカウントを選択してください。"
+  }
+}

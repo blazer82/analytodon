@@ -2,10 +2,21 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { SessionUserDto } from '@analytodon/rest-client';
-import { Box, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import {
+  Box,
+  Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  type SxProps,
+  type Theme,
+} from '@mui/material';
 import { Link as RemixLink, useRouteLoaderData } from '@remix-run/react';
 import Title from '~/components/Title';
-import { formatDate, shortenToot } from '~/utils/formatters';
+import { formatDate, shortenToot, tootToPlainText } from '~/utils/formatters';
 
 // Define types similar to legacy app
 export interface Toot {
@@ -18,6 +29,28 @@ export interface Toot {
   favouritesCount: number;
 }
 
+// Headers never wrap: a column must not get narrower than its title (e.g. "返信" breaking into 返/信)
+const headerCellSx: SxProps<Theme> = {
+  fontWeight: 600,
+  borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
+  whiteSpace: 'nowrap',
+};
+
+const numberCellSx: SxProps<Theme> = { fontWeight: 500, whiteSpace: 'nowrap' };
+
+// The post always stays on one line, whatever its script: the column takes the width the other
+// columns leave over (width 100% + max-width 0 keeps the text from widening it) and the text is cut
+// with an ellipsis where it doesn't fit. On narrow screens the column keeps a readable minimum and
+// the table scrolls sideways instead.
+const postCellSx: SxProps<Theme> = {
+  width: '100%',
+  maxWidth: 0,
+  minWidth: 240,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
 const TopToots: React.FunctionComponent<{
   data: Toot[];
   title?: string;
@@ -27,7 +60,8 @@ const TopToots: React.FunctionComponent<{
   showBoosts?: boolean;
   showFavorites?: boolean;
 }> = ({ data, title, linkText, link, showReplies = true, showBoosts = true, showFavorites = true }) => {
-  const { t } = useTranslation('components.topToots');
+  const { t, i18n } = useTranslation('components.topToots');
+  const locale = i18n.language || 'en';
   const appData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto };
   const userTimezone = appData?.user?.timezone;
 
@@ -50,52 +84,20 @@ const TopToots: React.FunctionComponent<{
         >
           <TableHead>
             <TableRow>
-              <TableCell
-                sx={{
-                  fontWeight: 600,
-                  borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
-                }}
-              >
-                {t('headers.date')}
-              </TableCell>
-              <TableCell
-                sx={{
-                  fontWeight: 600,
-                  borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
-                }}
-              >
-                {t('headers.toot')}
-              </TableCell>
+              <TableCell sx={headerCellSx}>{t('headers.date')}</TableCell>
+              <TableCell sx={headerCellSx}>{t('headers.toot')}</TableCell>
               {showReplies && (
-                <TableCell
-                  align="right"
-                  sx={{
-                    fontWeight: 600,
-                    borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
-                  }}
-                >
+                <TableCell align="right" sx={headerCellSx}>
                   {t('headers.replies')}
                 </TableCell>
               )}
               {showBoosts && (
-                <TableCell
-                  align="right"
-                  sx={{
-                    fontWeight: 600,
-                    borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
-                  }}
-                >
+                <TableCell align="right" sx={headerCellSx}>
                   {t('headers.boosts')}
                 </TableCell>
               )}
               {showFavorites && (
-                <TableCell
-                  align="right"
-                  sx={{
-                    fontWeight: 600,
-                    borderBottom: (theme) => `2px solid ${theme.palette.divider}`,
-                  }}
-                >
+                <TableCell align="right" sx={headerCellSx}>
                   {t('headers.favorites')}
                 </TableCell>
               )}
@@ -104,10 +106,11 @@ const TopToots: React.FunctionComponent<{
           <TableBody>
             {data.map((toot) => (
               <TableRow key={toot.uri} sx={{ transition: 'background-color 0.2s ease' }}>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(toot.createdAt, userTimezone)}</TableCell>
-                <TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(toot.createdAt, userTimezone, locale)}</TableCell>
+                <TableCell sx={postCellSx}>
                   <Link
                     href={toot.url}
+                    title={tootToPlainText(toot.content)}
                     target="_blank"
                     rel="noopener noreferrer"
                     sx={{
@@ -125,17 +128,17 @@ const TopToots: React.FunctionComponent<{
                   </Link>
                 </TableCell>
                 {showReplies && (
-                  <TableCell align="right" sx={{ fontWeight: 500 }}>
+                  <TableCell align="right" sx={numberCellSx}>
                     {`${toot.repliesCount}`}
                   </TableCell>
                 )}
                 {showBoosts && (
-                  <TableCell align="right" sx={{ fontWeight: 500 }}>
+                  <TableCell align="right" sx={numberCellSx}>
                     {`${toot.reblogsCount}`}
                   </TableCell>
                 )}
                 {showFavorites && (
-                  <TableCell align="right" sx={{ fontWeight: 500 }}>
+                  <TableCell align="right" sx={numberCellSx}>
                     {`${toot.favouritesCount}`}
                   </TableCell>
                 )}

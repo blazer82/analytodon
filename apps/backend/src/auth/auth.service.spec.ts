@@ -175,6 +175,11 @@ describe('AuthService', () => {
       expect(result).toBe('de');
     });
 
+    it('should extract Japanese from Accept-Language header', () => {
+      const result = service.extractLocaleFromHeader('ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7');
+      expect(result).toBe('ja');
+    });
+
     it('should return the first supported locale even if others are present', () => {
       const result = service.extractLocaleFromHeader('fr-FR,en-US;q=0.9,de;q=0.8');
       expect(result).toBe('en');

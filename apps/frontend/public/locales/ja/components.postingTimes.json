@@ -1,0 +1,52 @@
+{
+  "title": "投稿時間帯",
+  "gridLabel": "曜日・時間別の投稿時間帯",
+  "empty": "この期間の投稿はありません。",
+  "loadError": "投稿時間帯を読み込めませんでした。",
+  "metric": {
+    "ariaLabel": "指標",
+    "posts": "投稿",
+    "engagement": "平均エンゲージメント"
+  },
+  "subtitle": {
+    "posts_other": "曜日・時間帯別の投稿状況です（{{timezone}}）。{{count}}件の投稿に基づいています（ブーストを除く）。",
+    "engagement_other": "投稿1件あたりの平均エンゲージメント（返信＋ブースト＋お気に入り）を、投稿した時間帯別に表示しています（{{timezone}}）。{{count}}件の投稿に基づいています。"
+  },
+  "tooltip": {
+    "posts_other": "{{count}}件の投稿",
+    "average": "平均エンゲージメント{{value}}",
+    "tooFew": "投稿が少ないため、平均値の信頼性は低めです"
+  },
+  "totals": {
+    "label": "曜日ごとの投稿数",
+    "day_other": "{{day}}: {{count}}件の投稿"
+  },
+  "legend": {
+    "low": "低",
+    "high": "高（{{value}}）",
+    "maxPosts_other": "{{count}}件の投稿",
+    "tooFew_other": "投稿{{count}}件未満",
+    "notEnoughData": "平均を算出できるだけの投稿がある時間帯がまだありません"
+  },
+  "insights": {
+    "chronotype": {
+      "label": "あなたの投稿タイプ",
+      "nightOwl": "夜型",
+      "earlyBird": "朝型",
+      "daytime": "日中型",
+      "night": "深夜 {{percent}}%",
+      "morning": "午前 {{percent}}%",
+      "afternoon": "午後 {{percent}}%",
+      "evening": "夜 {{percent}}%"
+    },
+    "usualSlot": {
+      "label": "よく投稿する時間帯",
+      "busiestDay_other": "最も多い曜日: {{day}}（{{count}}件の投稿）"
+    },
+    "bestTime": {
+      "label": "投稿におすすめの時間帯",
+      "average": "投稿1件あたりの平均エンゲージメント{{value}}",
+      "notEnoughData_other": "まだデータが足りません（投稿が{{count}}件以上ある時間帯がありません）"
+    }
+  }
+}

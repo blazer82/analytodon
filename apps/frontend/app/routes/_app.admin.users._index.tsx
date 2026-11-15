@@ -57,7 +57,8 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
 });
 
 export default function AdminUsersIndex() {
-  const { t } = useTranslation('routes.admin.users');
+  const { t, i18n } = useTranslation('routes.admin.users');
+  const locale = i18n.language || 'en';
   const { users } = useLoaderData<typeof loader>() as {
     users: UserResponseDto[] | null;
   };
@@ -194,9 +195,9 @@ export default function AdminUsersIndex() {
                       </TableCell>
                       <TableCell>{user.accountsCount ?? '-'}</TableCell>
                       <TableCell>
-                        {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : t('labels.never')}
+                        {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString(locale) : t('labels.never')}
                       </TableCell>
-                      <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(user.createdAt).toLocaleDateString(locale)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

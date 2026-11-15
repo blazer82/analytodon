@@ -4,11 +4,31 @@ import { useTranslation } from 'react-i18next';
 import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { deDE as datePickersDeDE } from '@mui/x-date-pickers/locales';
+import { deDE as datePickersDeDE, jaJP as datePickersJaJP } from '@mui/x-date-pickers/locales';
 import dayjs, { type Dayjs } from 'dayjs';
 
 import 'dayjs/locale/de';
 import 'dayjs/locale/en-gb';
+import 'dayjs/locale/ja';
+
+// dayjs locale, MUI date picker texts and date formats (dayjs tokens) per UI language; anything else
+// falls back to English. `fieldFormat` is what the input shows (default: YYYY-MM-DD), `calendarHeaderFormat`
+// the month title of the calendar (default: the picker's "MMMM YYYY", e.g. "October 2026").
+const PICKER_LOCALES: Record<
+  string,
+  { adapterLocale: string; localeText?: typeof datePickersDeDE; fieldFormat?: string; calendarHeaderFormat?: string }
+> = {
+  de: { adapterLocale: 'de', localeText: datePickersDeDE },
+  // Japanese writes the year first: "2026年10月" rather than "10月 2026", and dates with slashes
+  ja: {
+    adapterLocale: 'ja',
+    localeText: datePickersJaJP,
+    fieldFormat: 'YYYY/MM/DD',
+    calendarHeaderFormat: 'YYYY年M月',
+  },
+};
+
+const DEFAULT_FIELD_FORMAT = 'YYYY-MM-DD';
 
 export type Timeframe =
   | 'last30days'
@@ -54,9 +74,14 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
 }) => {
   const { t, i18n } = useTranslation('components.periodSelector');
 
-  const adapterLocale = i18n.language === 'de' ? 'de' : 'en-gb';
-  const pickerLocaleText =
-    i18n.language === 'de' ? datePickersDeDE.components.MuiLocalizationProvider.defaultProps.localeText : undefined;
+  const pickerLocale = PICKER_LOCALES[i18n.language];
+  const adapterLocale = pickerLocale?.adapterLocale ?? 'en-gb';
+  const pickerLocaleText = pickerLocale?.localeText?.components.MuiLocalizationProvider.defaultProps.localeText;
+  const fieldFormat = pickerLocale?.fieldFormat ?? DEFAULT_FIELD_FORMAT;
+  const pickerSlotProps = {
+    textField: { size: 'small' as const },
+    ...(pickerLocale?.calendarHeaderFormat && { calendarHeader: { format: pickerLocale.calendarHeaderFormat } }),
+  };
 
   const [fromDate, setFromDate] = React.useState<Dayjs | null>(dateFrom ? dayjs(dateFrom) : null);
   const [toDate, setToDate] = React.useState<Dayjs | null>(dateTo ? dayjs(dateTo) : null);
@@ -124,8 +149,8 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
               minDate={toDate ? toDate.subtract(MAX_RANGE_DAYS, 'day') : undefined}
               maxDate={toDate ?? today}
               disabled={disabled}
-              slotProps={{ textField: { size: 'small' } }}
-              format="YYYY-MM-DD"
+              slotProps={pickerSlotProps}
+              format={fieldFormat}
             />
             <Box sx={{ mx: 0.5 }}>&ndash;</Box>
             <DatePicker
@@ -138,8 +163,8 @@ const PeriodSelector: React.FunctionComponent<PeriodSelectorProps> = ({
                 return maxByRange.isBefore(today) ? maxByRange : today;
               })()}
               disabled={disabled}
-              slotProps={{ textField: { size: 'small' } }}
-              format="YYYY-MM-DD"
+              slotProps={pickerSlotProps}
+              format={fieldFormat}
             />
           </Box>
         )}

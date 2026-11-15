@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "メール一斉配信"
+  },
+  "form": {
+    "recipientGroup": "配信先グループ",
+    "groupAll": "すべてのユーザー",
+    "groupActive": "アクティブなユーザー（過去30日間）",
+    "sectionEnglish": "英語版",
+    "sectionGerman": "ドイツ語版",
+    "subjectEn": "件名（英語）",
+    "bodyEn": "本文（英語）",
+    "subjectDe": "件名（ドイツ語）",
+    "bodyDe": "本文（ドイツ語）",
+    "bodyHelp": "[[email]]と[[userid]]をプレースホルダーとして使用できます",
+    "isTest": "両方の言語版をテストとして管理者のメールアドレスに送信する",
+    "recipientCount": "配信先: {{count}}人",
+    "recipientCountLoading": "配信先の人数を読み込み中..."
+  },
+  "actions": {
+    "send": "メールを送信",
+    "sending": "送信中..."
+  },
+  "confirm": {
+    "title": "メール一斉配信の確認",
+    "message": "このメールを配信先{{count}}人に送信してもよろしいですか？この操作は取り消せません。",
+    "cancel": "キャンセル",
+    "confirm": "送信"
+  },
+  "success": {
+    "emailSent": "メールの一斉配信を開始しました。"
+  },
+  "errors": {
+    "failedToSend": "メールの一斉配信に失敗しました。"
+  }
+}

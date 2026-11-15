@@ -15,7 +15,8 @@ const TotalBox: React.FunctionComponent<{
   linkText?: string;
   link?: string;
 }> = ({ title, amount, date, linkText, link }) => {
-  const { t } = useTranslation('components.totalBox');
+  const { t, i18n } = useTranslation('components.totalBox');
+  const locale = i18n.language || 'en';
   const appData = useRouteLoaderData('routes/_app') as { user?: SessionUserDto };
   const userTimezone = appData?.user?.timezone;
 
@@ -46,7 +47,7 @@ const TotalBox: React.FunctionComponent<{
           opacity: 0.8,
         }}
       >
-        {t('on')} {formatDate(date, userTimezone)}
+        {t('on')} {formatDate(date, userTimezone, locale)}
       </Typography>
       {linkText && link && (
         <Box sx={{ mt: 2 }}>

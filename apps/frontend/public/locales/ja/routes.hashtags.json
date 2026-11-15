@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "title": "ハッシュタグのアナリティクス - Analytodon"
+  },
+  "sections": {
+    "topHashtags": "人気のハッシュタグ",
+    "usageOverTime": "使用状況の推移",
+    "engagement": "ハッシュタグ別のエンゲージメント",
+    "mostEffective": "最も効果的なハッシュタグ"
+  },
+  "table": {
+    "hashtag": "ハッシュタグ",
+    "tootCount": "投稿",
+    "repliesCount": "返信",
+    "reblogsCount": "ブースト",
+    "favouritesCount": "お気に入り",
+    "totalEngagement": "エンゲージメント合計",
+    "avgEngagement": "平均エンゲージメント / 投稿"
+  },
+  "messages": {
+    "selectAccount": "ハッシュタグのアナリティクスを表示するには、アカウントを選択してください。",
+    "noData": "この期間のハッシュタグデータはありません。",
+    "mostEffectiveNote": "{{count}}件以上の投稿で使用されたハッシュタグを、投稿1件あたりの平均エンゲージメント順に表示しています。"
+  }
+}

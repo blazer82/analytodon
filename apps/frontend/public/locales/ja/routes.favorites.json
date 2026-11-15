@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "title": "お気に入りのアナリティクス - Analytodon"
+  },
+  "kpi": {
+    "favorites": "お気に入り数",
+    "totalFavorites": "お気に入り総数"
+  },
+  "topPosts": {
+    "title": "お気に入りの多い投稿"
+  },
+  "messages": {
+    "selectAccount": "お気に入りのアナリティクスを表示するには、アカウントを選択してください。"
+  }
+}

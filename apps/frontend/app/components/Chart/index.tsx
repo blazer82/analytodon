@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Box, useTheme } from '@mui/material';
 import Title from '~/components/Title';
+import { formatChartDate } from '~/utils/formatters';
 import {
   Area,
   AreaChart,
@@ -24,27 +26,30 @@ export interface ChartData {
 
 export type ChartType = 'line' | 'bar' | 'area';
 
-const formatDefaultDate = (value: string) =>
-  new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
-
 const Chart: React.FunctionComponent<{
   title?: string;
   data: ChartData[];
   dataLabel?: string;
   type?: ChartType;
-  /** Formats the x-axis ticks (defaults to "MMM D, YYYY") */
+  /** Formats the x-axis ticks (defaults to a short date with year in the UI language, e.g. "Sep 1, 2026") */
   tickFormatter?: (time: string) => string;
-  /** Formats the tooltip label (defaults to "MMM D, YYYY") */
+  /** Formats the tooltip label (defaults to a short date with year in the UI language, e.g. "Sep 1, 2026") */
   labelFormatter?: (time: string) => string;
 }> = ({
   title,
   data,
   dataLabel,
   type = 'line',
-  tickFormatter = formatDefaultDate,
-  labelFormatter = formatDefaultDate,
+  tickFormatter: customTickFormatter,
+  labelFormatter: customLabelFormatter,
 }) => {
   const theme = useTheme();
+  const { i18n } = useTranslation();
+  const locale = i18n.language || 'en';
+
+  const formatDefaultDate = React.useCallback((value: string) => formatChartDate(value, locale), [locale]);
+  const tickFormatter = customTickFormatter ?? formatDefaultDate;
+  const labelFormatter = customLabelFormatter ?? formatDefaultDate;
 
   const isLineChart = React.useMemo(() => type === 'line', [type]);
   const isBarChart = React.useMemo(() => type === 'bar', [type]);

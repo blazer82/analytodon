@@ -124,6 +124,13 @@ export const loader = withSessionHandling(async ({ request }: LoaderFunctionArgs
   }
 });
 
+// Column titles only wrap between words: without this, Japanese titles break in the middle of a
+// word in narrow columns (e.g. ブース/ト). Titles in languages written with spaces are unaffected.
+const tableHeadSx = { '& .MuiTableCell-root': { wordBreak: 'keep-all' } };
+
+// A hashtag is one word and stays on one line (Japanese hashtags would otherwise break anywhere)
+const hashtagCellSx = { whiteSpace: 'nowrap' };
+
 function HashtagLink({ hashtag, serverUrl }: { hashtag: string; serverUrl: string | null }) {
   if (serverUrl) {
     const baseUrl = serverUrl.endsWith('/') ? serverUrl.slice(0, -1) : serverUrl;
@@ -211,7 +218,7 @@ export default function HashtagsPage() {
             {hasTopHashtags ? (
               <TableContainer>
                 <Table size="small">
-                  <TableHead>
+                  <TableHead sx={tableHeadSx}>
                     <TableRow>
                       <TableCell>{t('table.hashtag')}</TableCell>
                       <TableCell align="right">{t('table.tootCount')}</TableCell>
@@ -223,7 +230,7 @@ export default function HashtagsPage() {
                   <TableBody>
                     {topHashtags.map((row) => (
                       <TableRow key={row.hashtag}>
-                        <TableCell>
+                        <TableCell sx={hashtagCellSx}>
                           <HashtagLink hashtag={row.hashtag} serverUrl={serverUrl} />
                         </TableCell>
                         <TableCell align="right">{row.tootCount}</TableCell>
@@ -318,7 +325,7 @@ export default function HashtagsPage() {
             {hasEngagement ? (
               <TableContainer>
                 <Table size="small">
-                  <TableHead>
+                  <TableHead sx={tableHeadSx}>
                     <TableRow>
                       <TableCell>{t('table.hashtag')}</TableCell>
                       <TableCell align="right">{t('table.tootCount')}</TableCell>
@@ -332,7 +339,7 @@ export default function HashtagsPage() {
                   <TableBody>
                     {engagement.map((row) => (
                       <TableRow key={row.hashtag}>
-                        <TableCell>
+                        <TableCell sx={hashtagCellSx}>
                           <HashtagLink hashtag={row.hashtag} serverUrl={serverUrl} />
                         </TableCell>
                         <TableCell align="right">{row.tootCount}</TableCell>
@@ -384,7 +391,7 @@ export default function HashtagsPage() {
             {hasMostEffective ? (
               <TableContainer>
                 <Table size="small">
-                  <TableHead>
+                  <TableHead sx={tableHeadSx}>
                     <TableRow>
                       <TableCell>{t('table.hashtag')}</TableCell>
                       <TableCell align="right">{t('table.tootCount')}</TableCell>
@@ -398,7 +405,7 @@ export default function HashtagsPage() {
                   <TableBody>
                     {mostEffective.map((row) => (
                       <TableRow key={row.hashtag}>
-                        <TableCell>
+                        <TableCell sx={hashtagCellSx}>
                           <HashtagLink hashtag={row.hashtag} serverUrl={serverUrl} />
                         </TableCell>
                         <TableCell align="right">{row.tootCount}</TableCell>

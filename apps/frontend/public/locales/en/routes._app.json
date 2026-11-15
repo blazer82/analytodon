@@ -9,6 +9,8 @@
     "boosts": "Boosts",
     "favorites": "Favorites",
     "topPosts": "Top Posts",
-    "settings": "Settings"
+    "hashtags": "Hashtags",
+    "settings": "Settings",
+    "admin": "Admin"
   }
 }

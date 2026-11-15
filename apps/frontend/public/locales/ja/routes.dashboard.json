@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "title": "Analytodonダッシュボード"
+  },
+  "chart": {
+    "followersTitle": "過去30日間のフォロワー"
+  },
+  "totalBox": {
+    "followersTitle": "フォロワー総数",
+    "viewStats": "フォロワーの統計を見る"
+  },
+  "topPosts": {
+    "title": "過去30日間の人気の投稿",
+    "viewMore": "人気の投稿をもっと見る"
+  },
+  "dataLabels": {
+    "followers": "フォロワー"
+  },
+  "messages": {
+    "noData": "データがありません。"
+  }
+}

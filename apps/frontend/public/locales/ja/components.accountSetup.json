@@ -1,0 +1,29 @@
+{
+  "steps": {
+    "connect": "連携",
+    "authorize": "承認",
+    "complete": "完了"
+  },
+  "dialog": {
+    "title": "Mastodonアカウントの設定",
+    "description": "Analytodonを利用するには、Mastodonアカウントを連携する必要があります。"
+  },
+  "form": {
+    "serverUrl": {
+      "label": "サーバーURL（例: mastodon.social）",
+      "helperText": "アカウントがあるMastodonサーバーのURLです。"
+    },
+    "timezone": {
+      "label": "タイムゾーン",
+      "helperText": "アナリティクスレポートの表示に使用するタイムゾーンです。"
+    },
+    "validationError": "すべての項目に有効な値を入力してください。",
+    "cancel": "キャンセル",
+    "connect": "アカウントを連携",
+    "connecting": "連携中..."
+  },
+  "authorize": {
+    "description": "次のステップでは、MastodonアカウントでAnalytodonを承認する必要があります。下のボタンをクリックしてご利用のサーバーに移動し、Analytodonを承認してください。",
+    "button": "Analytodonを承認"
+  }
+}

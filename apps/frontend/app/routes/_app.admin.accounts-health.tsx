@@ -68,7 +68,8 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 }
 
 export default function AdminAccountsHealth() {
-  const { t } = useTranslation('routes.admin.accounts-health');
+  const { t, i18n } = useTranslation('routes.admin.accounts-health');
+  const locale = i18n.language || 'en';
   const { health } = useLoaderData<typeof loader>() as {
     health: AccountHealthResponseDto | null;
   };
@@ -90,7 +91,7 @@ export default function AdminAccountsHealth() {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {health.generatedAt && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {t('labels.lastUpdated', { date: new Date(health.generatedAt).toLocaleString() })}
+          {t('labels.lastUpdated', { date: new Date(health.generatedAt).toLocaleString(locale) })}
         </Typography>
       )}
 
@@ -156,7 +157,7 @@ export default function AdminAccountsHealth() {
                       <TableCell>{account.ownerEmail}</TableCell>
                       <TableCell>
                         {account.lastStatsDate
-                          ? new Date(account.lastStatsDate).toLocaleDateString()
+                          ? new Date(account.lastStatsDate).toLocaleDateString(locale)
                           : t('labels.noStats')}
                       </TableCell>
                       <TableCell>
@@ -170,7 +171,9 @@ export default function AdminAccountsHealth() {
                         <Chip
                           label={
                             account.staleNoticeSentAt
-                              ? t('labels.sentOn', { date: new Date(account.staleNoticeSentAt).toLocaleDateString() })
+                              ? t('labels.sentOn', {
+                                  date: new Date(account.staleNoticeSentAt).toLocaleDateString(locale),
+                                })
                               : t('labels.notSent')
                           }
                           size="small"
@@ -207,7 +210,7 @@ export default function AdminAccountsHealth() {
                       <TableCell>{account.accountName || t('labels.unknown')}</TableCell>
                       <TableCell>{account.serverURL}</TableCell>
                       <TableCell>{account.ownerEmail}</TableCell>
-                      <TableCell>{new Date(account.createdDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(account.createdDate).toLocaleDateString(locale)}</TableCell>
                       <TableCell>
                         <Chip
                           label={account.daysSinceCreation}
@@ -247,7 +250,7 @@ export default function AdminAccountsHealth() {
                       <TableCell>{account.ownerEmail}</TableCell>
                       <TableCell>
                         {account.lastLoginDate
-                          ? new Date(account.lastLoginDate).toLocaleDateString()
+                          ? new Date(account.lastLoginDate).toLocaleDateString(locale)
                           : t('labels.never')}
                       </TableCell>
                       <TableCell>

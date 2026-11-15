@@ -90,7 +90,8 @@ function MetricRow({ label, value }: MetricRowProps) {
 }
 
 export default function AdminDashboard() {
-  const { t } = useTranslation('routes.admin.dashboard');
+  const { t, i18n } = useTranslation('routes.admin.dashboard');
+  const locale = i18n.language || 'en';
   const { stats } = useLoaderData<typeof loader>() as {
     stats: AdminStatsResponseDto | null;
   };
@@ -115,7 +116,7 @@ export default function AdminDashboard() {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {stats.generatedAt && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {t('labels.lastUpdated', { date: new Date(stats.generatedAt).toLocaleString() })}
+          {t('labels.lastUpdated', { date: new Date(stats.generatedAt).toLocaleString(locale) })}
         </Typography>
       )}
       <Grid container spacing={3}>

@@ -1,0 +1,20 @@
+{
+  "title": "投稿",
+  "previousPeriod": "前の期間は{{amount}}件",
+  "previousPeriodSoFar": "前の期間の同時点では{{amount}}件",
+  "facts": {
+    "perDay": "1日あたり",
+    "busiestDay": "最も多かった日",
+    "busiestDayOn": "最も多かった日（{{date}}）",
+    "daysWithoutPosts": "投稿のなかった日数"
+  },
+  "chart": {
+    "title": {
+      "day": "日別の投稿数",
+      "week": "週別の投稿数",
+      "month": "月別の投稿数"
+    },
+    "dataLabel": "投稿",
+    "weekOf": "{{date}}の週"
+  }
+}

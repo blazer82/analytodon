@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 
 // Supported locales - should match i18n configuration and frontend i18n config
-const SUPPORTED_LOCALES = ['en', 'de'] as const;
+const SUPPORTED_LOCALES = ['en', 'de', 'ja'] as const;
 
 @ValidatorConstraint({ name: 'isValidLocale', async: false })
 export class IsValidLocaleConstraint implements ValidatorConstraintInterface {

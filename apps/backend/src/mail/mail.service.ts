@@ -15,8 +15,10 @@ import { FavoritesService } from '../favorites/favorites.service';
 import { FollowersService } from '../followers/followers.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
 import { RepliesService } from '../replies/replies.service';
+import { formatDateRange } from '../shared/utils/format-date-range';
 import { stripHtml } from '../shared/utils/strip-html';
 import { KpiDto, resolveTimeframe } from '../shared/utils/timeframe.helper';
+import { SUPPORTED_LOCALES } from '../shared/validators/is-valid-locale.validator';
 import { TootRankingEnum } from '../toots/dto/get-top-toots-query.dto';
 import { TootsService } from '../toots/toots.service';
 import { UsersService } from '../users/users.service';
@@ -103,7 +105,7 @@ export class MailService {
    * @returns The user's locale string (guaranteed to be a supported locale)
    */
   private getUserLocale(user: UserEntity): string {
-    const supportedLocales = ['en', 'de']; // Should match i18n config and auth service
+    const supportedLocales: readonly string[] = SUPPORTED_LOCALES;
     const locale = user.locale;
 
     // Validate that the locale is supported, fallback to 'en' if not
@@ -141,6 +143,20 @@ export class MailService {
    */
   private async translate(key: string, locale: string, args?: Record<string, string | number>): Promise<string> {
     return this.i18n.translate(key, { lang: locale, args });
+  }
+
+  /**
+   * Splits a translated sentence at a placeholder so a template can render markup in its place.
+   * @param text - The translated sentence
+   * @param placeholder - The placeholder to split at
+   * @returns The text before and after the placeholder; the whole text and '' if it is missing
+   */
+  private splitAtPlaceholder(text: string, placeholder: string): [string, string] {
+    const index = text.indexOf(placeholder);
+    if (index === -1) {
+      return [text, ''];
+    }
+    return [text.slice(0, index), text.slice(index + placeholder.length)];
   }
 
   private stripHtmlAndTruncate(html: string, maxLength: number): string {
@@ -609,6 +625,13 @@ export class MailService {
     const subject = await this.translate('email.weeklyStats.subject', locale);
     const unsubscribeURL = `${this.frontendURL}/unsubscribe/weekly?u=${encodeURIComponent(user.id)}&e=${encodeURIComponent(user.email)}`;
     const recipientEmail = rerouteToEmail || user.email;
+    // The unsubscribe sentence is a single translation with a {link} placeholder, so each locale owns its
+    // word order and punctuation. It is split here and the template puts the <a> in between, which keeps
+    // every part HTML-escaped.
+    const [unsubscribePrefix, unsubscribeSuffix] = this.splitAtPlaceholder(
+      await this.translate('email.weeklyStats.unsubscribe', locale, { link: '{link}' }),
+      '{link}',
+    );
 
     try {
       await this.mailerService.sendMail({
@@ -647,12 +670,16 @@ export class MailService {
             bestDay: await this.translate('email.weeklyStats.bestDay', locale),
             bestDayLabel: await this.translate('email.weeklyStats.bestDayLabel', locale),
             topPosts: await this.translate('email.weeklyStats.topPosts', locale),
+            topPostsBoosts: await this.translate('email.weeklyStats.topPostsBoosts', locale),
+            topPostsReplies: await this.translate('email.weeklyStats.topPostsReplies', locale),
+            topPostsFavorites: await this.translate('email.weeklyStats.topPostsFavorites', locale),
             viewPost: await this.translate('email.weeklyStats.viewPost', locale),
             topHashtags: await this.translate('email.weeklyStats.topHashtags', locale),
             topHashtagsPosts: await this.translate('email.weeklyStats.topHashtagsPosts', locale),
             topHashtagsEngagement: await this.translate('email.weeklyStats.topHashtagsEngagement', locale),
             dashboardButton: await this.translate('email.weeklyStats.dashboardButton', locale),
-            unsubscribe: await this.translate('email.weeklyStats.unsubscribe', locale),
+            unsubscribePrefix,
+            unsubscribeSuffix,
             unsubscribeLink: await this.translate('email.weeklyStats.unsubscribeLink', locale),
           },
         },
@@ -837,14 +864,7 @@ export class MailService {
     const { dateFrom: weekStart, dateTo: weekEndExclusive } = resolveTimeframe(userAccounts[0].timezone, 'lastweek');
     const weekEnd = new Date(weekEndExclusive);
     weekEnd.setUTCDate(weekEnd.getUTCDate() - 1);
-    const dateFormatFrom: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', timeZone: accountTimezone };
-    const dateFormatTo: Intl.DateTimeFormatOptions = {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      timeZone: accountTimezone,
-    };
-    const dateRange = `${new Intl.DateTimeFormat(locale, dateFormatFrom).format(weekStart)} – ${new Intl.DateTimeFormat(locale, dateFormatTo).format(weekEnd)}`;
+    const dateRange = formatDateRange(weekStart, weekEnd, locale, accountTimezone);
 
     for (const account of userAccounts) {
       try {

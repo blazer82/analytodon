@@ -1,0 +1,23 @@
+{
+  "sections": {
+    "analytics": "アナリティクス",
+    "settings": "設定",
+    "admin": "管理"
+  },
+  "items": {
+    "dashboard": "ダッシュボード",
+    "followers": "フォロワー",
+    "replies": "返信",
+    "boosts": "ブースト",
+    "favorites": "お気に入り",
+    "hashtags": "ハッシュタグ",
+    "topPosts": "人気の投稿",
+    "accounts": "アカウント",
+    "adminDashboard": "プラットフォーム概要",
+    "accountHealth": "アカウントの状態",
+    "systemHealth": "システムの状態",
+    "userManagement": "ユーザー",
+    "accountBrowser": "アカウント一覧",
+    "emailBroadcast": "メール一斉配信"
+  }
+}

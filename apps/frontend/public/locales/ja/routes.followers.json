@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "title": "フォロワーのアナリティクス - Analytodon"
+  },
+  "kpi": {
+    "followersGained": "フォロワー増加数",
+    "totalFollowers": "フォロワー総数"
+  },
+  "messages": {
+    "selectAccount": "フォロワーのアナリティクスを表示するには、アカウントを選択してください。"
+  },
+  "servers": {
+    "title": "フォロワーのいるサーバー",
+    "snapshot": "{{date}}時点のスナップショット · 毎週更新",
+    "insight": {
+      "topAndHome_other": "フォロワーの<b>{{topShare}}</b>は<b>{{topServer}}</b>にいて、<b>{{homeShare}}</b>はあなたと同じサーバー<b>{{homeServer}}</b>にいます。フォロワーは{{count}}サーバーに分散しています。",
+      "homeIsTop_other": "フォロワーの<b>{{homeShare}}</b>は、あなたと同じサーバー<b>{{homeServer}}</b>にいます。フォロワーは{{count}}サーバーに分散しています。",
+      "topOnly_other": "フォロワーの<b>{{topShare}}</b>は<b>{{topServer}}</b>にいます。フォロワーは{{count}}サーバーに分散しています。"
+    },
+    "stats": {
+      "servers_other": "フォロワーのいるサーバー数",
+      "home": "あなたのサーバー（{{homeServer}}）のフォロワー",
+      "topThree": "上位3サーバーのフォロワー"
+    },
+    "yourServer": "あなたのサーバー",
+    "otherServers_other": "その他の{{count}}サーバー",
+    "basedOn": "フォロワー{{total}}人のうち{{sampled}}人に基づいています。",
+    "sampleNote": "人数はフォロワー総数と若干異なる場合があります。また、フォロワーの多いアカウントでは、直近の10,000人のみが対象となります。",
+    "empty": {
+      "pending": "フォロワーのサーバー情報はまだ収集されていません。次回の週次更新後にここに表示されます。",
+      "hidden": "ご利用のサーバーがフォロワー一覧をAnalytodonに公開していないため、フォロワーのいるサーバーを表示できません。",
+      "noFollowers": "まだフォロワーがいません。フォローされると、フォロワーのいるサーバーがここに表示されます。"
+    }
+  }
+}

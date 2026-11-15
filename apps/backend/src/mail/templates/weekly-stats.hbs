@@ -380,7 +380,7 @@
           {{#each this.topPosts}}
             <div class="top-post">
               <p class="post-snippet">{{this.snippet}}</p>
-              <p class="post-stats">{{this.boosts}} boosts &middot; {{this.replies}} replies &middot; {{this.favorites}} favorites</p>
+              <p class="post-stats">{{this.boosts}} {{ ../../t.topPostsBoosts }} &middot; {{this.replies}} {{ ../../t.topPostsReplies }} &middot; {{this.favorites}} {{ ../../t.topPostsFavorites }}</p>
               <a href="{{this.url}}" class="post-link">{{ ../../t.viewPost }} &rarr;</a>
             </div>
           {{/each}}
@@ -408,8 +408,7 @@
         {{ supportEmail }} &middot; <a href="{{ marketingURL }}">{{ marketingURL }}</a>
       </p>
       <p class="unsubscribe">
-        {{ t.unsubscribe }}
-        <a href="{{ unsubscribeURL }}">{{ t.unsubscribeLink }}</a>.
+        {{ t.unsubscribePrefix }}<a href="{{ unsubscribeURL }}">{{ t.unsubscribeLink }}</a>{{ t.unsubscribeSuffix }}
       </p>
     </div>
   </div>

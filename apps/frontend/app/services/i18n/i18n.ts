@@ -1,8 +1,8 @@
-export const TRANSLATIONS_VERSION = '1.10.0';
+export const TRANSLATIONS_VERSION = '1.11.0';
 
 export default {
   // Supported languages
-  supportedLngs: ['en', 'de'],
+  supportedLngs: ['en', 'de', 'ja'],
 
   // Fallback language when translation missing
   fallbackLng: 'en',

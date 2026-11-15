@@ -101,7 +101,8 @@ const ServerName: React.FC<{ domain: string }> = ({ domain }) =>
   );
 
 const FollowerServers: React.FC<{ data: FollowerServersDto | null }> = ({ data }) => {
-  const { t } = useTranslation('routes.followers');
+  const { t, i18n } = useTranslation('routes.followers');
+  const locale = i18n.language || 'en';
   const theme = useTheme();
 
   const isDark = theme.palette.mode === 'dark';
@@ -256,7 +257,7 @@ const FollowerServers: React.FC<{ data: FollowerServersDto | null }> = ({ data }
         {data?.day && data.status !== 'pending' && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {/* Snapshot days are stored as UTC dates, so format without the user's timezone */}
-            {t('servers.snapshot', { date: formatDate(data.day) })}
+            {t('servers.snapshot', { date: formatDate(data.day, undefined, locale) })}
           </Typography>
         )}
       </Box>
